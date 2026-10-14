@@ -17,6 +17,7 @@ def _base():
 BASE = _base()
 CACHE = BASE / "cache"
 STATE = BASE / "state.json"
+CACHE_VERSION = 2  # höjs när rutdetekteringen ändras
 
 
 def _read_json(p, default):
@@ -70,7 +71,9 @@ class PanelCache:
     def __init__(self, path):
         h = hashlib.sha1(comic_key(path).encode()).hexdigest()[:16]
         self.file = CACHE / f"{h}.json"
-        self.data = _read_json(self.file, {"v": 1, "pages": {}})
+        self.data = _read_json(self.file, {"v": CACHE_VERSION, "pages": {}})
+        if self.data.get("v") != CACHE_VERSION:  # äldre detektering: gör om sidorna med nuvarande metod
+            self.data = {"v": CACHE_VERSION, "pages": {}}
         self.dirty = 0
 
     def get(self, name):
