@@ -1,91 +1,121 @@
-"""Tränar om rutmodellen på dina rättelser (redigeringsläget, E) och installerar den i PanelView.
+"""Tränar om rutmodellen och installerar den i PanelView om hela läsaren blir bättre.
 
-Flöde:
-  1. Rättade sidor sparas automatiskt i <datamapp>/training/images + labels (YOLO-format) när du ritar rutor.
-  2. Det här skriptet delar upp dem i träning/validering (var 5:e sida valideras), finjusterar YOLO-modellen
-     (mosesb/best-comic-panel-detection) på grafikkortet och mäter träffsäkerheten före/efter på valideringssidorna.
-  3. Om den nya modellen är bättre exporteras den till ONNX, kvantiseras till int8 och läggs i
-     <datamapp>/models/panels_int8.onnx. PanelView använder den direkt vid nästa start (sidorna detekteras om).
-  4. Vill du bygga in den i programmet: kopiera filen till models/ i repot och bygg/tagga en ny version.
+Data:
+  - Dina rättade/godkända sidor (redigeringsläget, E/K) i <datamapp>/training. Var femte sida hålls utanför
+    träningen och används bara för att mäta.
+  - Externa dataset i YOLO-format med train/ och val/ (t.ex. CoMix, se build_tools/comix_to_yolo.py).
+
+Flöde: finjustera YOLO på grafikkortet -> exportera till ONNX int8 -> mät hela PanelView-kedjan (eval_pages.py)
+med gammal och ny modell på dina provsidor och de externa valideringssidorna -> installera bara om andelen
+helt rätt sidor ökar. Resultaten loggas i <datamapp>/training/historik.jsonl.
 
 Kör (med .venv-export som har ultralytics + torch med CUDA):
-  .venv-export/Scripts/python build_tools/train_model.py [--epochs 40] [--force]
-
+  .venv-export/Scripts/python build_tools/train_model.py [--extra datasets/comix_yolo] [--epochs 40] [--force]
 Datamapp: Windows %LOCALAPPDATA%\\PanelView, Linux ~/.local/share/PanelView.
 """
 import argparse
+import json
 import random
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from panelview.store import BASE  # noqa: E402
 
-MIN_PAGES = 30
+PANELVIEW_PY = ROOT / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
 
 
-def split(data, work):
-    imgs = sorted((data / "images").glob("*.jpg"))
-    pairs = [(i, data / "labels" / f"{i.stem}.txt") for i in imgs if (data / "labels" / f"{i.stem}.txt").exists()]
+def user_split(work):
+    """Dina sidor -> work/user/{train,val}. Returnerar (antal train, antal val)."""
+    data = BASE / "training"
+    pairs = [(i, data / "labels" / f"{i.stem}.txt") for i in sorted((data / "images").glob("*.jpg"))
+             if (data / "labels" / f"{i.stem}.txt").exists()]
     random.Random(1).shuffle(pairs)
-    if work.exists():
-        shutil.rmtree(work)
-    for part in ("train", "val"):
-        (work / part / "images").mkdir(parents=True)
-        (work / part / "labels").mkdir(parents=True)
+    n = {"train": 0, "val": 0}
     for k, (img, lab) in enumerate(pairs):
         part = "val" if k % 5 == 0 else "train"
-        shutil.copy2(img, work / part / "images" / img.name)
-        shutil.copy2(lab, work / part / "labels" / lab.name)
-    (work / "data.yaml").write_text(
-        f"path: {work.as_posix()}\ntrain: train/images\nval: val/images\nnames: {{0: panel}}\n", encoding="utf-8")
-    return len(pairs)
+        for sub, f in (("images", img), ("labels", lab)):
+            (work / "user" / part / sub).mkdir(parents=True, exist_ok=True)
+            shutil.copy2(f, work / "user" / part / sub / f.name)
+        n[part] += 1
+    return n["train"], n["val"]
 
 
-def score(model_path, work):
-    """mAP50 på valideringssidorna."""
-    from ultralytics import YOLO
-    r = YOLO(str(model_path)).val(data=str(work / "data.yaml"), imgsz=640, verbose=False, plots=False)
-    return float(r.box.map50)
+def evaluate(model, data_dir, log):
+    r = subprocess.run([str(PANELVIEW_PY), str(ROOT / "build_tools" / "eval_pages.py"), str(data_dir),
+                        "--model", str(model), "--max", "300", "--log", str(log)],
+                       capture_output=True, text=True, encoding="utf-8")
+    line = (r.stdout.strip().splitlines() or ["{}"])[-1]
+    print("  ", line)
+    try:
+        return json.loads(line)
+    except ValueError:
+        return {}
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--epochs", type=int, default=40)
+    ap.add_argument("--batch", type=int, default=8)
     prev = BASE / "models" / "panels_ft.pt"  # bygg vidare på förra omträningen om den finns
-    ap.add_argument("--base", default=str(prev if prev.exists() else Path(__file__).parent / "best.pt"))
+    ap.add_argument("--base", default=str(prev if prev.exists() else ROOT / "build_tools" / "best.pt"))
+    default_extra = ROOT / "datasets" / "comix_yolo"
+    ap.add_argument("--extra", nargs="*", default=[str(default_extra)] if default_extra.exists() else [])
     ap.add_argument("--force", action="store_true", help="installera även om den inte blev bättre")
     a = ap.parse_args()
-    data, work = BASE / "training", BASE / "training_run"
-    n = split(data, work)
-    print(f"{n} rättade sidor i {data}")
-    if n < MIN_PAGES:
-        print(f"För få sidor för att träna (minst {MIN_PAGES}). Rätta fler sidor med E i PanelView.")
+
+    work = BASE / "training_run"
+    if work.exists():
+        shutil.rmtree(work)
+    ntr, nval = user_split(work)
+    print(f"Dina sidor: {ntr} träning, {nval} prov")
+    train = [str(work / "user" / "train" / "images")] if ntr else []
+    val = [str(work / "user" / "val" / "images")] if nval else []
+    evals = [work / "user" / "val"] if nval else []
+    for e in a.extra:
+        e = Path(e)
+        train.append(str(e / "train" / "images"))
+        val.append(str(e / "val" / "images"))
+        evals.append(e / "val")
+        print(f"Extern data: {e.name} ({len(list((e / 'train' / 'images').glob('*.jpg')))} träning, "
+              f"{len(list((e / 'val' / 'images').glob('*.jpg')))} prov)")
+    if not train or not val:
+        print("Ingen träningsdata.")
         return
+    (work / "data.yaml").write_text(json.dumps({"train": train, "val": val, "names": {0: "panel"}}), encoding="utf-8")
+
     from ultralytics import YOLO
-    before = score(a.base, work)
-    print(f"Före: mAP50 {before:.3f}")
-    YOLO(a.base).train(data=str(work / "data.yaml"), imgsz=640, epochs=a.epochs, batch=8, patience=10,
-                       project=str(work), name="ft", exist_ok=True, fliplr=0.5, mosaic=0.5, verbose=False)
+    YOLO(a.base).train(data=str(work / "data.yaml"), imgsz=640, epochs=a.epochs, batch=a.batch, patience=10,
+                       project=str(work), name="ft", exist_ok=True, fliplr=0.5, mosaic=0.5, plots=False, verbose=False)
     best = work / "ft" / "weights" / "best.pt"
-    after = score(best, work)
-    print(f"Efter: mAP50 {after:.3f}")
-    if after <= before and not a.force:
-        print("Inte bättre – behåller nuvarande modell (använd --force för att installera ändå).")
-        return
+
     from onnxruntime.quantization import QuantType, quantize_dynamic
     from onnxruntime.quantization.shape_inference import quant_pre_process
     onnx = Path(YOLO(str(best)).export(format="onnx", imgsz=640, opset=17, simplify=True, dynamic=False))
     pre = onnx.with_name("pre.onnx")
     quant_pre_process(str(onnx), str(pre))
-    out = BASE / "models" / "panels_int8.onnx"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    tmp = out.with_suffix(".tmp")
-    quantize_dynamic(str(pre), str(tmp), weight_type=QuantType.QUInt8)
-    tmp.replace(out)
-    shutil.copy2(best, BASE / "models" / "panels_ft.pt")  # utgångspunkt för nästa omträning
-    print(f"Installerad: {out}  (PanelView detekterar om sidorna vid nästa start)")
+    cand = work / "panels_int8.onnx"
+    quantize_dynamic(str(pre), str(cand), weight_type=QuantType.QUInt8)
+
+    cur = BASE / "models" / "panels_int8.onnx"
+    old = cur if cur.exists() else ROOT / "models" / "panels_int8.onnx"
+    log = BASE / "training" / "historik.jsonl"
+    better = True
+    for d in evals:
+        print(f"Mäter på {d}:")
+        r_old, r_new = evaluate(old, d, log), evaluate(cand, d, log)
+        better &= r_new.get("helt_ratt_sidor", 0) >= r_old.get("helt_ratt_sidor", 0)
+    if not better and not a.force:
+        print("Inte bättre överallt – behåller nuvarande modell (använd --force för att installera ändå).")
+        return
+    cur.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(cand, cur.with_suffix(".tmp"))
+    cur.with_suffix(".tmp").replace(cur)
+    shutil.copy2(best, BASE / "models" / "panels_ft.pt")
+    print(f"Installerad: {cur}  (PanelView detekterar om sidorna vid nästa start)")
 
 
 if __name__ == "__main__":

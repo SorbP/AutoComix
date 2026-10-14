@@ -15,6 +15,9 @@ SIZE = 640
 
 def model_path():
     """Omtränad modell i användarmappen (build_tools/train_model.py) går före den inbyggda."""
+    import os
+    if os.environ.get("PANELVIEW_MODEL"):  # för utvärdering av en viss modell
+        return Path(os.environ["PANELVIEW_MODEL"])
     from .store import BASE
     user = BASE / "models" / "panels_int8.onnx"
     if user.exists():
