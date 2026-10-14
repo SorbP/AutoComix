@@ -122,6 +122,7 @@ class Viewer(QWidget):
         self.at_end = False
         self.mag_on = self.mag_hold = False
         self.edit, self.edit_drag, self.edit_undo = False, None, []
+        self.edit_grab = None  # (sida, index, kanter, ursprungsruta, startpunkt) vid storleksändring/flytt
         self.user = None
         self.mouse = QPointF()
         self.anim = QVariantAnimation(self, startValue=0.0, endValue=1.0, duration=self.opt("anim_ms"),
@@ -874,6 +875,8 @@ class Viewer(QWidget):
         self.edit = not self.edit
         self.edit_drag = None
         if self.edit:
+            self.cursor_timer.stop()
+            self.setCursor(Qt.CursorShape.CrossCursor)  # muspekaren syns hela tiden i redigeringsläget
             self.slideshow.stop()
             sp = self._spread(self.sp)
             self.custom = QRectF(0, 0, sp[0].width(), sp[0].height()) if sp else None
@@ -881,6 +884,7 @@ class Viewer(QWidget):
             self._retarget(animate=False)
         else:
             self.custom = None
+            self.unsetCursor()
             self._clamp_retarget()
             self.flash("Rutorna sparade")
         self.changed.emit()
@@ -931,6 +935,75 @@ class Viewer(QWidget):
         if self.edit:
             self.edit_delete_at(self._to_page(self.mouse))
 
+    GRAB_PX = 9  # så nära kanten (skärmpixlar) räknas som att ta tag i kanten
+
+    def _edit_hit(self, pos, move=False):
+        """(sida, index, kanter) för rutan vars kant/hörn är under muspekaren; med move=True även insidan."""
+        sp = self._spread(self.sp)
+        if not sp:
+            return None
+        g = self.GRAB_PX
+        best = None
+        for r, pg in zip(sp[1], sp[2]):
+            for k, b in enumerate(self._edit_boxes(pg)):
+                sr = self._to_screen(QRectF(r.x() + b["x"] * r.width(), r.y() + b["y"] * r.height(),
+                                            b["w"] * r.width(), b["h"] * r.height()))
+                if not sr.adjusted(-g, -g, g, g).contains(pos):
+                    continue
+                edges = set()
+                if abs(pos.x() - sr.left()) <= g:
+                    edges.add("l")
+                elif abs(pos.x() - sr.right()) <= g:
+                    edges.add("r")
+                if abs(pos.y() - sr.top()) <= g:
+                    edges.add("t")
+                elif abs(pos.y() - sr.bottom()) <= g:
+                    edges.add("b")
+                if move and not edges and sr.contains(pos):
+                    edges = {"move"}
+                if edges and (best is None or sr.width() * sr.height() < best[3]):
+                    best = (pg, k, edges, sr.width() * sr.height())
+        return best[:3] if best else None
+
+    def _edit_cursor(self, pos, shift):
+        hit = self._edit_hit(pos, move=shift)
+        if not hit:
+            self.setCursor(Qt.CursorShape.CrossCursor)
+            return
+        e = hit[2]
+        if "move" in e:
+            shape = Qt.CursorShape.SizeAllCursor
+        elif e in ({"l", "t"}, {"r", "b"}):
+            shape = Qt.CursorShape.SizeFDiagCursor
+        elif e in ({"r", "t"}, {"l", "b"}):
+            shape = Qt.CursorShape.SizeBDiagCursor
+        elif e & {"l", "r"}:
+            shape = Qt.CursorShape.SizeHorCursor
+        else:
+            shape = Qt.CursorShape.SizeVerCursor
+        self.setCursor(shape)
+
+    def _edit_grab_move(self, pt):
+        """Uppdaterar rutan som dras i (sidans normaliserade koordinater) under storleksändring/flytt."""
+        pg, k, edges, orig, start = self.edit_grab
+        sp = self._spread(self.sp)
+        r = sp[1][sp[2].index(pg)]
+        dx, dy = (pt.x() - start.x()) / r.width(), (pt.y() - start.y()) / r.height()
+        x0, y0, x1, y1 = orig["x"], orig["y"], orig["x"] + orig["w"], orig["y"] + orig["h"]
+        if "move" in edges:
+            dx = min(max(dx, -x0), 1 - x1)
+            dy = min(max(dy, -y0), 1 - y1)
+            x0, x1, y0, y1 = x0 + dx, x1 + dx, y0 + dy, y1 + dy
+        if "l" in edges:
+            x0 = min(max(0.0, x0 + dx), x1 - 0.03)
+        if "r" in edges:
+            x1 = max(min(1.0, x1 + dx), x0 + 0.03)
+        if "t" in edges:
+            y0 = min(max(0.0, y0 + dy), y1 - 0.03)
+        if "b" in edges:
+            y1 = max(min(1.0, y1 + dy), y0 + 0.03)
+        return {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0}
+
     def edit_add(self, a, b):
         p, r = self._edit_page_at(QPointF((a.x() + b.x()) / 2, (a.y() + b.y()) / 2))
         if p is None:
@@ -961,6 +1034,14 @@ class Viewer(QWidget):
         self.update()
 
     def _paint_edit(self, p):
+        if self.edit_grab and self.edit_drag:
+            pg, k, _e, _o, _s = self.edit_grab
+            q = self._edit_grab_move(self.edit_drag[1])
+            sp = self._spread(self.sp)
+            r = sp[1][sp[2].index(pg)]
+            p.setPen(QPen(QColor(90, 200, 255), 3))
+            p.drawRect(self._to_screen(QRectF(r.x() + q["x"] * r.width(), r.y() + q["y"] * r.height(),
+                                              q["w"] * r.width(), q["h"] * r.height())))
         ps, _ = self.panels()
         p.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
         for k, r in enumerate(ps):
@@ -973,11 +1054,12 @@ class Viewer(QWidget):
             p.setPen(QColor(255, 255, 255))
             p.drawText(tag, Qt.AlignmentFlag.AlignCenter, str(k + 1))
         p.setBrush(Qt.BrushStyle.NoBrush)
-        if self.edit_drag:
+        if self.edit_drag and not self.edit_grab:
             a, b = self.edit_drag
             p.setPen(QPen(QColor(90, 200, 255), 2, Qt.PenStyle.DashLine))
             p.drawRect(self._to_screen(QRectF(a, b).normalized()))
-        self._text(p, "REDIGERA RUTOR  ·  dra = ny ruta  ·  högerklick/Delete = ta bort  ·  Ctrl+Z = ångra  ·  "
+        self._text(p, "REDIGERA RUTOR  ·  dra = ny ruta  ·  dra i kant/hörn = ändra storlek  ·  Shift+dra = flytta  ·  "
+                      "högerklick/Delete = ta bort  ·  Ctrl+Z = ångra  ·  "
                       "Ctrl+R = automatiskt igen  ·  E = klar", pos=(12, self.area_h() - 48))
 
     # ---------- inmatning ----------
@@ -994,7 +1076,7 @@ class Viewer(QWidget):
         self.goto_page(self.page, animate=False)
 
     def _hide_cursor(self):
-        if self.window().isFullScreen() and self.opt("hide_cursor") and not (self.mag_on or self.mag_hold):
+        if self.window().isFullScreen() and self.opt("hide_cursor") and not (self.mag_on or self.mag_hold or self.edit):
             self.setCursor(Qt.CursorShape.BlankCursor)
 
     def wheelEvent(self, e):
@@ -1014,6 +1096,11 @@ class Viewer(QWidget):
         if self.edit:
             if b == Qt.MouseButton.LeftButton:
                 pt = self._to_page(e.position())
+                shift = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
+                hit = self._edit_hit(e.position(), move=shift)
+                if hit:
+                    pg, k, edges = hit
+                    self.edit_grab = (pg, k, edges, self._edit_boxes(pg)[k], pt)
                 self.edit_drag = (pt, pt)
             elif b == Qt.MouseButton.RightButton:
                 self.edit_delete_at(self._to_page(e.position()))
@@ -1034,6 +1121,8 @@ class Viewer(QWidget):
             if self.edit_drag:
                 self.edit_drag = (self.edit_drag[0], self._to_page(e.position()))
                 self.update()
+            else:
+                self._edit_cursor(e.position(), bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier))
             return
         self.unsetCursor()
         self.cursor_timer.start()
@@ -1054,7 +1143,16 @@ class Viewer(QWidget):
             if b == Qt.MouseButton.LeftButton and self.edit_drag:
                 a, c = self.edit_drag
                 self.edit_drag = None
-                self.edit_add(a, c)
+                if self.edit_grab:  # storleksändring/flytt av befintlig ruta
+                    q = self._edit_grab_move(c)
+                    pg, k = self.edit_grab[0], self.edit_grab[1]
+                    self.edit_grab = None
+                    boxes = self._edit_boxes(pg)
+                    boxes[k] = q
+                    self._edit_store(pg, boxes)
+                else:
+                    self.edit_add(a, c)
+                self._edit_cursor(e.position(), False)  # redo för nästa ruta direkt
             return
         if b == Qt.MouseButton.LeftButton and self.drag and not self.drag[2]:
             pos = e.position()
