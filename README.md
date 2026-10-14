@@ -25,7 +25,8 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `G` guidat läge, `V` helsida först, `D` svart runt rutan, `R` japanskt läge, `Shift+D` dubbelsida
 - `1`–`4` anpassning (skärm, bredd, höjd, 100 %), `M` förstoringsglas, `A` färgkorrigering, `[` `]` rotera
 - `L` bläddra bland serier med förhandsvisning, `Ctrl+L` senaste serien, `N`/`B` nästa/föregående fil
-- `E` redigera rutor (dra = ny ruta, dra i kant/hörn = ändra storlek, Shift+dra = flytta, högerklick/Delete = ta bort,
+- `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
+  Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
 - `F` helskärm, `Ctrl+B` bokmärke, högerklick = meny
 

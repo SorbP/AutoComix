@@ -16,7 +16,7 @@ from . import imaging
 from .comic import IMAGE_EXT, Comic, PasswordNeeded
 from .detector import Detector
 from .overlays import PageSlider, ThumbBar
-from .store import PanelCache, State, UserPanels, load_sidecar, save_training_example
+from .store import PanelCache, State, UserPanels, load_sidecar, save_training_example, training_counts
 
 MARGIN = 0.012     # luft runt rutan, andel av sidan
 SCROLL_OVERLAP = 0.1  # överlapp när en sida visas i flera steg (anpassa bredd/höjd/zoom)
@@ -898,18 +898,39 @@ class Viewer(QWidget):
         name = self.comic.pages[p]
         self.edit_undo.append((p, self.user.get(name)))
         self.user.set(name, boxes)
-        try:  # träningsdata: sidan som JPEG + rutorna
+        self._training(p, boxes, "rättad")
+        self.update()
+
+    def _training(self, p, boxes, kind):
+        """Sidan som JPEG + rutorna som träningsexempel (rättad eller godkänd)."""
+        try:
             import hashlib
             from PySide6.QtCore import QBuffer, QIODevice
+            name = self.comic.pages[p]
             key = hashlib.sha1(f"{self.comic.path}|{name}".encode()).hexdigest()[:20]
             img = QImage.fromData(self.comic.read(p))
             buf = QBuffer()
             buf.open(QIODevice.OpenModeFlag.WriteOnly)
             img.save(buf, "JPG", 92)
-            save_training_example(bytes(buf.data()), boxes, key)
+            save_training_example(bytes(buf.data()), boxes, key, kind)
         except Exception:
             pass
-        self.update()
+
+    def approve_page(self):
+        """Sidan är rätt: nuvarande rutor sparas som träningsexempel (även korrekta sidor behövs i träningen)."""
+        if not self.comic or not self.spreads:
+            return
+        _ps, ready = self.panels()
+        if not ready:
+            self.flash("Vänta tills rutorna är hittade")
+            return
+        if self.opt("rotation"):
+            self.flash("Rotera tillbaka till 0° först")
+            return
+        for p in self.spreads[self.sp]:
+            self._training(p, self._edit_boxes(p), "godkänd")
+        r, g = training_counts()
+        self.flash(f"Sidan godkänd  ·  träningsdata: {r} rättade, {g} godkända")
 
     def _edit_page_at(self, pt):
         sp = self._spread(self.sp)
@@ -965,8 +986,9 @@ class Viewer(QWidget):
                     best = (pg, k, edges, sr.width() * sr.height())
         return best[:3] if best else None
 
-    def _edit_cursor(self, pos, shift):
-        hit = self._edit_hit(pos, move=shift)
+    def _edit_cursor(self, pos, grab):
+        """Pekare efter vad ett drag gör här: flytta/ändra storlek (grab) eller rita ny ruta (Shift)."""
+        hit = self._edit_hit(pos, move=True) if grab else None
         if not hit:
             self.setCursor(Qt.CursorShape.CrossCursor)
             return
@@ -1058,9 +1080,12 @@ class Viewer(QWidget):
             a, b = self.edit_drag
             p.setPen(QPen(QColor(90, 200, 255), 2, Qt.PenStyle.DashLine))
             p.drawRect(self._to_screen(QRectF(a, b).normalized()))
-        self._text(p, "REDIGERA RUTOR  ·  dra = ny ruta  ·  dra i kant/hörn = ändra storlek  ·  Shift+dra = flytta  ·  "
+        self._text(p, "REDIGERA RUTOR  ·  dra utanför rutor = ny ruta  ·  dra i ruta = flytta  ·  dra i kant/hörn = ändra storlek  ·  "
+                      "Shift+dra = ny ruta även över en ruta  ·  "
                       "högerklick/Delete = ta bort  ·  Ctrl+Z = ångra  ·  "
-                      "Ctrl+R = automatiskt igen  ·  E = klar", pos=(12, self.area_h() - 48))
+                      "Ctrl+R = automatiskt igen  ·  K = sidan är rätt  ·  E = klar\n"
+                      "Träningsdata: {} rättade, {} godkända sidor".format(*training_counts()),
+                   pos=(12, self.area_h() - 72))
 
     # ---------- inmatning ----------
     def next_dir(self, key_right):
@@ -1097,7 +1122,7 @@ class Viewer(QWidget):
             if b == Qt.MouseButton.LeftButton:
                 pt = self._to_page(e.position())
                 shift = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
-                hit = self._edit_hit(e.position(), move=shift)
+                hit = None if shift else self._edit_hit(e.position(), move=True)  # Shift = alltid ny ruta
                 if hit:
                     pg, k, edges = hit
                     self.edit_grab = (pg, k, edges, self._edit_boxes(pg)[k], pt)
@@ -1122,7 +1147,7 @@ class Viewer(QWidget):
                 self.edit_drag = (self.edit_drag[0], self._to_page(e.position()))
                 self.update()
             else:
-                self._edit_cursor(e.position(), bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier))
+                self._edit_cursor(e.position(), not (e.modifiers() & Qt.KeyboardModifier.ShiftModifier))
             return
         self.unsetCursor()
         self.cursor_timer.start()
@@ -1152,7 +1177,7 @@ class Viewer(QWidget):
                     self._edit_store(pg, boxes)
                 else:
                     self.edit_add(a, c)
-                self._edit_cursor(e.position(), False)  # redo för nästa ruta direkt
+                self._edit_cursor(e.position(), True)  # redo för nästa ruta direkt
             return
         if b == Qt.MouseButton.LeftButton and self.drag and not self.drag[2]:
             pos = e.position()

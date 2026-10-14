@@ -113,13 +113,22 @@ class UserPanels:
         _write_json(self.file, self.data)
 
 
-def save_training_example(jpg_bytes, boxes, key):
+def training_counts():
+    """(rättade, godkända) sidor i träningsdatan."""
+    idx = _read_json(BASE / "training" / "index.json", {})
+    return sum(v == "rättad" for v in idx.values()), sum(v == "godkänd" for v in idx.values())
+
+
+def save_training_example(jpg_bytes, boxes, key, kind="rättad"):
     """Sida + rutor i YOLO-format under BASE/training (images/ + labels/), för att träna om modellen."""
     d = BASE / "training"
     (d / "images").mkdir(parents=True, exist_ok=True)
     (d / "labels").mkdir(parents=True, exist_ok=True)
     (d / "images" / f"{key}.jpg").write_bytes(jpg_bytes)
     lines = [f"0 {b['x'] + b['w'] / 2:.6f} {b['y'] + b['h'] / 2:.6f} {b['w']:.6f} {b['h']:.6f}" for b in boxes]
+    idx = _read_json(d / "index.json", {})
+    idx[key] = "rättad" if kind == "rättad" or idx.get(key) == "rättad" else "godkänd"
+    _write_json(d / "index.json", idx)
     (d / "labels" / f"{key}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

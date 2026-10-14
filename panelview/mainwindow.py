@@ -125,6 +125,7 @@ class MainWindow(QMainWindow):
         A("bg_auto", "Automatisk bakgrundsfärg", [], self.toggle_bg_auto, check=lambda: v.opt("bg") == "auto")
         # Bokmärken
         A("edit", "Redigera rutor (rita/ta bort, sparas)", ["E"], v.toggle_edit, check=lambda: v.edit)
+        A("approve", "Sidan är rätt (spara som träningsdata)", ["K", "Ctrl+Return"], v.approve_page)
         A("edit_del", "Ta bort rutan under musen", ["Delete"], v.edit_delete_under_mouse)
         A("edit_undo", "Ångra rutändring", ["Ctrl+Z"], v.edit_undo_last)
         A("edit_reset", "Automatiska rutor igen (uppslaget)", ["Ctrl+R"], v.edit_reset_page)
@@ -180,7 +181,7 @@ class MainWindow(QMainWindow):
                   "pagenum", "progress"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu("&Bild")
-        for k in ("edit", "edit_del", "edit_undo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
+        for k in ("edit", "approve", "edit_del", "edit_undo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
         self.bm_menu = mb.addMenu("B&okmärken")
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
