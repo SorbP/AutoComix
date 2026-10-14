@@ -15,7 +15,7 @@ def detect_bytes(data, ml_ok=True):
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)  # imdecode klarar å/α i sökvägar
     if img is None:
         return [], [], ml_ok
-    cv = [asdict(p) for p in detect_panels(img, min_area_frac=0.03, gutter_threshold=230)]
+    cv = _cv_best(img, detect_panels)
     ml = []
     if ml_ok:
         try:
@@ -24,6 +24,25 @@ def detect_bytes(data, ml_ok=True):
         except Exception:  # modell/onnxruntime saknas => kör bara CV
             ml_ok = False
     return cv, ml + _leftovers(img, cv, ml), ml_ok
+
+
+def _cv_best(img, detect_panels):
+    """CV med vita mellanrum, och en gång till där svarta linjer räknas som mellanrum (serier med svarta
+    ramlinjer/mellanrum, t.ex. amerikanska). Det rena resultatet med flest rutor vinner."""
+    from . import geometry as G
+    runs = [[asdict(p) for p in detect_panels(img, min_area_frac=0.03, gutter_threshold=230)]]
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    dark = gray < 45
+    if dark.mean() > 0.01:
+        k = max(9, img.shape[1] // 90) | 1  # breda mellanrum: CV sluter annars glipor under ~10 px
+        lines = cv2.morphologyEx(dark.astype(np.uint8), cv2.MORPH_OPEN, np.ones((1, img.shape[1] // 12), np.uint8))
+        lines |= cv2.morphologyEx(dark.astype(np.uint8), cv2.MORPH_OPEN, np.ones((img.shape[0] // 12, 1), np.uint8))
+        lines = cv2.dilate(lines, np.ones((k, k), np.uint8))  # bara långa raka mörka linjer, inte mörka partier i bilden
+        alt = img.copy()
+        alt[lines > 0] = 255
+        runs.append([asdict(p) for p in detect_panels(alt, min_area_frac=0.03, gutter_threshold=230)])
+    good = [r for r in runs if G.cv_good(r)]
+    return max(good, key=len) if good else runs[0]
 
 
 def _leftovers(img, cv, ml):

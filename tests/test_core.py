@@ -21,7 +21,19 @@ def test_order_ltr_rtl():
 def test_order_tall_panel_beside_stack():
     tall, top, bot, wide = P(0, 0, .4, .6), P(.45, 0, .5, .28), P(.45, .32, .5, .28), P(0, .65, .95, .3)
     assert G.finalize([wide, bot, top, tall], rtl=False) == [tall, top, bot, wide]
-    assert G.finalize([wide, bot, top, tall], rtl=True) == [top, bot, tall, wide]
+    assert G.finalize([wide, bot, top, tall], rtl=True) == [top, tall, bot, wide]
+
+
+def test_order_strict_rows_stack_left_tall_right():
+    # vänster: två staplade, höger: en hög. Rad för rad: övre vänster, höga högra, sedan nedre vänster.
+    tl, bl, tall = P(0, 0, .45, .28), P(0, .32, .45, .28), P(.5, 0, .45, .6)
+    assert G.finalize([bl, tall, tl]) == [tl, tall, bl]
+
+
+def test_order_z_grid_3x3():
+    g = [P(c * .33, r * .33, .3, .3) for r in range(3) for c in range(3)]
+    shuffled = [g[i] for i in (8, 3, 0, 5, 1, 7, 2, 6, 4)]
+    assert G.finalize(shuffled) == g
 
 
 def test_order_staggered_row():
@@ -105,3 +117,26 @@ def test_comicinfo_manga_hint(tmp_path):
         f.writestr("001.png", buf.getvalue())
         f.writestr("ComicInfo.xml", "<ComicInfo><Manga>YesAndRightToLeft</Manga></ComicInfo>")
     assert Comic(z).rtl_hint() is True
+
+
+def test_order_random_row_layouts():
+    """500 slumpade sidor med 1–4 rader, 1–4 rutor per rad, ojämna överkanter: alltid rad för rad."""
+    import random
+    rnd = random.Random(7)
+    for _ in range(500):
+        y, want = 0.02, []
+        for _r in range(rnd.randint(1, 4)):
+            h = rnd.uniform(.15, .3)
+            n = rnd.randint(1, 4)
+            xs = sorted(rnd.uniform(0, 1) for _ in range(n - 1))
+            edges = [0.02] + [0.02 + .96 * x for x in xs] + [0.98]
+            row = []
+            for i in range(n):
+                if edges[i + 1] - edges[i] < .1:
+                    continue
+                jitter = rnd.uniform(-.02, .02)
+                row.append(P(edges[i] + .01, max(0, y + jitter), edges[i + 1] - edges[i] - .02, h - .02))
+            want += row
+            y += h + .02
+        got = G.order(rnd.sample(want, len(want)), rtl=False)
+        assert got == want

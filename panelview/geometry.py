@@ -8,7 +8,6 @@ CONTAIN = 0.75    # andel av mindre rutan inuti större => "inuti"
 FULL_ANY = 0.80   # en ruta så stor => visa hela sidan
 FULL_SINGLE = 0.50  # ensam ruta så stor => visa hela sidan
 IOU_BAD = 0.30    # kvarvarande överlapp => opålitligt => helsida
-ROW_TOL = 0.08    # radband för läsordning
 GAP_MAX = 0.30    # ML-ruta räknas som ny om max så mycket ligger i CV-rutor
 MIN_AREA = 0.03
 
@@ -75,56 +74,28 @@ def merge(cv, ml):
     return ml or cv
 
 
-CUT_TOL = 0.015   # tillåtet överlapp vid snitt mellan rader/kolumner
-
-
-def _groups(ps, start, length):
-    """Delar rutor i grupper längs en axel där inget överlapp finns (rader eller kolumner)."""
-    s = sorted(ps, key=lambda p: p[start])
-    groups, cur = [], [s[0]]
-    end = s[0][start] + s[0][length]
-    for p in s[1:]:
-        if p[start] >= end - CUT_TOL:
-            groups.append(cur)
-            cur, end = [p], p[start] + p[length]
-        else:
-            cur.append(p)
-            end = max(end, p[start] + p[length])
-    groups.append(cur)
-    return groups
-
-
-def _banded(ps, rtl):
-    """Reserv när inga rena snitt finns: radband uppifrån och ned, sedan i läsriktningen."""
-    ps = sorted(ps, key=lambda p: p["y"])
-    rows, cur = [], [ps[0]]
-    for p in ps[1:]:
-        if p["y"] - cur[0]["y"] <= ROW_TOL:
-            cur.append(p)
-        else:
-            rows.append(cur)
-            cur = [p]
-    rows.append(cur)
+def rows(ps):
+    """Grupperar rutor i rader efter överkanten: en ruta hör till raden om dess överkant ligger i övre halvan
+    av radens lägsta ruta (tål sneda/förskjutna rader). En hög ruta hör till raden där den börjar."""
+    ps = sorted(ps, key=lambda p: (p["y"], p["x"]))
     out = []
-    for r in rows:
-        out += sorted(r, key=lambda p: -(p["x"] + p["w"]) if rtl else p["x"])
+    for p in ps:
+        if out:
+            r = out[-1]
+            top = min(q["y"] for q in r)
+            if p["y"] < top + 0.5 * min(q["h"] for q in r):
+                r.append(p)
+                continue
+        out.append([p])
     return out
 
 
 def order(ps, rtl):
-    """Läsordning med rekursiva snitt (XY-cut): först rader uppifrån och ned, inom en rad kolumner i läsriktningen,
-    inom en kolumn igen rader. En hög ruta bredvid två staplade läses därför före dem (västerländskt: vänster först)."""
-    if len(ps) <= 1:
-        return list(ps)
-    rows = _groups(ps, "y", "h")
-    if len(rows) > 1:
-        return [p for r in rows for p in order(r, rtl)]
-    cols = _groups(ps, "x", "w")
-    if len(cols) > 1:
-        if rtl:
-            cols.reverse()
-        return [p for c in cols for p in order(c, rtl)]
-    return _banded(ps, rtl)
+    """Läsordning rad för rad: uppifrån och ned, inom raden vänster→höger (höger→vänster i japanskt läge)."""
+    out = []
+    for r in rows(ps):
+        out += sorted(r, key=lambda p: -(p["x"] + p["w"]) if rtl else p["x"])
+    return out
 
 
 def finalize(ps, rtl=False):
