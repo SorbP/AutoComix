@@ -6,6 +6,9 @@ on:
   push:
     tags: ["v*"]
 
+permissions:
+  contents: write   # för att skapa release med filerna
+
 jobs:
   build:
     strategy:
@@ -14,7 +17,7 @@ jobs:
         include:
           - {os: windows-latest, name: windows-x64, out: dist/PanelView.exe}
           - {os: ubuntu-22.04, name: linux-x64, out: dist/PanelView}       # glibc 2.35 => kör på de flesta distar
-          - {os: macos-13, name: macos-intel, out: dist/PanelView.app}
+          - {os: macos-15-intel, name: macos-intel, out: dist/PanelView.app}
           - {os: macos-14, name: macos-arm64, out: dist/PanelView.app}
     runs-on: ${{ matrix.os }}
     steps:

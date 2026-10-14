@@ -118,6 +118,29 @@ class Comic:
         self.pages = pick_images((p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()), key)
         self._check()
 
+    def rtl_hint(self):
+        """Läsriktning ur ComicInfo.xml (<Manga>YesAndRightToLeft</Manga>), annars None.
+
+        Rutmodellen ser bara rutornas form, inte om serien är manga, så riktningen tas ur metadata
+        eller sparas när man trycker R (gäller sedan hela mappen)."""
+        try:
+            if self._zip:
+                name = next((n for n in self._zip.namelist() if n.lower().endswith("comicinfo.xml")), None)
+                data = self._zip.read(name) if name else None
+            else:
+                root = getattr(self, "root", None)
+                f = next(root.rglob("[Cc]omic[Ii]nfo.xml"), None) if root else None
+                data = f.read_bytes() if f else None
+            if not data:
+                return None
+            import re as _re
+            m = _re.search(rb"<Manga>\s*([^<]+?)\s*</Manga>", data, _re.I)
+            if m:
+                return m.group(1).lower() == b"yesandrighttoleft"
+        except Exception:
+            pass
+        return None
+
     def _check(self):
         if not self.pages:
             raise FileNotFoundError(f"Inga bilder i {self.path}")

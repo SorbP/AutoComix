@@ -107,11 +107,15 @@ class State:
     def comic(self, path):
         return self.d["comics"].get(comic_key(path), {})
 
-    def rtl(self, path):
+    def rtl(self, path, hint=None):
+        """Sparat val för serien, annars mappens, annars metadata (ComicInfo.xml), annars vänster→höger."""
         c = self.comic(path)
         if "rtl" in c:
             return c["rtl"]
-        return self.d["dirs"].get(comic_key(Path(path).parent), {}).get("rtl", False)
+        d = self.d["dirs"].get(comic_key(Path(path).parent), {})
+        if "rtl" in d:
+            return d["rtl"]
+        return bool(hint)
 
     def set_rtl(self, path, rtl):
         # Sparas även på föräldramappen så att andra delar i samma serie ärver valet.

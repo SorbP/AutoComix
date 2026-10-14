@@ -178,7 +178,7 @@ class Viewer(QWidget):
         self.comic = comic
         self.cache = PanelCache(path)
         self.sidecar = load_sidecar(path)
-        self.rtl = self.state.rtl(path)
+        self.rtl = self.state.rtl(path, comic.rtl_hint())
         start = min(self.state.comic(path).get("page", 0), len(comic.pages) - 1)
         if first:
             start = next((i for i, n in enumerate(comic.pages) if Path(n).name == first), start)
@@ -329,7 +329,7 @@ class Viewer(QWidget):
     # ---------- mål ----------
     def _viewports(self, full):
         """Visningsfönster enligt anpassningsläget, i läsordning."""
-        W, H = max(self.width(), 1), max(self.height(), 1)
+        W, H = max(self.width(), 1), self.area_h()
         ar = W / H
         fit = self.opt("fit")
         if fit == "width":
@@ -462,7 +462,7 @@ class Viewer(QWidget):
 
     def _fit_aspect(self, r, full):
         """Rutan i fönstrets proportioner, centrerad. Med svart runt rutan syns inga halva grannrutor."""
-        ar = self.width() / max(self.height(), 1)
+        ar = self.width() / self.area_h()
         w, h = r.width(), r.height()
         if w / max(h, 1e-6) < ar:
             w = h * ar
@@ -578,14 +578,23 @@ class Viewer(QWidget):
         return self.comic.read(self.page), Path(self.comic.pages[self.page]).name
 
     # ---------- rendering ----------
+    def area_h(self):
+        """Höjden som sidan visas i: miniatyrlist och reglage tar plats längst ner i stället för att täcka rutan."""
+        h = self.height()
+        if self.thumbbar.isVisible():
+            h -= self.thumbbar.height()
+        if self.slider.isVisible():
+            h -= self.slider.height()
+        return max(h, 1)
+
     def _scale(self):
         v = self.view
-        return min(self.width() / max(v.width(), 1e-6), self.height() / max(v.height(), 1e-6))
+        return min(self.width() / max(v.width(), 1e-6), self.area_h() / max(v.height(), 1e-6))
 
     def _offset(self):
         s = self._scale()
         return ((self.width() - self.view.width() * s) / 2 - self.view.x() * s,
-                (self.height() - self.view.height() * s) / 2 - self.view.y() * s)
+                (self.area_h() - self.view.height() * s) / 2 - self.view.y() * s)
 
     def _to_screen(self, r):
         s = self._scale()
@@ -802,6 +811,7 @@ class Viewer(QWidget):
             self.thumbbar.set_comic(self.comic, self.rtl)
             self.thumbbar.show_at(self.page)
             self._place_overlays()
+        self._clamp_retarget(animate=False)
         self.changed.emit()
 
     def toggle_slider(self):
@@ -811,13 +821,15 @@ class Viewer(QWidget):
             self.slider.show()
             self.slider.raise_()
         self._sync_overlays()
+        self._clamp_retarget(animate=False)
         self.changed.emit()
 
     def _thumb_picked(self, i, close):
         self.goto_page(i)
         if close:
             self.thumbbar.hide()
-            self.setFocus()
+            self._clamp_retarget(animate=False)
+        self.setFocus()
 
     def _place_overlays(self):
         W, H = self.width(), self.height()

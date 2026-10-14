@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
         A("prev", "Föregående", ["Backspace", "Up"], lambda: self.nav(-1))
         A("right", "Höger (följer läsriktningen)", ["Right"], lambda: self.nav(v.next_dir(True), arrow=True))
         A("left", "Vänster (följer läsriktningen)", ["Left"], lambda: self.nav(v.next_dir(False), arrow=True))
-        A("enter", "Välj miniatyr / helskärm", ["Return", "Enter"], self.enter)
+        A("enter", "Helskärm (Enter)", ["Return", "Enter"], self.enter)
         A("next_page", "Nästa sida", ["PgDown"], lambda: v.page_step(1))
         A("prev_page", "Föregående sida", ["PgUp"], lambda: v.page_step(-1))
         A("first", "Första sidan", ["Home"], v.first)
@@ -406,18 +406,11 @@ class MainWindow(QMainWindow):
         self._sync()
 
     def nav(self, d, arrow=False):
-        """Med miniatyrlisten öppen flyttar pilarna markeringen i listan, annars stegar de i serien."""
-        if self.v.thumbbar.isVisible():
-            self.v.thumbbar.move_sel(d if arrow else d)
-        else:
-            self.v.step(d)
+        """Pilar/mellanslag stegar alltid genom rutorna, även med miniatyrlist eller reglage öppna."""
+        self.v.step(d)  # miniatyrlisten/reglaget är öppna samtidigt och följer med
 
     def enter(self):
-        tb = self.v.thumbbar
-        if tb.isVisible() and tb.currentRow() >= 0:
-            self.v._thumb_picked(tb.currentRow(), True)
-        else:
-            self.toggle_fullscreen()
+        self.toggle_fullscreen()
 
     def escape(self):
         if self.v.thumbbar.isVisible():

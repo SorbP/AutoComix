@@ -52,6 +52,7 @@ class ThumbBar(QListWidget):
         self.pool.setMaxThreadCount(3)
         self.itemClicked.connect(lambda it: self.picked.emit(it.data(Qt.ItemDataRole.UserRole), False))
         self.itemActivated.connect(lambda it: self.picked.emit(it.data(Qt.ItemDataRole.UserRole), True))
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # tangenterna fortsätter styra läsningen medan listan är öppen
         self.hide()
 
     def set_comic(self, comic, rtl):
@@ -80,7 +81,6 @@ class ThumbBar(QListWidget):
         self.show()
         self.raise_()
         self.select(page)
-        self.setFocus()
 
     def select(self, page):
         if 0 <= page < self.count():
@@ -119,6 +119,8 @@ class PageSlider(QWidget):
         self.slider.valueChanged.connect(lambda val: self.label.setText(f"{val} / {self.slider.maximum()}"))
         self.slider.sliderReleased.connect(lambda: self.picked.emit(self.slider.value() - 1))
         self.slider.actionTriggered.connect(self._clicked)
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.slider.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.hide()
 
     def _clicked(self, action):

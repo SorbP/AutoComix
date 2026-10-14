@@ -111,10 +111,13 @@ def script():
     shot("16_miniatyrlist", lambda: v.thumbbar.isVisible() and v.thumbbar.currentRow() == v.page)
     p0 = v.page
     act("right")
-    act("right")
-    act("enter")
     yield 3000
-    shot("17_efter_miniatyrval", lambda: v.page == p0 + 2 and not v.thumbbar.isVisible())
+    shot("17_ruta_med_lista_oppen", lambda: v.thumbbar.isVisible() and v.thumbbar.currentRow() == v.page)
+    v._thumb_picked(p0 + 2, False)
+    yield 3000
+    shot("17b_klick_i_listan", lambda: v.page == p0 + 2 and v.thumbbar.isVisible() and v.area_h() < v.height())
+    act("thumbbar")
+    yield 500
     act("slider")
     yield 500
     shot("18_reglage", lambda: v.slider.isVisible() and v.slider.slider.value() == v.page + 1)
