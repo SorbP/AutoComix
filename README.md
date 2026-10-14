@@ -28,7 +28,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
   Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
-- `F` helskärm, `Ctrl+B` bokmärke, högerklick = meny
+- `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
 
 ## Bygga
 ```

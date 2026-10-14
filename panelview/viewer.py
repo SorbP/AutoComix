@@ -129,7 +129,7 @@ class Viewer(QWidget):
                                       easingCurve=QEasingCurve.Type.OutCubic)
         self.anim.valueChanged.connect(self._tick)
         self.anim.finished.connect(self._anim_done)
-        self.hud_timer = QTimer(self, singleShot=True, interval=2500, timeout=self.update)
+        self.hud_timer = QTimer(self, singleShot=True, interval=2200, timeout=self._clear_msg)
         self.slideshow = QTimer(self, timeout=self._slide)
         self.cursor_timer = QTimer(self, singleShot=True, interval=2000, timeout=self._hide_cursor)
         self.thumbbar = ThumbBar(self)
@@ -687,9 +687,8 @@ class Viewer(QWidget):
             p.fillRect(QRectF(0, H - 4, W, 4), QColor(255, 255, 255, 40))
             x0 = W * (1 - frac) if self.rtl else 0
             p.fillRect(QRectF(x0, H - 4, W * frac, 4), QColor(90, 160, 255, 200))
-        if self.opt("show_pagenum"):
-            pages = self.spreads[self.sp] if self.spreads else (self.page,)
-            s = f"{pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else "") + f" / {n}"
+        if self.opt("show_pagenum") and not self.edit:
+            s = self.counter_text()
             p.setFont(QFont("Segoe UI", 10))
             fm = p.fontMetrics()
             w = fm.horizontalAdvance(s) + 16
@@ -741,23 +740,49 @@ class Viewer(QWidget):
                        "L = bläddra   Ctrl+O = öppna fil   Ctrl+L = senaste   F = helskärm   H = hjälp",
                        center=True)
             return
-        if not (self.hud_always or self.hud_timer.isActive() or self.msg):
-            return
-        s = "  ·  ".join(self.status_parts())
-        if self.msg:
-            s += "\n" + self.msg
-        self._text(p, s)
+        if self.hud_always or self.edit:  # full informationsrad bara på begäran (I) och i redigeringsläget
+            self._text(p, "  ·  ".join(self.status_parts()))
+        if self.msg:  # kvitto: liten rad överst i mitten, försvinner av sig själv
+            self._toast(p, self.msg)
+
+    def _toast(self, p, s):
+        p.setFont(QFont("Segoe UI", 11))
+        fm = p.fontMetrics()
+        w = fm.horizontalAdvance(s) + 28
+        h = fm.height() + 12
+        r = QRectF((self.width() - w) / 2, 14, w, h)
+        p.setPen(Qt.PenStyle.NoPen)
+        p.setBrush(QColor(0, 0, 0, 170))
+        p.drawRoundedRect(r, h / 2, h / 2)
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.setPen(QColor(235, 235, 235))
+        p.drawText(r, Qt.AlignmentFlag.AlignCenter, s)
+
+    def counter_text(self):
+        """'s. 6/24 · ruta 2/7' (eller 'del 2/3' när sidan visas i flera steg)."""
+        pages = self.spreads[self.sp] if self.spreads else (self.page,)
+        n = len(self.comic.pages)
+        s = f"s. {pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else "") + f"/{n}"
+        t = self.targets()
+        ps, ready = self.panels()
+        if self.custom is None and not self.free and len(t) > 1:
+            if self.guided() and ps:
+                k = self.pidx - (1 if self.opt("overview") else 0)
+                s += f"  ·  ruta {k + 1}/{len(ps)}" if k >= 0 else f"  ·  helsida ({len(ps)} rutor)"
+            else:
+                s += f"  ·  del {self.pidx + 1}/{len(t)}"
+        elif self.guided() and not ready:
+            s += "  ·  söker rutor…"
+        return s
 
     def flash(self, msg=""):
         self.msg = msg
         self.hud_timer.start()
-        QTimer.singleShot(2500, self._clear_msg)
         self.update()
 
     def _clear_msg(self):
-        if not self.hud_timer.isActive():
-            self.msg = ""
-            self.update()
+        self.msg = ""
+        self.update()
 
     # ---------- zoom ----------
     def zoom(self, f, at=None):
@@ -1085,7 +1110,7 @@ class Viewer(QWidget):
                       "högerklick/Delete = ta bort  ·  Ctrl+Z = ångra  ·  "
                       "Ctrl+R = automatiskt igen  ·  K = sidan är rätt  ·  E = klar\n"
                       "Träningsdata: {} rättade, {} godkända sidor".format(*training_counts()),
-                   pos=(12, self.area_h() - 72))
+                   pos=(12, self.area_h() - 64))
 
     # ---------- inmatning ----------
     def next_dir(self, key_right):
@@ -1191,7 +1216,6 @@ class Viewer(QWidget):
                 elif x < 0.2:
                     self.step(self.next_dir(False))
                 else:
-                    self.hud_timer.start()
                     self.update()
         elif b == Qt.MouseButton.RightButton:
             self.contextMenu.emit(e.globalPosition())
