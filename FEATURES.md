@@ -5,13 +5,13 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 
 | CDisplayEx | PanelView | Genväg |
 |---|---|---|
-| Ladda filer / Öppna mapp | Öppna fil, Öppna mapp, dra och släpp (även på ikonen) | Ctrl+O, Ctrl+Shift+O |
+| Ladda filer / Öppna mapp | Filbläddrare med mappträd, fillista och förhandsvisning (även zip/pdf/rar/7z), Öppna fil, Öppna mapp, dra och släpp | L, Ctrl+O, Ctrl+Shift+O |
 | Öppna senaste, Rensa historik, historik på/av, rensa vid stängning | Arkiv → Öppna senaste, Inställningar → Historik | |
-| Återuppta senaste fil (till senaste sida) | Återuppta senaste, valfritt vid start; sidan sparas per serie | L |
-| Ladda nästa/föregående fil, automatiskt nästa fil vid slut, extra musknappar | Nästa/Föregående fil, auto-nästa (tryck igen vid slutet), musknapp bakåt/framåt | N, Shift+N |
+| Återuppta senaste fil (till senaste sida) | Återuppta senaste, valfritt vid start; sidan sparas per serie | Ctrl+L |
+| Ladda nästa/föregående fil, automatiskt nästa fil vid slut, extra musknappar | Nästa/Föregående fil, auto-nästa (tryck igen vid slutet), musknapp bakåt/framåt | N, B |
 | Nästa/föregående sida, första/sista sidan, framåt/bakåt två sidor | Pilar/mellanslag (ruta, del eller sida), PgUp/PgDn (uppslag), Home/End | |
 | Japanskt läge (höger→vänster, hela gränssnittet speglat) | Japanskt läge: pilar, klickzoner, uppslag, förloppslist och miniatyrlist speglas; sparas per serie | R |
-| Dubbel sida, liggande sida = uppslag, omslag, skugga, delning | Dubbelsida, liggande sidor visas ensamma, omslaget ensamt, skugga i bokryggen | B |
+| Dubbel sida, liggande sida = uppslag, omslag, skugga, delning | Dubbelsida, liggande sidor visas ensamma, omslaget ensamt, skugga i bokryggen | Shift+D |
 | Anpassa till skärm, Över/Under bredd, Över/Under höjd | Anpassa till skärm med fyra val: krymp bredare, förstora smalare, krymp högre, förstora lägre | 1 |
 | Anpassa liggande/stående | Anpassa till bredd / höjd (sidan visas i flera steg med överlapp) | 2, 3 |
 | Zoom 100/125/150/200/400 %, zooma in/ut, behåll zoom | Originalstorlek och zoomnivåer i menyn, fri zoom med Ctrl+hjul, panorera genom att dra | 4, +, −, 0 |
@@ -36,5 +36,7 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 ## Utöver CDisplayEx
 - Guidat läge: rutorna hittas automatiskt (OpenCV + YOLO-modell) och visas en i taget, centrerade med svart runt.
 - Dubbelklick på en ruta zoomar dit även om detekteringen missat den.
+- Redigeringsläge (E): rita/ta bort rutor, sparas per sida och blir träningsdata för en omtränad modell.
+- Läsordning rad för rad (vänster→höger, uppifrån och ned), läsriktning ur ComicInfo.xml.
 - Rättade rutor från `cbxy-editor` (`.cbxy` bredvid serien) används före den automatiska detekteringen.
 - Körbar fil för Windows och Linux (PyInstaller, självtest i CI).

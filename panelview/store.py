@@ -71,9 +71,11 @@ class PanelCache:
     def __init__(self, path):
         h = hashlib.sha1(comic_key(path).encode()).hexdigest()[:16]
         self.file = CACHE / f"{h}.json"
-        self.data = _read_json(self.file, {"v": CACHE_VERSION, "pages": {}})
-        if self.data.get("v") != CACHE_VERSION:  # äldre detektering: gör om sidorna med nuvarande metod
-            self.data = {"v": CACHE_VERSION, "pages": {}}
+        from .ml_onnx import model_id
+        mid = model_id()
+        self.data = _read_json(self.file, {"v": CACHE_VERSION, "model": mid, "pages": {}})
+        if self.data.get("v") != CACHE_VERSION or self.data.get("model") != mid:  # ny metod/modell: gör om sidorna
+            self.data = {"v": CACHE_VERSION, "model": mid, "pages": {}}
         self.dirty = 0
 
     def get(self, name):
@@ -89,6 +91,36 @@ class PanelCache:
         if self.dirty:
             _write_json(self.file, self.data)
             self.dirty = 0
+
+
+class UserPanels:
+    """Rutor som användaren ritat/rättat i redigeringsläget, per serie. Går före den automatiska detekteringen
+    och nollställs aldrig när detekteringen ändras."""
+
+    def __init__(self, path):
+        h = hashlib.sha1(comic_key(path).encode()).hexdigest()[:16]
+        self.file = BASE / "edits" / f"{h}.json"
+        self.data = _read_json(self.file, {"path": str(path), "pages": {}})
+
+    def get(self, name):
+        return self.data["pages"].get(name)
+
+    def set(self, name, boxes):
+        if boxes is None:
+            self.data["pages"].pop(name, None)
+        else:
+            self.data["pages"][name] = boxes
+        _write_json(self.file, self.data)
+
+
+def save_training_example(jpg_bytes, boxes, key):
+    """Sida + rutor i YOLO-format under BASE/training (images/ + labels/), för att träna om modellen."""
+    d = BASE / "training"
+    (d / "images").mkdir(parents=True, exist_ok=True)
+    (d / "labels").mkdir(parents=True, exist_ok=True)
+    (d / "images" / f"{key}.jpg").write_bytes(jpg_bytes)
+    lines = [f"0 {b['x'] + b['w'] / 2:.6f} {b['y'] + b['h'] / 2:.6f} {b['w']:.6f} {b['h']:.6f}" for b in boxes]
+    (d / "labels" / f"{key}.txt").write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 class State:

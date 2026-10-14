@@ -14,11 +14,25 @@ SIZE = 640
 
 
 def model_path():
+    """Omtränad modell i användarmappen (build_tools/train_model.py) går före den inbyggda."""
+    from .store import BASE
+    user = BASE / "models" / "panels_int8.onnx"
+    if user.exists():
+        return user
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))  # PyInstaller packar upp hit
     for p in (base / "models" / "panels_int8.onnx", Path(__file__).resolve().parent.parent / "models" / "panels_int8.onnx"):
         if p.exists():
             return p
     return None
+
+
+def model_id():
+    """Identitet för aktuell modell (storlek + ändringstid), så att rutcachen görs om när modellen byts."""
+    p = model_path()
+    if p is None:
+        return "ingen"
+    st = p.stat()
+    return f"{st.st_size}-{int(st.st_mtime)}"
 
 
 @lru_cache(maxsize=1)

@@ -66,9 +66,10 @@ class MainWindow(QMainWindow):
         # Arkiv
         A("open_file", "Öppna fil…", ["Ctrl+O", "O"], self.open_file)
         A("open_folder", "Öppna mapp…", ["Ctrl+Shift+O", "Shift+O"], self.open_folder)
-        A("resume", "Återuppta senaste", ["L"], self.resume_last)
+        A("browse", "Bläddra bland serier (med förhandsvisning)…", ["L"], self.browse)
+        A("resume", "Återuppta senaste", ["Ctrl+L"], self.resume_last)
         A("next_file", "Nästa fil", ["N", "Ctrl+Right"], lambda: v.sibling(1))
-        A("prev_file", "Föregående fil", ["Shift+N", "Ctrl+Left"], lambda: v.sibling(-1))
+        A("prev_file", "Föregående fil", ["B", "Shift+N", "Ctrl+Left"], lambda: v.sibling(-1))
         A("save_page", "Spara sida som…", ["Ctrl+S"], self.save_page)
         A("copy_page", "Kopiera sida", ["Ctrl+C"], self.copy_page)
         A("print", "Skriv ut…", ["Ctrl+P"], self.print_page)
@@ -98,7 +99,7 @@ class MainWindow(QMainWindow):
         A("overview", "Visa hela sidan före rutorna", ["V"], lambda: self._toggle("overview"), check=lambda: v.opt("overview"))
         A("dim", "Svart runt rutan", ["D"], lambda: self._toggle("dim"), check=lambda: v.opt("dim"))
         A("rtl", "Japanskt läge (höger→vänster)", ["R"], v.toggle_rtl, check=lambda: v.rtl)
-        A("double", "Dubbelsida", ["B"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
+        A("double", "Dubbelsida", ["Shift+D"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
         A("cover_single", "Omslaget ensamt", [], lambda: self._toggle("cover_single"), check=lambda: v.opt("cover_single"))
         A("shadow", "Skugga i bokryggen", [], lambda: self._toggle("shadow"), check=lambda: v.opt("shadow"))
         for i, (k, label) in enumerate(FITS):
@@ -123,6 +124,10 @@ class MainWindow(QMainWindow):
         A("bg_color", "Bakgrundsfärg…", [], self.pick_bg)
         A("bg_auto", "Automatisk bakgrundsfärg", [], self.toggle_bg_auto, check=lambda: v.opt("bg") == "auto")
         # Bokmärken
+        A("edit", "Redigera rutor (rita/ta bort, sparas)", ["E"], v.toggle_edit, check=lambda: v.edit)
+        A("edit_del", "Ta bort rutan under musen", ["Delete"], v.edit_delete_under_mouse)
+        A("edit_undo", "Ångra rutändring", ["Ctrl+Z"], v.edit_undo_last)
+        A("edit_reset", "Automatiska rutor igen (uppslaget)", ["Ctrl+R"], v.edit_reset_page)
         A("bm_add", "Lägg till bokmärke…", ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", "Hantera bokmärken…", ["Ctrl+Shift+B"], self.manage_bookmarks)
         # Inställningar / hjälp
@@ -142,7 +147,7 @@ class MainWindow(QMainWindow):
         mb = self.menuBar()
         a = self.acts
         m = mb.addMenu("&Arkiv")
-        for k in ("open_file", "open_folder"):
+        for k in ("browse", "open_file", "open_folder"):
             m.addAction(a[k])
         self.recent_menu = m.addMenu("Öppna senaste")
         self.recent_menu.aboutToShow.connect(self._fill_recent)
@@ -175,7 +180,7 @@ class MainWindow(QMainWindow):
                   "pagenum", "progress"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu("&Bild")
-        for k in ("auto_color", None, "bg_color", "bg_auto"):
+        for k in ("edit", "edit_del", "edit_undo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
         self.bm_menu = mb.addMenu("B&okmärken")
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
@@ -222,7 +227,7 @@ class MainWindow(QMainWindow):
         """Högerklicksmeny som i ett vanligt Windows-program: vanligaste kommandona först, sedan undermenyer."""
         a = self.acts
         m = QMenu(self)
-        for k in ("open_file", "open_folder"):
+        for k in ("browse", "open_file", "open_folder"):
             m.addAction(a[k])
         rec = m.addMenu("Öppna senaste")
         self.recent_menu_ctx = rec
@@ -305,6 +310,12 @@ class MainWindow(QMainWindow):
         p = QFileDialog.getExistingDirectory(self, "Öppna seriemapp", self._start_dir())
         if p:
             self.v.open(p)
+
+    def browse(self):
+        from .browser import BrowserDialog
+        d = BrowserDialog(self, self.state, self._start_dir())
+        if d.exec() == QDialog.DialogCode.Accepted and d.choice:
+            self.v.open(d.choice)
 
     def resume_last(self):
         last = self.state.d.get("last")

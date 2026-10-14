@@ -22,9 +22,11 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `→`/`←`, mellanslag, hjul, klick i kanterna: nästa/föregående ruta (eller del/sida)
 - Dubbelklick på en ruta: zooma dit, även där detekteringen missat. Igen = hela sidan.
 - `Ctrl+T` miniatyrlist, `Ctrl+I` sidreglage, `Ctrl+H` bildspel (ruta för ruta), `T` miniatyröversikt
-- `G` guidat läge, `V` helsida först, `D` svart runt rutan, `R` japanskt läge, `B` dubbelsida
+- `G` guidat läge, `V` helsida först, `D` svart runt rutan, `R` japanskt läge, `Shift+D` dubbelsida
 - `1`–`4` anpassning (skärm, bredd, höjd, 100 %), `M` förstoringsglas, `A` färgkorrigering, `[` `]` rotera
-- `F` helskärm, `L` senaste serien, `N` nästa fil, `Ctrl+B` bokmärke, högerklick = meny
+- `L` bläddra bland serier med förhandsvisning, `Ctrl+L` senaste serien, `N`/`B` nästa/föregående fil
+- `E` redigera rutor (dra = ny ruta, högerklick/Delete = ta bort, Ctrl+Z = ångra, Ctrl+R = automatiskt igen)
+- `F` helskärm, `Ctrl+B` bokmärke, högerklick = meny
 
 ## Bygga
 ```
@@ -38,6 +40,16 @@ PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger 
 
 Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel-detection` och kvantiserad till int8
 (se `build_tools/compare_ml.py`: 95 av 100 originalrutor återfunna, fp32 98 av 100).
+
+## Träna om rutmodellen på dina rättelser
+1. Läs som vanligt. När en sida blir fel: tryck `E`, rita rätt rutor (dra), ta bort fel (högerklick), `E` igen.
+   Rättelsen gäller direkt och sparas, och sidan + rutorna läggs som träningsexempel i `<datamapp>/training`.
+2. När minst 30 sidor är rättade: `.venv-export/Scripts/python build_tools/train_model.py`
+   (kräver ultralytics och PyTorch med CUDA för rimlig tid). Skriptet mäter träffsäkerheten före/efter
+   på var femte rättad sida och installerar bara en bättre modell, i `<datamapp>/models/panels_int8.onnx`.
+3. PanelView använder den nya modellen vid nästa start och detekterar om sidorna. Ingen ombyggnad behövs.
+4. För att bygga in modellen i programmet: kopiera den till `models/`, bygg och tagga en ny version
+   (`git tag v2.x.0 && git push origin v2.x.0`), så bygger GitHub nya filer under Releases.
 
 ## Tester
 - `python -m pytest -q tests` – enhetstester.

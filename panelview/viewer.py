@@ -16,7 +16,7 @@ from . import imaging
 from .comic import IMAGE_EXT, Comic, PasswordNeeded
 from .detector import Detector
 from .overlays import PageSlider, ThumbBar
-from .store import PanelCache, State, load_sidecar
+from .store import PanelCache, State, UserPanels, load_sidecar, save_training_example
 
 MARGIN = 0.012     # luft runt rutan, andel av sidan
 SCROLL_OVERLAP = 0.1  # överlapp när en sida visas i flera steg (anpassa bredd/höjd/zoom)
@@ -121,6 +121,8 @@ class Viewer(QWidget):
         self.wheel_acc = 0
         self.at_end = False
         self.mag_on = self.mag_hold = False
+        self.edit, self.edit_drag, self.edit_undo = False, None, []
+        self.user = None
         self.mouse = QPointF()
         self.anim = QVariantAnimation(self, startValue=0.0, endValue=1.0, duration=self.opt("anim_ms"),
                                       easingCurve=QEasingCurve.Type.OutCubic)
@@ -177,6 +179,7 @@ class Viewer(QWidget):
         self.close_comic()
         self.comic = comic
         self.cache = PanelCache(path)
+        self.user = UserPanels(path)
         self.sidecar = load_sidecar(path)
         self.rtl = self.state.rtl(path, comic.rtl_hint())
         start = min(self.state.comic(path).get("page", 0), len(comic.pages) - 1)
@@ -289,7 +292,10 @@ class Viewer(QWidget):
         """(rutor normaliserade för sidan, klar?)."""
         name = self.comic.pages[i]
         sc = self.sidecar.get(Path(name).stem.lower())
-        if sc is not None:
+        up = self.user.get(name) if self.user else None
+        if up is not None:  # egna rutor: bara läsordningen räknas fram
+            ps = G.order(up, self.rtl) if up else []
+        elif sc is not None:
             ps = G.finalize(sc, self.rtl)
         else:
             c = self.cache.get(name)
@@ -630,6 +636,8 @@ class Viewer(QWidget):
                 self._dim(p, self._to_screen(self.focus), bg)
             if self.mag_on or self.mag_hold:
                 self._magnifier(p, img)
+            if self.edit:
+                self._paint_edit(p)
         elif self.comic:
             self._text(p, "Laddar…", center=True)
         self._overlays(p)
@@ -704,7 +712,10 @@ class Viewer(QWidget):
         if not self.comic:
             return []
         ps, ready = self.panels()
-        parts = [self.comic.title]
+        pages = self.spreads[self.sp] if self.spreads else (self.page,)
+        n = len(self.comic.pages)
+        parts = [self.comic.title,
+                 f"sida {pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else "") + f" av {n}"]
         t = self.targets()
         if not self.guided():
             parts.append("sidläge")
@@ -726,7 +737,7 @@ class Viewer(QWidget):
     def _hud(self, p):
         if not self.comic:
             self._text(p, self.msg or "Dra in en mapp, ett serie-arkiv, en PDF eller en bild hit\n"
-                       "Ctrl+O = öppna fil   Ctrl+Shift+O = öppna mapp   L = senaste   F = helskärm   H = hjälp",
+                       "L = bläddra   Ctrl+O = öppna fil   Ctrl+L = senaste   F = helskärm   H = hjälp",
                        center=True)
             return
         if not (self.hud_always or self.hud_timer.isActive() or self.msg):
@@ -851,6 +862,124 @@ class Viewer(QWidget):
             self.thumbbar.select(self.page)
         self._place_overlays()
 
+    # ---------- redigera rutor ----------
+    def toggle_edit(self):
+        """Redigeringsläge: hela uppslaget med numrerade rutor. Dra = ny ruta, högerklick/Delete = ta bort,
+        Ctrl+Z = ångra. Rättelserna sparas per sida och samlas som träningsdata för modellen."""
+        if not self.comic:
+            return
+        if self.opt("rotation"):
+            self.flash("Rotera tillbaka till 0° för att redigera rutor")
+            return
+        self.edit = not self.edit
+        self.edit_drag = None
+        if self.edit:
+            self.slideshow.stop()
+            sp = self._spread(self.sp)
+            self.custom = QRectF(0, 0, sp[0].width(), sp[0].height()) if sp else None
+            self.free = False
+            self._retarget(animate=False)
+        else:
+            self.custom = None
+            self._clamp_retarget()
+            self.flash("Rutorna sparade")
+        self.changed.emit()
+        self.update()
+
+    def _edit_boxes(self, p):
+        ps, _ = self._page_panels(p)
+        return [dict(q) for q in ps]
+
+    def _edit_store(self, p, boxes):
+        name = self.comic.pages[p]
+        self.edit_undo.append((p, self.user.get(name)))
+        self.user.set(name, boxes)
+        try:  # träningsdata: sidan som JPEG + rutorna
+            import hashlib
+            from PySide6.QtCore import QBuffer, QIODevice
+            key = hashlib.sha1(f"{self.comic.path}|{name}".encode()).hexdigest()[:20]
+            img = QImage.fromData(self.comic.read(p))
+            buf = QBuffer()
+            buf.open(QIODevice.OpenModeFlag.WriteOnly)
+            img.save(buf, "JPG", 92)
+            save_training_example(bytes(buf.data()), boxes, key)
+        except Exception:
+            pass
+        self.update()
+
+    def _edit_page_at(self, pt):
+        sp = self._spread(self.sp)
+        if not sp:
+            return None, None
+        for r, p in zip(sp[1], sp[2]):
+            if r.contains(pt):
+                return p, r
+        return None, None
+
+    def edit_delete_at(self, pt):
+        p, r = self._edit_page_at(pt)
+        if p is None:
+            return
+        boxes = self._edit_boxes(p)
+        nx, ny = (pt.x() - r.x()) / r.width(), (pt.y() - r.y()) / r.height()
+        hit = [b for b in boxes if b["x"] <= nx <= b["x"] + b["w"] and b["y"] <= ny <= b["y"] + b["h"]]
+        if hit:
+            boxes.remove(min(hit, key=G.area))
+            self._edit_store(p, boxes)
+
+    def edit_delete_under_mouse(self):
+        if self.edit:
+            self.edit_delete_at(self._to_page(self.mouse))
+
+    def edit_add(self, a, b):
+        p, r = self._edit_page_at(QPointF((a.x() + b.x()) / 2, (a.y() + b.y()) / 2))
+        if p is None:
+            return
+        x0, x1 = sorted(((a.x() - r.x()) / r.width(), (b.x() - r.x()) / r.width()))
+        y0, y1 = sorted(((a.y() - r.y()) / r.height(), (b.y() - r.y()) / r.height()))
+        x0, y0, x1, y1 = max(0.0, x0), max(0.0, y0), min(1.0, x1), min(1.0, y1)
+        q = {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0}
+        if q["w"] < 0.03 or q["h"] < 0.03:
+            return
+        boxes = [b for b in self._edit_boxes(p) if G.inter(b, q) / G.area(b) < 0.8]  # ersätter rutor den täcker
+        self._edit_store(p, boxes + [q])
+
+    def edit_undo_last(self):
+        if self.edit and self.edit_undo:
+            p, old = self.edit_undo.pop()
+            self.user.set(self.comic.pages[p], old)
+            self.update()
+
+    def edit_reset_page(self):
+        """Tillbaka till automatisk detektering för sidorna i uppslaget."""
+        if not self.edit:
+            return
+        for p in self.spreads[self.sp]:
+            name = self.comic.pages[p]
+            self.edit_undo.append((p, self.user.get(name)))
+            self.user.set(name, None)
+        self.update()
+
+    def _paint_edit(self, p):
+        ps, _ = self.panels()
+        p.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        for k, r in enumerate(ps):
+            sr = self._to_screen(r)
+            p.setPen(QPen(QColor(255, 60, 60), 3))
+            p.setBrush(QColor(255, 60, 60, 35))
+            p.drawRect(sr)
+            tag = QRectF(sr.x() + 4, sr.y() + 4, 34, 30)
+            p.fillRect(tag, QColor(255, 60, 60))
+            p.setPen(QColor(255, 255, 255))
+            p.drawText(tag, Qt.AlignmentFlag.AlignCenter, str(k + 1))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        if self.edit_drag:
+            a, b = self.edit_drag
+            p.setPen(QPen(QColor(90, 200, 255), 2, Qt.PenStyle.DashLine))
+            p.drawRect(self._to_screen(QRectF(a, b).normalized()))
+        self._text(p, "REDIGERA RUTOR  ·  dra = ny ruta  ·  högerklick/Delete = ta bort  ·  Ctrl+Z = ångra  ·  "
+                      "Ctrl+R = automatiskt igen  ·  E = klar", pos=(12, self.area_h() - 48))
+
     # ---------- inmatning ----------
     def next_dir(self, key_right):
         return (-1 if self.rtl else 1) * (1 if key_right else -1)
@@ -869,6 +998,8 @@ class Viewer(QWidget):
             self.setCursor(Qt.CursorShape.BlankCursor)
 
     def wheelEvent(self, e):
+        if self.edit:
+            return
         dy = e.angleDelta().y()
         if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
             self.zoom(1.15 if dy > 0 else 1 / 1.15, e.position())
@@ -880,6 +1011,13 @@ class Viewer(QWidget):
 
     def mousePressEvent(self, e):
         b = e.button()
+        if self.edit:
+            if b == Qt.MouseButton.LeftButton:
+                pt = self._to_page(e.position())
+                self.edit_drag = (pt, pt)
+            elif b == Qt.MouseButton.RightButton:
+                self.edit_delete_at(self._to_page(e.position()))
+            return
         if b == Qt.MouseButton.LeftButton:
             self.drag = (e.position(), QRectF(self.view), False)
         elif b == Qt.MouseButton.MiddleButton:
@@ -892,6 +1030,11 @@ class Viewer(QWidget):
 
     def mouseMoveEvent(self, e):
         self.mouse = e.position()
+        if self.edit:
+            if self.edit_drag:
+                self.edit_drag = (self.edit_drag[0], self._to_page(e.position()))
+                self.update()
+            return
         self.unsetCursor()
         self.cursor_timer.start()
         if self.drag and e.buttons() & Qt.MouseButton.LeftButton:
@@ -907,6 +1050,12 @@ class Viewer(QWidget):
 
     def mouseReleaseEvent(self, e):
         b = e.button()
+        if self.edit:
+            if b == Qt.MouseButton.LeftButton and self.edit_drag:
+                a, c = self.edit_drag
+                self.edit_drag = None
+                self.edit_add(a, c)
+            return
         if b == Qt.MouseButton.LeftButton and self.drag and not self.drag[2]:
             pos = e.position()
             if self.comic and self.opt("show_progress") and pos.y() > self.height() - 14:
@@ -930,7 +1079,7 @@ class Viewer(QWidget):
 
     def mouseDoubleClickEvent(self, e):
         """Som Smart Comic Reader: dubbelklick på en ruta zoomar till den. Dubbelklick på inzoomad ruta = helsida."""
-        if e.button() != Qt.MouseButton.LeftButton:
+        if e.button() != Qt.MouseButton.LeftButton or self.edit:
             return
         sp = self._spread(self.sp) if self.comic and self.spreads else None
         if sp is None:
