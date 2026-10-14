@@ -1,12 +1,12 @@
 # PanelView
 
-Serieläsare med CDisplayEx:s funktioner plus automatisk zoom ruta för ruta. Körs på Windows, Linux och macOS.
+Serieläsare med CDisplayEx:s funktioner plus automatisk zoom ruta för ruta. Körs på Windows och Linux.
 Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEATURES.md).
 
 - Öppnar bildmappar, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` och `.pdf`. Krypterade arkiv ger en lösenordsfråga.
 - Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime. Hybridlogiken finns i
   `panelview/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
-  (Windows `%LOCALAPPDATA%\PanelView`, macOS `~/Library/Application Support/PanelView`, Linux `~/.local/share/PanelView`).
+  (Windows `%LOCALAPPDATA%\PanelView`, Linux `~/.local/share/PanelView`).
 - En `.cbxy` bredvid serien (t.ex. rättad i `cbxy-editor`) går före cachen.
 - Läsriktning och senaste sida sparas per serie.
 
@@ -14,7 +14,6 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - **Windows:** `dist\windows\PanelView.exe`. `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
   **Öppna i PanelView** i högerklicksmenyn (`.\install.ps1 -Uninstall` tar bort dem).
 - **Linux:** `dist/linux/PanelView` (lokalt bygge kräver glibc 2.39; CI-bygget på Ubuntu 22.04 kör på äldre distar).
-- **macOS:** byggs i GitHub Actions (`.github/workflows/build.yml`), ger `PanelView.app`.
 - Startad utan fil öppnas ett tomt fönster: dra in en mapp, ett arkiv, en PDF eller en bild.
   Släpp på ikonen, eller ange en sökväg, så öppnas serien direkt i helskärm (`--window` för fönster).
 
@@ -32,10 +31,10 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 uv venv -p 3.12 .venv
 uv pip install -p .venv -r requirements.txt pyinstaller pillow pytest
 .venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python -m PyInstaller PanelView.spec        # -> dist/PanelView(.exe/.app)
+.venv/Scripts/python -m PyInstaller PanelView.spec        # -> dist/PanelView(.exe)
 ```
-PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger alla fyra
-(Windows, Linux, macOS Intel och Apple Silicon) och kör ett självtest (`--selftest=res.json`).
+PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger båda
+(Windows och Linux) och kör ett självtest (`--selftest=res.json`).
 
 Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel-detection` och kvantiserad till int8
 (se `build_tools/compare_ml.py`: 95 av 100 originalrutor återfunna, fp32 98 av 100).

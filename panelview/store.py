@@ -11,8 +11,6 @@ import sys
 def _base():
     if sys.platform == "win32":
         return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "PanelView"
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support" / "PanelView"
     return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "PanelView"
 
 

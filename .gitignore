@@ -6,4 +6,3 @@ __pycache__/
 build_tools/*.onnx
 build_tools/*.pt
 build_tools/viewer_v1_backup.py
-assets/icon.icns

@@ -37,4 +37,4 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 - Guidat läge: rutorna hittas automatiskt (OpenCV + YOLO-modell) och visas en i taget, centrerade med svart runt.
 - Dubbelklick på en ruta zoomar dit även om detekteringen missat den.
 - Rättade rutor från `cbxy-editor` (`.cbxy` bredvid serien) används före den automatiska detekteringen.
-- Körbar fil för Windows, Linux och macOS (PyInstaller, självtest i CI).
+- Körbar fil för Windows och Linux (PyInstaller, självtest i CI).

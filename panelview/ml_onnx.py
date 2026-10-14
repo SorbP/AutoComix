@@ -1,6 +1,6 @@
 """Rutdetektering med YOLO-modellen (mosesb/best-comic-panel-detection, Apache-2.0) via ONNX Runtime.
 
-Ersätter ultralytics/PyTorch så att programmet kan byggas till en liten .exe för Windows, Linux och macOS.
+Ersätter ultralytics/PyTorch så att programmet kan byggas till en liten .exe för Windows och Linux.
 Modellen exporterades till ONNX och kvantiserades till int8 (build_tools/export_model.py).
 """
 import sys

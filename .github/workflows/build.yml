@@ -1,4 +1,4 @@
-# Bygger PanelView för Windows, Linux och macOS (Intel + Apple Silicon) och kör ett självtest per plattform.
+# Bygger PanelView för Windows och Linux och kör ett självtest per plattform.
 # Starta manuellt (Actions -> Build -> Run workflow) eller pusha en tagg v* för att skapa en release.
 name: Build
 on:
@@ -17,8 +17,6 @@ jobs:
         include:
           - {os: windows-latest, name: windows-x64, out: dist/PanelView.exe}
           - {os: ubuntu-22.04, name: linux-x64, out: dist/PanelView}       # glibc 2.35 => kör på de flesta distar
-          - {os: macos-15-intel, name: macos-intel, out: dist/PanelView.app}
-          - {os: macos-14, name: macos-arm64, out: dist/PanelView.app}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -31,12 +29,6 @@ jobs:
         run: pip install -r requirements.txt pyinstaller pillow pytest
       - name: Tester
         run: python -m pytest -q tests
-      - name: macOS-ikon
-        if: runner.os == 'macOS'
-        run: |
-          mkdir icon.iconset
-          for s in 16 32 64 128 256; do sips -z $s $s assets/icon.png --out icon.iconset/icon_${s}x${s}.png; done
-          iconutil -c icns icon.iconset -o assets/icon.icns
       - name: Bygg
         run: pyinstaller --noconfirm PanelView.spec
       - name: Självtest
@@ -44,8 +36,7 @@ jobs:
         env: {QT_QPA_PLATFORM: offscreen}
         run: |
           python build_tools/make_test_cbz.py test.cbz
-          if [ "$RUNNER_OS" = "macOS" ]; then BIN=dist/PanelView.app/Contents/MacOS/PanelView; else BIN=${{ matrix.out }}; fi
-          "$BIN" test.cbz --window --selftest=res.json || true
+          "${{ matrix.out }}" test.cbz --window --selftest=res.json || true
           cat res.json
           python -c "import json,sys; r=json.load(open('res.json')); sys.exit(0 if r['ok'] and r['panels']>0 else 1)"
       - name: Packa
@@ -53,7 +44,6 @@ jobs:
         run: |
           cd dist
           if [ "$RUNNER_OS" = "Windows" ]; then 7z a ../PanelView-${{ matrix.name }}.zip PanelView.exe;
-          elif [ "$RUNNER_OS" = "macOS" ]; then ditto -c -k --keepParent PanelView.app ../PanelView-${{ matrix.name }}.zip;
           else tar czf ../PanelView-${{ matrix.name }}.tar.gz PanelView; fi
       - uses: actions/upload-artifact@v4
         with:
