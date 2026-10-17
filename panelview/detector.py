@@ -13,8 +13,13 @@ def detect_bytes(data, ml_ok=True):
     """(cv_rutor, ml_rutor, ml_fungerade) för en sidas bildbytes."""
     from .vendor.cbxy_cv import detect_panels
     img = cv2.imdecode(np.frombuffer(data, np.uint8), cv2.IMREAD_COLOR)  # imdecode klarar å/α i sökvägar
-    if img is None:
-        return [], [], ml_ok
+    if img is None:  # GIF m.fl. som OpenCV inte läser: första rutan via Qt
+        from PySide6.QtGui import QImage
+        from .imaging import to_rgb
+        q = QImage.fromData(data)
+        if q.isNull():
+            return [], [], ml_ok
+        img = cv2.cvtColor(to_rgb(q), cv2.COLOR_RGB2BGR)
     cv = _cv_best(img, detect_panels)
     ml = []
     if ml_ok:

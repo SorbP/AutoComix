@@ -3,6 +3,7 @@
 Navigeringen går genom en lista "mål" per uppslag: rutor (guidat läge) eller visningsfönster enligt
 anpassningsläget (skärm/bredd/höjd/originalstorlek). Pil/klick/hjul stegar genom målen och sedan till nästa uppslag.
 """
+import time
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +12,7 @@ from PySide6.QtCore import (QEasingCurve, QObject, QPointF, QRectF, QRunnable, Q
 from PySide6.QtGui import QColor, QCursor, QFont, QImage, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QApplication, QProgressDialog, QWidget
 
+from . import animation
 from . import geometry as G
 from . import imaging
 from .comic import IMAGE_EXT, Comic, PasswordNeeded
@@ -33,7 +35,9 @@ DEFAULTS = {
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
+    "anim_play": True, "anim_speed": 1.0, "slideshow_wait_anim": True,  # animerade sidor (GIF/WebP/APNG)
 }
+ANIM_SPEEDS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
 
 
 def lerp_rect(a, b, t):
@@ -68,6 +72,7 @@ def _steps(total, view):
 
 class _Sig(QObject):
     loaded = Signal(int, QImage, int)  # sida, bild, generation
+    frames = Signal(int, object, int)  # sida, (bildrutor, fördröjningar ms), generation – skickas före loaded
 
 
 class _Load(QRunnable):
@@ -76,12 +81,20 @@ class _Load(QRunnable):
         self.comic, self.i, self.sig, self.opts, self.gen = comic, i, sig, opts, gen
 
     def run(self):
+        anim = None
         try:
-            img = QImage.fromData(self.comic.read(self.i))
-            img = imaging.process(img, **self.opts)
+            data = self.comic.read(self.i)
+            anim = animation.decode(data)
+            if anim:  # färg/rotation på varje bildruta; första rutan är "sidan" (rutdetektering, miniatyrer)
+                anim = ([imaging.process(f, **self.opts) for f in anim[0]], anim[1])
+                img = anim[0][0]
+            else:
+                img = imaging.process(QImage.fromData(data), **self.opts)
         except Exception:
-            img = QImage()
+            img, anim = QImage(), None
         try:
+            if anim:
+                self.sig.frames.emit(self.i, anim, self.gen)
             self.sig.loaded.emit(self.i, img, self.gen)
         except RuntimeError:  # fönstret stängdes medan sidan laddades
             pass
@@ -110,6 +123,10 @@ class Viewer(QWidget):
         self.pidx = 0
         self.sig = _Sig()
         self.sig.loaded.connect(self._on_loaded)
+        self.sig.frames.connect(self._on_frames)
+        self.anims = {}       # sida -> {"f": rutor, "d": fördröjningar, "k": aktuell ruta, "loops": varv, "due": tid}
+        self.anim_key = None  # (uppslag, animerade sidor) som klockan senast startades för
+        self.frame_timer = QTimer(self, singleShot=True, timeout=self._next_frame)
         self.pool = QThreadPool.globalInstance()
         self.view = self.focus = QRectF()
         self.a0 = self.a1 = self.f0 = self.f1 = QRectF()
@@ -247,6 +264,7 @@ class Viewer(QWidget):
             self.state.save()
             self.comic.close()
         self.comic = None
+        self._anim_clear()
         self.images.clear()
         self.sizes.clear()
         self.loading.clear()
@@ -275,6 +293,7 @@ class Viewer(QWidget):
         if not self.comic:
             return
         self.gen += 1
+        self._anim_clear()
         self.images.clear()
         self.sizes.clear()
         self.loading.clear()
@@ -579,10 +598,125 @@ class Viewer(QWidget):
         for s in range(self.sp - KEEP_SPREADS, self.sp + KEEP_SPREADS + 1):
             if 0 <= s < len(self.spreads):
                 keep.update(self.spreads[s])
+        for k in [k for k in self.anims if k not in want]:  # alla bildrutor = mycket minne: bara närmaste uppslagen
+            del self.anims[k]
+            self.images.pop(k, None)
+            for s in [s for s in self.sp_cache if k in self.spreads[s]]:
+                del self.sp_cache[s]
         for k in [k for k in self.images if k not in keep]:
             del self.images[k]
         for s in [s for s in self.sp_cache if abs(s - self.sp) > KEEP_SPREADS]:
             del self.sp_cache[s]
+
+    def _on_frames(self, i, fd, gen):
+        if gen == self.gen and self.comic:
+            self.anims[i] = {"f": fd[0], "d": fd[1], "k": 0, "loops": 0, "due": None}
+
+    # ---------- animerade sidor ----------
+    def _anim_clear(self):
+        self.frame_timer.stop()
+        self.anims.clear()
+        self.anim_key = None
+
+    def anim_pages(self):
+        """Animerade sidor i uppslaget som visas nu."""
+        if not self.comic or not self.spreads or self.sp >= len(self.spreads):
+            return []
+        return [p for p in self.spreads[self.sp] if p in self.anims]
+
+    def _set_frame(self, p):
+        a = self.anims[p]
+        f = a["f"][a["k"]]
+        if self.images.get(p) is not f:
+            self.images[p] = f
+            self.sp_cache.pop(self.sp_of.get(p), None)  # enkelsida: ingen kopia; dubbelsida sätts ihop igen
+
+    def _anim_sync(self):
+        """Vid varje ritning: nytt uppslag -> animationen börjar om från första rutan; klockan går bara för det som syns."""
+        vis = self.anim_pages()
+        key = (self.sp, tuple(vis))
+        if key != self.anim_key:
+            self.anim_key = key
+            self.frame_timer.stop()
+            for p in vis:
+                self.anims[p].update(k=0, loops=0, due=None)
+                self._set_frame(p)
+        if vis and self.opt("anim_play") and not self.frame_timer.isActive():
+            self._anim_schedule(vis)
+
+    def _anim_speed(self):
+        return max(0.1, float(self.opt("anim_speed")))
+
+    def _anim_schedule(self, vis):
+        now, sp = time.monotonic(), self._anim_speed()
+        for p in vis:
+            a = self.anims[p]
+            if a["due"] is None or a["due"] < now - 1.0:  # start, eller klockan har stått (lång ritning/paus)
+                a["due"] = now + a["d"][a["k"]] / 1000 / sp
+        nxt = min(self.anims[p]["due"] for p in vis)
+        self.frame_timer.start(max(1, int((nxt - now) * 1000)))
+
+    def _next_frame(self):
+        vis = self.anim_pages()
+        if not vis or not self.opt("anim_play"):
+            return
+        now, sp = time.monotonic(), self._anim_speed()
+        for p in vis:
+            a = self.anims[p]
+            if a["due"] is None:
+                continue
+            n = 0
+            while a["due"] <= now and n < len(a["f"]):  # hoppar över rutor om datorn hann efter
+                a["k"] = (a["k"] + 1) % len(a["f"])
+                a["loops"] += a["k"] == 0
+                a["due"] += a["d"][a["k"]] / 1000 / sp
+                n += 1
+            if n:
+                self._set_frame(p)
+        self.update()
+        self._anim_schedule(vis)
+
+    def toggle_anim(self):
+        play = not self.opt("anim_play")
+        self.set_opt("anim_play", play)
+        self.frame_timer.stop()
+        for p in self.anim_pages():
+            self.anims[p]["due"] = None
+        self.flash("Animation: spelar" if play else "Animation: pausad")
+        self.update()
+        self.changed.emit()
+
+    def anim_step(self, d):
+        """En bildruta fram/bak (pausar)."""
+        vis = self.anim_pages()
+        if not vis:
+            self.flash("Ingen animation på sidan")
+            return
+        if self.opt("anim_play"):
+            self.set_opt("anim_play", False)
+            self.frame_timer.stop()
+        for p in vis:
+            a = self.anims[p]
+            a["k"], a["due"] = (a["k"] + d) % len(a["f"]), None
+            self._set_frame(p)
+        a = self.anims[vis[0]]
+        self.flash(f"Bildruta {a['k'] + 1}/{len(a['f'])} (pausad)")
+        self.update()
+        self.changed.emit()
+
+    def anim_speed_step(self, d):
+        cur = self._anim_speed()
+        i = min(range(len(ANIM_SPEEDS)), key=lambda j: abs(ANIM_SPEEDS[j] - cur))
+        self.set_anim_speed(ANIM_SPEEDS[max(0, min(len(ANIM_SPEEDS) - 1, i + d))])
+
+    def set_anim_speed(self, v):
+        self.set_opt("anim_speed", v)
+        for p in self.anim_pages():
+            self.anims[p]["due"] = None
+        self.frame_timer.stop()
+        self.flash(f"Animationshastighet {v:g}x")
+        self.update()
+        self.changed.emit()
 
     def _on_loaded(self, i, img, gen):
         if gen != self.gen or not self.comic:
@@ -676,6 +810,8 @@ class Viewer(QWidget):
         return QColor(12, 12, 12) if c == "auto" else QColor(c)
 
     def paintEvent(self, _):
+        if self.anims:
+            self._anim_sync()
         p = QPainter(self)
         bg = self.bg_color()
         p.fillRect(self.rect(), bg)
@@ -831,6 +967,12 @@ class Viewer(QWidget):
                 s += f"  ·  del {self.pidx + 1}/{len(t)}"
         elif self.guided() and not ready:
             s += "  ·  söker rutor…"
+        vis = self.anim_pages()
+        if vis:
+            a = self.anims[vis[0]]
+            s += f"  ·  {'▶' if self.opt('anim_play') else '❚❚'} {a['k'] + 1}/{len(a['f'])}"
+            if self._anim_speed() != 1.0:
+                s += f" {self._anim_speed():g}x"
         d, tot = self.progress
         if tot and d < tot:
             s += f"  ·  rutor {d}/{tot}"
@@ -876,6 +1018,11 @@ class Viewer(QWidget):
 
     def _slide(self):
         """Ett steg i bildspelet: nästa ruta (guidat läge) eller nästa sida; vid slutet ev. nästa fil."""
+        if self.comic and self.opt("slideshow_wait_anim") and self.opt("anim_play"):
+            if any(self.anims[p]["loops"] < 1 for p in self.anim_pages()):
+                self.slideshow.setInterval(250)  # animationen har inte gått ett varv än: kolla snart igen
+                return
+            self.slideshow.setInterval(int(self.opt("slideshow_ms")))
         if not self.comic:
             self.slideshow.stop()
         elif self.opt("slideshow_mode") == "pages" or not self.guided():

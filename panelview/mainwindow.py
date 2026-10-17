@@ -141,6 +141,15 @@ class MainWindow(QMainWindow):
         A("thumbs", "Miniatyröversikt…", ["T"], self.thumbnails)
         A("slideshow", "Automatiskt bildspel (ruta för ruta i guidat läge)", ["Ctrl+H", "S"], v.toggle_slideshow,
           check=lambda: v.slideshow.isActive())
+        # Animation (GIF/WebP/APNG)
+        A("anim_play", "Spela animationer", ["P", "Ctrl+Space"], v.toggle_anim, check=lambda: v.opt("anim_play"))
+        A("anim_next", "Nästa bildruta", ["."], lambda: v.anim_step(1))
+        A("anim_prev", "Föregående bildruta", [","], lambda: v.anim_step(-1))
+        A("anim_faster", "Snabbare", ["Ctrl+Up"], lambda: v.anim_speed_step(1))
+        A("anim_slower", "Långsammare", ["Ctrl+Down"], lambda: v.anim_speed_step(-1))
+        A("anim_normal", "Normal hastighet", ["Ctrl+Shift+0"], lambda: v.set_anim_speed(1.0))
+        A("slideshow_wait_anim", "Bildspelet väntar tills animationen gått ett varv", [],
+          lambda: self._toggle("slideshow_wait_anim"), check=lambda: v.opt("slideshow_wait_anim"))
         # Visa
         A("fullscreen", "Helskärm", ["F", "F11"], self.toggle_fullscreen, check=self.isFullScreen)
         A("menubar", "Visa menyrad", ["Ctrl+M"], self.toggle_menubar, check=lambda: self.state.setting("menubar", True))
@@ -212,6 +221,10 @@ class MainWindow(QMainWindow):
             m.addSeparator() if k is None else m.addAction(a[k])
         sm = m.addMenu("Bildspel")
         sm.aboutToShow.connect(lambda sm=sm: (sm.clear(), self.slideshow_menu(sm)))
+        am = m.addMenu("Animation (GIF/WebP/APNG)")
+        for k in ("anim_play", None, "anim_next", "anim_prev", None, "anim_faster", "anim_slower", "anim_normal",
+                  None, "slideshow_wait_anim"):
+            am.addSeparator() if k is None else am.addAction(a[k])
         m = mb.addMenu("&Visa")
         for k in ("fullscreen", "menubar", None, "guided", "overview", "dim", None, "rtl", "double", "cover_single",
                   "shadow"):
