@@ -26,7 +26,7 @@ SCROLL_OVERLAP = 0.1  # överlapp när en sida visas i flera steg (anpassa bredd
 KEEP_SPREADS = 3   # uppslag före/efter som hålls i minnet
 
 DEFAULTS = {
-    "guided": True, "overview": False, "dim": True,
+    "guided": True, "overview": False, "dim": True, "order_xy": False,  # order_xy: kolumn bredvid hög ruta först
     "fit": "screen", "zoom": 1.0,
     "shrink_w": True, "grow_w": True, "shrink_h": True, "grow_h": True,  # CDisplayEx: över/under bredd/höjd
     "double": False, "cover_single": True, "shadow": True,
@@ -150,6 +150,7 @@ class Viewer(QWidget):
         self.mag_on = self.mag_hold = False
         self.edit, self.edit_drag, self.edit_undo, self.edit_redo = False, None, [], []  # stegen = listor av (sida, rutor)
         self.edit_grab = None  # (sida, index, kanter, ursprungsruta, startpunkt) vid storleksändring/flytt
+        self.order_pick = None  # ordningsläget: {"p": sida, "seq": rutindex i klickad ordning}
         self.user = None
         self.frozen = None  # (bild, visningsfönster, fokus, bakgrund) som visas i stället – andra skärmens fördelning
         self.mouse = QPointF()
@@ -366,15 +367,16 @@ class Viewer(QWidget):
         name = self.comic.pages[i]
         sc = self.sidecar.get(Path(name).stem.lower())
         up = self.user.get(name) if self.user else None
-        if up is not None:  # egna rutor: bara läsordningen räknas fram
-            ps = G.order(up, self.rtl) if up else []
+        xy = self.opt("order_xy")
+        if up is not None:  # egna rutor: bara läsordningen räknas fram (eller är satt i ordningsläget)
+            ps = G.order(up, self.rtl, xy) if up else []
         elif sc is not None:
-            ps = G.finalize(sc, self.rtl)
+            ps = G.finalize(sc, self.rtl, xy)
         else:
             c = self.cache.get(name)
             if c is None:
                 return [], False
-            ps = G.finalize(G.merge(c["cv"], c["ml"]), self.rtl)
+            ps = G.finalize(G.merge(c["cv"], c["ml"]), self.rtl, xy)
         rot = self.opt("rotation")
         return [rotate_box(p, rot) for p in ps], True
 
@@ -466,6 +468,7 @@ class Viewer(QWidget):
         self.custom = None
         self.free = False
         self.at_end = False
+        self.order_pick = None
         self.sp = max(0, min(s, len(self.spreads) - 1))
         self.page = self.spreads[self.sp][0]
         self.detector and self.detector.set_focus(self.page)
@@ -1256,6 +1259,7 @@ class Viewer(QWidget):
             return
         self.edit = not self.edit
         self.edit_drag = None
+        self.order_pick = None
         if self.edit:
             self.cursor_timer.stop()
             self.setCursor(Qt.CursorShape.CrossCursor)  # muspekaren syns hela tiden i redigeringsläget
@@ -1313,6 +1317,100 @@ class Viewer(QWidget):
             self._training(p, self._edit_boxes(p), "godkänd")
         r, g = training_counts()
         self.flash(f"Sidan godkänd  ·  träningsdata: {r} rättade, {g} godkända")
+
+    # ---------- läsordning ----------
+    def toggle_order(self):
+        """Ordningsläge: klicka rutorna i den ordning de ska läsas (startar redigeringsläget vid behov).
+        Den sista rutan hamnar sist av sig själv. Högerklick ångrar senaste klicket, X/Esc avbryter."""
+        if not self.comic:
+            return
+        if self.order_pick is not None:
+            self.order_pick = None
+            self.flash("Ordningen avbruten")
+            self.update()
+            return
+        if not self.edit:
+            self.toggle_edit()
+            if not self.edit:
+                return
+        self.order_pick = {"p": None, "seq": []}
+        self.flash("Klicka rutorna i läsordning")
+        self.update()
+
+    def _order_hit(self, pt):
+        """(sida, rutindex) för minsta rutan under punkten (uppslagets pixlar), eller (None, None)."""
+        p, r = self._edit_page_at(pt)
+        if p is None:
+            return None, None
+        boxes = self._edit_boxes(p)
+        nx, ny = (pt.x() - r.x()) / r.width(), (pt.y() - r.y()) / r.height()
+        hit = [k for k, b in enumerate(boxes) if b["x"] <= nx <= b["x"] + b["w"] and b["y"] <= ny <= b["y"] + b["h"]]
+        return (p, min(hit, key=lambda k: G.area(boxes[k]))) if hit else (None, None)
+
+    def order_click(self, pt):
+        o = self.order_pick
+        p, k = self._order_hit(pt)
+        if p is None or (o["p"] is not None and p != o["p"]) or k in o["seq"]:
+            return
+        o["p"] = p
+        o["seq"].append(k)
+        boxes = self._edit_boxes(p)
+        rest = [i for i in range(len(boxes)) if i not in o["seq"]]
+        if len(rest) <= 1:  # sista rutan: klar
+            seq = o["seq"] + rest
+            self.order_pick = None
+            self._edit_store(p, [dict(boxes[i], n=j) for j, i in enumerate(seq)])
+            self.flash("Läsordningen sparad")
+        self.update()
+
+    def order_undo(self):
+        o = self.order_pick
+        if o["seq"]:
+            o["seq"].pop()
+        if not o["seq"]:
+            o["p"] = None
+        self.update()
+
+    def order_auto(self):
+        """Släpp egen läsordning på uppslaget: rutorna behålls, ordningen räknas fram automatiskt igen."""
+        if not self.comic or not self.spreads:
+            return
+        pages = [p for p in self.spreads[self.sp] if any("n" in b for b in (self.user.get(self.comic.pages[p]) or []))]
+        if not pages:
+            self.flash("Ingen egen läsordning på sidan")
+            return
+        self._edit_push(pages)
+        for p in pages:
+            self.user.set(self.comic.pages[p], [{k: v for k, v in b.items() if k != "n"}
+                                                for b in self.user.get(self.comic.pages[p])])
+        self._clamp_retarget(animate=False)
+        self.flash("Automatisk läsordning igen")
+        self.update()
+
+    def _paint_order(self, p):
+        o = self.order_pick
+        sp = self._spread(self.sp)
+        if not sp:
+            return
+        p.setFont(self.font(16, bold=True))
+        for pg in self.spreads[self.sp]:
+            r = sp[1][sp[2].index(pg)]
+            for k, b in enumerate(self._edit_boxes(pg)):
+                sr = self._to_screen(QRectF(r.x() + b["x"] * r.width(), r.y() + b["y"] * r.height(),
+                                            b["w"] * r.width(), b["h"] * r.height()))
+                done = o["p"] == pg and k in o["seq"]
+                c = QColor(60, 200, 90) if done else QColor(150, 150, 150)
+                p.setPen(QPen(c, 3))
+                p.setBrush(QColor(c.red(), c.green(), c.blue(), 40))
+                p.drawRect(sr)
+                tag = QRectF(sr.x() + 4, sr.y() + 4, 34, 30)
+                p.fillRect(tag, c)
+                p.setPen(QColor(255, 255, 255))
+                p.drawText(tag, Qt.AlignmentFlag.AlignCenter, str(o["seq"].index(k) + 1) if done else "?")
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        self._text(p, "LÄSORDNING  ·  klicka rutorna i den ordning de ska läsas (den sista hamnar sist av sig själv)  ·  "
+                      "högerklick = ångra senaste  ·  X/Esc = avbryt  ·  Shift+X = automatisk ordning igen",
+                   pos=(12, self.area_h() - 40))
 
     def _edit_page_at(self, pt):
         sp = self._spread(self.sp)
@@ -1463,6 +1561,9 @@ class Viewer(QWidget):
         self.update()
 
     def _paint_edit(self, p):
+        if self.order_pick is not None:
+            self._paint_order(p)
+            return
         if self.edit_grab and self.edit_drag:
             pg, k, _e, _o, _s = self.edit_grab
             q = self._edit_grab_move(self.edit_drag[1])
@@ -1533,6 +1634,12 @@ class Viewer(QWidget):
 
     def mousePressEvent(self, e):
         b = e.button()
+        if self.edit and self.order_pick is not None:
+            if b == Qt.MouseButton.LeftButton:
+                self.order_click(self._to_page(e.position()))
+            elif b == Qt.MouseButton.RightButton:
+                self.order_undo()
+            return
         if self.edit:
             if b == Qt.MouseButton.LeftButton:
                 pt = self._to_page(e.position())

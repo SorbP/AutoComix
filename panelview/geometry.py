@@ -10,6 +10,7 @@ FULL_SINGLE = 0.50  # ensam ruta så stor => visa hela sidan
 IOU_BAD = 0.30    # kvarvarande överlapp => opålitligt => helsida
 GAP_MAX = 0.30    # ML-ruta räknas som ny om max så mycket ligger i CV-rutor
 MIN_AREA = 0.03
+OVERLAP = 0.15    # läsordning: så stor andel av sin höjd/bredd får en ruta överlappa grannen och ändå räknas skild
 
 
 def area(p):
@@ -90,15 +91,43 @@ def rows(ps):
     return out
 
 
-def order(ps, rtl):
-    """Läsordning rad för rad: uppifrån och ned, inom raden vänster→höger (höger→vänster i japanskt läge)."""
+def _cut(ps, a, size):
+    """Delar rutorna där ingen ruta korsar en linje tvärs över axeln a ('y' = rader, 'x' = kolumner).
+    En ruta får sticka in OVERLAP i grannen (sneda/förskjutna rutor) utan att linjen räknas som bruten."""
+    spans = sorted(((p[a] + OVERLAP * p[size], p[a] + (1 - OVERLAP) * p[size], p) for p in ps), key=lambda t: t[0])
+    out, end = [], 0.0
+    for s, e, p in spans:
+        if out and s < end:
+            out[-1].append(p)
+            end = max(end, e)
+        else:
+            out.append([p])
+            end = e
+    return out
+
+
+def order(ps, rtl, xy=False):
+    """Läsordning. Egen ordning (n, från ordningsläget) går först. Standard: rad för rad, uppifrån och ned, inom
+    raden vänster→höger (höger→vänster i japanskt läge).
+    xy: XY-snitt – dela i rader där ett mellanrum går tvärs över, annars i kolumner, och upprepa inuti varje del.
+    Då läses en staplad kolumn bredvid en hög ruta (4 över 6, 5 hög till höger) som 4-6-5 i stället för 4-5-6."""
+    if ps and all("n" in p for p in ps):
+        return sorted(ps, key=lambda p: p["n"])
+    if xy and len(ps) > 1:
+        parts = _cut(ps, "y", "h")
+        if len(parts) == 1:
+            parts = _cut(ps, "x", "w")
+            if rtl:
+                parts.reverse()
+        if len(parts) > 1:
+            return [q for part in parts for q in order(part, rtl, xy)]
     out = []
     for r in rows(ps):
         out += sorted(r, key=lambda p: -(p["x"] + p["w"]) if rtl else p["x"])
     return out
 
 
-def finalize(ps, rtl=False):
+def finalize(ps, rtl=False, xy=False):
     """Rensade rutor i läsordning, eller [] om hela sidan ska visas."""
     ps = dedupe([clip(p) for p in ps if p["w"] > 0 and p["h"] > 0])
     if not ps or any(area(p) >= FULL_ANY for p in ps):
@@ -107,7 +136,7 @@ def finalize(ps, rtl=False):
         return []
     if any(iou(a, b) > IOU_BAD for i, a in enumerate(ps) for b in ps[i + 1:]):
         return []
-    return order(ps, rtl)
+    return order(ps, rtl, xy)
 
 
 def panel_at(gray, x, y):

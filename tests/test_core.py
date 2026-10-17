@@ -30,6 +30,20 @@ def test_order_strict_rows_stack_left_tall_right():
     assert G.finalize([bl, tall, tl]) == [tl, tall, bl]
 
 
+def test_order_xy_stack_left_tall_right():
+    # samma layout med XY-ordning: den staplade vänsterkolumnen först (4-6-5)
+    tl, bl, tall = P(0, 0, .45, .28), P(0, .32, .45, .28), P(.5, 0, .45, .6)
+    assert G.finalize([bl, tall, tl], xy=True) == [tl, bl, tall]
+    assert G.finalize([bl, tall, tl], rtl=True, xy=True) == [tall, tl, bl]
+    assert G.finalize(GRID, xy=True) == GRID  # vanligt rutnät: samma som rad för rad
+
+
+def test_order_manual_n_wins():
+    a, b, c = dict(P(0, 0, .45, .28), n=2), dict(P(0, .32, .45, .28), n=0), dict(P(.5, 0, .45, .6), n=1)
+    assert G.order([a, b, c], rtl=False) == [b, c, a]
+    assert G.order([a, b, c], rtl=True, xy=True) == [b, c, a]
+
+
 def test_order_z_grid_3x3():
     g = [P(c * .33, r * .33, .3, .3) for r in range(3) for c in range(3)]
     shuffled = [g[i] for i in (8, 3, 0, 5, 1, 7, 2, 6, 4)]

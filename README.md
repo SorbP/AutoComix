@@ -52,6 +52,10 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
   Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
+- `X` ändra läsordningen på sidan: klicka rutorna i den ordning de ska läsas (den sista hamnar sist av sig själv,
+  högerklick ångrar, Esc avbryter). Sparas per sida. `Shift+X` = automatisk ordning igen.
+  Bild → "Läsordning: kolumn bredvid hög ruta först" läser t.ex. två staplade rutor bredvid en hög som 4-6-5
+  i stället för rad för rad (4-5-6) i alla serier.
 - `Alt+Upp`/`Alt+Ned` bildspel: längre/kortare tid per steg
 - `F9` andra skärmen: av → spegling → automatisk fördelning, `Shift+F9` andra skärmens anpassning
 - `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
@@ -90,6 +94,7 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 - `python -m pytest -q tests` – enhetstester.
 - `python build_tools/anim_smoke.py` – animerade sidor: avkodning GIF/WebP/APNG, uppspelning, paus, steg, hastighet, bildspel.
 - `python build_tools/ui_smoke.py` – gränssnittets storlek, avståndsläge, förstoringsglasets former.
+- `python build_tools/order_smoke.py` – läsordning: ordningsläget (X), Shift+X, XY-ordning.
 - `python build_tools/second_smoke.py` – andra skärmen: spegling, fördelning liggande/stående, F9.
 - `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.

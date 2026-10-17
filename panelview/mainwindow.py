@@ -214,6 +214,11 @@ class MainWindow(QMainWindow):
         A("edit_undo", "Ångra rutändring", ["Ctrl+Z"], v.edit_undo_last)
         A("edit_redo", "Gör om rutändring", ["Ctrl+Alt+Z"], v.edit_redo_last)
         A("edit_reset", "Automatiska rutor igen (uppslaget)", ["Ctrl+R"], v.edit_reset_page)
+        A("order_pick", "Ändra läsordning (klicka rutorna i ordning)", ["X"], v.toggle_order,
+          check=lambda: v.order_pick is not None)
+        A("order_auto", "Automatisk läsordning igen (uppslaget)", ["Shift+X"], v.order_auto)
+        A("order_xy", "Läsordning: kolumn bredvid hög ruta först (4-6-5 i stället för 4-5-6)", [],
+          lambda: self._toggle("order_xy"), check=lambda: v.opt("order_xy"))
         A("bm_add", "Lägg till bokmärke…", ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", "Hantera bokmärken…", ["Ctrl+Shift+B"], self.manage_bookmarks)
         # Inställningar / hjälp
@@ -287,7 +292,8 @@ class MainWindow(QMainWindow):
             g.addAction(a["second_fit_" + k])
         dm.addAction(a["second_fit_cycle"])
         m = mb.addMenu("&Bild")
-        for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
+        for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None,
+                  "order_pick", "order_auto", "order_xy", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
         self.bm_menu = mb.addMenu("B&okmärken")
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
@@ -603,7 +609,9 @@ class MainWindow(QMainWindow):
         self.toggle_fullscreen()
 
     def escape(self):
-        if self.v.thumbbar.isVisible():
+        if self.v.order_pick is not None:
+            self.v.toggle_order()
+        elif self.v.thumbbar.isVisible():
             self.v.toggle_thumbbar()
         elif self.v.show_help:
             self.toggle_help()
