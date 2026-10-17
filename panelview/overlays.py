@@ -44,6 +44,19 @@ class _Thumb(QRunnable):
             pass
 
 
+def _scale_thumbbar(self, u):
+    t = int(THUMB * u)
+    self.scale = u
+    self.setIconSize(QSize(t, t))
+    self.setGridSize(QSize(t + int(14 * u), t + int(30 * u)))
+    self.setFixedHeight(t + int(52 * u))
+
+
+def _scale_slider(self, u):
+    self.setFixedHeight(int(44 * u))
+    self.label.setMinimumWidth(int(90 * u))
+
+
 class ThumbBar(QListWidget):
     """Horisontell miniatyrlist längst ner. Pilar flyttar markeringen, Enter/klick hoppar till sidan."""
     picked = Signal(int, bool)  # sida, stäng listan
@@ -59,6 +72,7 @@ class ThumbBar(QListWidget):
         self.setGridSize(QSize(THUMB + 14, THUMB + 30))
         self.setHorizontalScrollMode(QListWidget.ScrollMode.ScrollPerPixel)
         self.setFixedHeight(THUMB + 52)
+        self.scale = 1.0
         self.setStyleSheet("QListWidget{background:rgba(10,10,10,225);color:#ddd;border:none;}"
                            "QListWidget::item:selected{background:rgba(90,160,255,120);}")
         self.comic = None
@@ -164,3 +178,6 @@ class PageSlider(QWidget):
         self.slider.setInvertedAppearance(rtl)
         self.slider.blockSignals(False)
         self.label.setText(f"{page + 1} / {n}")
+
+ThumbBar.set_scale = _scale_thumbbar
+PageSlider.set_scale = _scale_slider

@@ -11,6 +11,11 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - Läsriktning, sida och ruta sparas löpande per serie. Ctrl+L öppnar senaste serien där du var;
   Arkiv → Visningshistorik (Ctrl+Shift+H) visar de 20 senaste med position. Vid hård krasch skrivs `crash.log` i datamappen.
 - Helskärm: menyraden visas när musen förs till överkanten.
+- Storlek: Ctrl+Shift+Upp/Ned (eller Inställningar → Visning) ändrar text, listor, menyer och dialoger.
+  Avståndsläge (Shift+F): sidräknaren blir stor (3× som standard) och döljs efter 1 s utan tangent/mus,
+  resten av gränssnittet blir 1,5× större. Allt ställbart under Storlek och avstånd.
+- Förstoringsglas (M): Visa → Förstoringsglas väljer form – rektangel, kvadrat, rund (platta) eller lins (förvrängd).
+  Medan glaset är på: Shift+hjul = storlek, Ctrl+hjul = förstoring.
 - Animerade sidor (GIF, animerad WebP, APNG) spelas direkt, även inzoomat på en ruta. P = paus/spela,
   `.`/`,` = bildruta fram/bak, Ctrl+Upp/Ned = hastighet. Räknaren visar `▶ 3/40`. Bildspelet väntar tills
   animationen gått ett varv (Navigera → Animation). Max 256 MB per animation; större skalas ner.
@@ -69,5 +74,6 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 ## Tester
 - `python -m pytest -q tests` – enhetstester.
 - `python build_tools/anim_smoke.py` – animerade sidor: avkodning GIF/WebP/APNG, uppspelning, paus, steg, hastighet, bildspel.
+- `python build_tools/ui_smoke.py` – gränssnittets storlek, avståndsläge, förstoringsglasets former.
 - `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.

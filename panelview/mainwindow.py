@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QByteArray, QEvent, QRectF, QRunnable, QSize, Qt, QThreadPool, QTimer, QObject, Signal
 from PySide6.QtGui import (QAction, QActionGroup, QColor, QGuiApplication, QIcon, QImage, QKeySequence,
-                           QPainter, QPixmap)
+                           QFont, QPainter, QPixmap)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QColorDialog, QComboBox, QDialog,
                                QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView,
                                QInputDialog, QKeySequenceEdit, QLabel, QLineEdit, QListWidget, QListWidgetItem,
@@ -19,7 +19,7 @@ from . import __version__
 from .comic import ARCHIVE_EXT, IMAGE_EXT
 from .store import State
 from .overlays import Progress
-from .viewer import DEFAULTS, Viewer
+from .viewer import DEFAULTS, MAG_SHAPES, Viewer
 
 FILTER = "Serier och bilder ({});;Alla filer (*)".format(
     " ".join(f"*{e}" for e in sorted(ARCHIVE_EXT | set(IMAGE_EXT))))
@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
         self.persist = QTimer(self, singleShot=True, interval=1500, timeout=self._persist)
         self.v.changed.connect(self.persist.start)
         self._build_top_bar()
+        self.apply_ui_scale()
         if path:
             self.v.open(path)
 
@@ -174,9 +175,20 @@ class MainWindow(QMainWindow):
         A("rot_left", "Rotera vänster", ["["], lambda: self.rotate(-90))
         A("rot_right", "Rotera höger", ["]"], lambda: self.rotate(90))
         A("magnifier", "Förstoringsglas (eller håll mittenknappen)", ["M"], v.toggle_magnifier, check=lambda: v.mag_on)
+        for k, label in MAG_SHAPES:
+            A("mag_" + k, label, [], lambda k=k: v.set_mag_shape(k), check=lambda k=k: v.opt("mag_shape") == k)
+        A("mag_bigger", "Större glas (eller Shift+hjul)", [], lambda: v.mag_resize(1.15))
+        A("mag_smaller", "Mindre glas", [], lambda: v.mag_resize(1 / 1.15))
+        A("mag_more", "Mer förstoring (eller Ctrl+hjul)", [], lambda: v.mag_zoom_step(1.25))
+        A("mag_less", "Mindre förstoring", [], lambda: v.mag_zoom_step(0.8))
         A("info", "Informationsrad alltid", ["I"], self.toggle_info, check=lambda: v.hud_always)
         A("pagenum", "Sidnummer", [], lambda: self._toggle("show_pagenum"), check=lambda: v.opt("show_pagenum"))
         A("progress", "Förloppslist (klickbar)", [], lambda: self._toggle("show_progress"), check=lambda: v.opt("show_progress"))
+        A("distance", "Avståndsläge (stor sidräknare, döljs vid inaktivitet)", ["Shift+F"],
+          lambda: (v.toggle_distance(), self.apply_ui_scale()),
+          check=lambda: v.opt("distance_mode"))
+        A("ui_bigger", "Större gränssnitt", ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
+        A("ui_smaller", "Mindre gränssnitt", ["Ctrl+Shift+Down"], lambda: self.ui_scale_step(-1))
         # Bild
         A("auto_color", "Automatisk färgkorrigering", ["A"], lambda: self._toggle("auto_color"), check=lambda: v.opt("auto_color"))
         A("bg_color", "Bakgrundsfärg…", [], self.pick_bg)
@@ -241,8 +253,13 @@ class MainWindow(QMainWindow):
         fm.addSeparator()
         for k in ("shrink_w", "grow_w", "shrink_h", "grow_h"):
             fm.addAction(a[k])
-        for k in (None, "zoom_in", "zoom_out", "zoom_reset", None, "rot_left", "rot_right", None, "magnifier", "info",
-                  "pagenum", "progress"):
+        for k in (None, "zoom_in", "zoom_out", "zoom_reset", None, "rot_left", "rot_right", None):
+            m.addSeparator() if k is None else m.addAction(a[k])
+        gm = m.addMenu("Förstoringsglas")
+        for k in ("magnifier", None, *("mag_" + x for x, _ in MAG_SHAPES), None,
+                  "mag_bigger", "mag_smaller", "mag_more", "mag_less"):
+            gm.addSeparator() if k is None else gm.addAction(a[k])
+        for k in ("info", "pagenum", "progress", None, "distance", "ui_bigger", "ui_smaller"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu("&Bild")
         for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
@@ -441,6 +458,32 @@ class MainWindow(QMainWindow):
         self.v.flash("Historiken rensad")
 
     # ---------- visa ----------
+    UI_SCALES = (0.75, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
+
+    def ui_scale_step(self, d):
+        cur = self.v.base_ui_scale()
+        i = min(range(len(self.UI_SCALES)), key=lambda j: abs(self.UI_SCALES[j] - cur))
+        val = self.UI_SCALES[max(0, min(len(self.UI_SCALES) - 1, i + d))]
+        self.v.set_opt("ui_scale", val)
+        self.apply_ui_scale()
+        self.v.flash(f"Gränssnittets storlek {int(val * 100)} %"
+                     + (f" (× {self.v.opt('distance_ui_scale'):g} i avståndsläget)" if self.v.opt("distance_mode") else ""))
+
+    def apply_ui_scale(self):
+        """Menyer, dialoger och listor följer ui_scale (visningens text skalas i Viewer)."""
+        app = QApplication.instance()
+        if not hasattr(self, "_base_font"):
+            self._base_font = QFont(app.font())
+        f = QFont(self._base_font)
+        f.setPointSizeF(max(6.0, self._base_font.pointSizeF() * self.v.ui_scale()))
+        app.setFont(f)
+        for w in (self.menuBar(), getattr(self, "top_bar", None)):
+            if w is not None:
+                w.setFont(f)
+        self.v.thumbbar.set_scale(self.v.ui_scale())
+        self.v.slider.set_scale(self.v.ui_scale())
+        self.v.update()
+
     def _toggle(self, k):
         self.v.set_opt(k, not self.v.opt(k))
         self.v.flash(f"{self._label_for(k)}: {'på' if self.v.opt(k) else 'av'}")
@@ -880,6 +923,13 @@ class OptionsDialog(QDialog):
         f.addRow(chk("show_pagenum", "Visa sidnummer"))
         f.addRow(chk("show_progress", "Visa förloppslist"))
         f.addRow(chk("hide_cursor", "Dölj muspekaren i helskärm"))
+        f.addRow(QLabel("<b>Storlek och avstånd</b>"))
+        f.addRow("Gränssnittets storlek (text, listor, menyer)", num("ui_scale", 0.5, 4.0, 0.05, 2, " ×"))
+        f.addRow(chk("distance_mode", "Avståndsläge (Shift+F)"))
+        f.addRow("  Sidräknarens storlek i avståndsläget", num("distance_scale", 1.0, 10.0, 0.25, 2, " ×"))
+        f.addRow("  Övrigt gränssnitt i avståndsläget", num("distance_ui_scale", 1.0, 4.0, 0.1, 2, " ×"))
+        f.addRow(chk("counter_autohide", "Dölj sidräknaren vid inaktivitet även utanför avståndsläget"))
+        f.addRow("  Döljs efter", num("counter_hide_ms", 300, 10000, 100, 0, " ms"))
         tabs.addTab(t, "Visning")
         # Läsning
         t = QWidget()
@@ -908,8 +958,11 @@ class OptionsDialog(QDialog):
         f.addRow("Gamma", num("gamma", 0.3, 3.0, 0.05, 2))
         f.addRow("Lyster (vibrance)", num("vibrance", 0.0, 1.5, 0.05, 2))
         f.addRow("Rotation", combo("rotation", [(0, "0°"), (90, "90°"), (180, "180°"), (270, "270°")]))
-        f.addRow("Förstoringsglas, storlek", num("mag_size", 120, 900, 20, 0, " px"))
-        f.addRow("Förstoringsglas, förstoring", num("mag_zoom", 1.25, 6.0, 0.25, 2, " ×"))
+        f.addRow("Förstoringsglas, form", combo("mag_shape", list(MAG_SHAPES)))
+        f.addRow("Förstoringsglas, bredd", num("mag_size", 80, 1600, 20, 0, " px"))
+        f.addRow("Rektangel, höjd/bredd", num("mag_aspect", 0.2, 2.0, 0.05, 2))
+        f.addRow("Förstoringsglas, förstoring", num("mag_zoom", 1.25, 8.0, 0.25, 2, " ×"))
+        f.addRow("Lins, förvrängning", num("mag_warp", 0.0, 1.5, 0.1, 2))
         tabs.addTab(t, "Bild")
         # Historik
         t = QWidget()
@@ -982,6 +1035,8 @@ class OptionsDialog(QDialog):
             self.v.state.set_setting(k, val)
         if "anim_ms" in changed:
             self.v.anim.setDuration(int(changed["anim_ms"]))
+        if changed.keys() & {"ui_scale", "distance_mode", "distance_ui_scale"}:
+            self.win.apply_ui_scale()
         if self.v.comic:
             if "sort" in changed:
                 self.v.open(self.v.comic.path)

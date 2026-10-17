@@ -35,9 +35,15 @@ DEFAULTS = {
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
+    "mag_shape": "rect", "mag_aspect": 0.6, "mag_warp": 0.5,  # rect/square/circle platta, lens = rund med förvrängning
     "anim_play": True, "anim_speed": 1.0, "slideshow_wait_anim": True,  # animerade sidor (GIF/WebP/APNG)
+    "ui_scale": 1.0,                                   # storlek på text/listor i visningen (och menyer/dialoger)
+    "distance_mode": False, "distance_scale": 3.0,     # avståndsläge: stor sidräknare som döljs vid inaktivitet
+    "distance_ui_scale": 1.5,                          # ...och hela gränssnittet så här mycket större
+    "counter_autohide": False, "counter_hide_ms": 1000,
 }
 ANIM_SPEEDS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
+MAG_SHAPES = (("rect", "Rektangel"), ("square", "Kvadrat"), ("circle", "Rund"), ("lens", "Lins (rund, förvrängd)"))
 
 
 def lerp_rect(a, b, t):
@@ -151,6 +157,11 @@ class Viewer(QWidget):
         self.hud_timer = QTimer(self, singleShot=True, interval=2200, timeout=self._clear_msg)
         self.slideshow = QTimer(self, timeout=self._slide)
         self.cursor_timer = QTimer(self, singleShot=True, interval=2000, timeout=self._hide_cursor)
+        self.last_activity = time.monotonic()
+        self.counter_timer = QTimer(self, singleShot=True, timeout=self.update)  # döljer räknaren efter inaktivitet
+        app = QApplication.instance()
+        if app:  # tangenter går via menyåtgärder och når inte widgeten: lyssna på hela programmet
+            app.installEventFilter(self)
         self.thumbbar = ThumbBar(self)
         self.thumbbar.picked.connect(self._thumb_picked)
         self.slider = PageSlider(self)
@@ -845,62 +856,180 @@ class Viewer(QWidget):
         p.fillRect(QRectF(0, f.top(), f.left(), f.height()), c)
         p.fillRect(QRectF(f.right(), f.top(), W - f.right(), f.height()), c)
 
+    def mag_box(self):
+        """Glasets rektangel på skärmen (centrerad på musen) enligt form och storlek."""
+        w = float(self.opt("mag_size")) * self.ui_scale()
+        h = w * float(self.opt("mag_aspect")) if self.opt("mag_shape") == "rect" else w
+        return QRectF(self.mouse.x() - w / 2, self.mouse.y() - h / 2, w, h)
+
     def _magnifier(self, p, img):
-        r = self.opt("mag_size") / 2
-        z = self.opt("mag_zoom")
-        s = self._scale() * z
+        shape = self.opt("mag_shape")
+        dst = self.mag_box()
+        s = self._scale() * float(self.opt("mag_zoom"))
         c = self._to_page(self.mouse)
-        src = QRectF(c.x() - r / s, c.y() - r / s, 2 * r / s, 2 * r / s)
-        dst = QRectF(self.mouse.x() - r, self.mouse.y() - r, 2 * r, 2 * r)
-        path = QPainterPath()
-        path.addEllipse(dst)
-        p.save()
-        p.setClipPath(path)
-        p.fillRect(dst, self.bg_color())
-        p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
+        src = QRectF(c.x() - dst.width() / 2 / s, c.y() - dst.height() / 2 / s, dst.width() / s, dst.height() / s)
+        # rendera det förstorade utsnittet till en egen bild (samma för alla former)
+        out = QImage(max(1, int(dst.width())), max(1, int(dst.height())), QImage.Format.Format_RGB32)
+        out.fill(self.bg_color())
+        q = QPainter(out)
+        q.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
         full = QRectF(0, 0, img.width(), img.height())
         vis = src.intersected(full)
         if not vis.isEmpty():
-            k = dst.width() / src.width()
-            p.drawImage(QRectF(dst.x() + (vis.x() - src.x()) * k, dst.y() + (vis.y() - src.y()) * k,
-                               vis.width() * k, vis.height() * k), img, vis)
+            k = out.width() / src.width()
+            q.drawImage(QRectF((vis.x() - src.x()) * k, (vis.y() - src.y()) * k, vis.width() * k, vis.height() * k),
+                        img, vis)
+        q.end()
+        if shape == "lens":
+            out = self._lens_warp(out)
+        path = QPainterPath()
+        if shape in ("circle", "lens"):
+            path.addEllipse(dst)
+        else:
+            path.addRect(dst)
+        p.save()
+        p.setClipPath(path)
+        p.drawImage(dst.topLeft(), out)
         p.restore()
-        p.setPen(QPen(QColor(220, 220, 220), 2))
-        p.drawEllipse(dst)
+        p.setPen(QPen(QColor(220, 220, 220), max(1, round(2 * self.ui_scale()))))
+        p.setBrush(Qt.BrushStyle.NoBrush)
+        p.drawPath(path)
+
+    _warp_maps = {}
+
+    def _lens_warp(self, img):
+        """Fisheye: mitten förstoras mer, kanten trycks ihop (som ett riktigt förstoringsglas)."""
+        import cv2
+        w, h = img.width(), img.height()
+        g = min(0.8, max(0.0, float(self.opt("mag_warp"))) * 0.6)  # mitten förstoras 1/(1-g) extra
+        key = (w, h, round(g, 3))
+        maps = Viewer._warp_maps.get(key)
+        if maps is None:
+            yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+            cx, cy, rad = (w - 1) / 2, (h - 1) / 2, min(w, h) / 2
+            dx, dy = (xx - cx) / rad, (yy - cy) / rad
+            r = np.sqrt(dx * dx + dy * dy)
+            # källradie = r·(1 − g(1 − r²)): mjuk utbuktning, ingen spets i mitten, kanten möter omgivningen
+            f = np.where(r < 1, 1 - g * (1 - r * r), 1.0).astype(np.float32)
+            maps = (cx + dx * f * rad, cy + dy * f * rad)
+            if len(Viewer._warp_maps) > 8:
+                Viewer._warp_maps.clear()
+            Viewer._warp_maps[key] = maps
+        a = imaging.to_rgb(img)
+        return imaging.from_rgb(cv2.remap(a, maps[0], maps[1], cv2.INTER_LINEAR, borderMode=cv2.BORDER_REPLICATE))
+
+    def set_mag_shape(self, shape):
+        self.set_opt("mag_shape", shape)
+        if not (self.mag_on or self.mag_hold):
+            self.mag_on = True
+        self.flash("Förstoringsglas: " + dict(MAG_SHAPES)[shape])
+        self.update()
+        self.changed.emit()
+
+    def mag_resize(self, f):
+        val = max(80, min(1600, round(float(self.opt("mag_size")) * f)))
+        self.set_opt("mag_size", val)
+        self.flash(f"Förstoringsglas {val} px")
+        self.update()
+
+    def mag_zoom_step(self, f):
+        val = max(1.25, min(8.0, round(float(self.opt("mag_zoom")) * f * 4) / 4))
+        self.set_opt("mag_zoom", val)
+        self.flash(f"Förstoring {val:g}×")
+        self.update()
+
+    # ---------- storlek / avståndsläge ----------
+    ACTIVITY = None
+
+    def eventFilter(self, obj, e):
+        if Viewer.ACTIVITY is None:
+            from PySide6.QtCore import QEvent
+            T = QEvent.Type
+            Viewer.ACTIVITY = {T.KeyPress, T.MouseMove, T.MouseButtonPress, T.Wheel}
+        if e.type() in Viewer.ACTIVITY:
+            self.poke()
+        return False
+
+    def poke(self):
+        """Aktivitet (tangent, mus, hjul): visa räknaren igen och starta nedräkningen till att den döljs."""
+        was = self.counter_visible()
+        self.last_activity = time.monotonic()
+        if self.counter_autohides():
+            self.counter_timer.start(int(self.opt("counter_hide_ms")) + 20)
+            if not was:
+                self.update()
+
+    def base_ui_scale(self):
+        return max(0.5, min(4.0, float(self.opt("ui_scale"))))
+
+    def ui_scale(self):
+        """Gränssnittets storlek just nu: inställningen, och i avståndsläget ytterligare förstorad."""
+        k = float(self.opt("distance_ui_scale")) if self.opt("distance_mode") else 1.0
+        return max(0.5, min(8.0, self.base_ui_scale() * k))
+
+    def font(self, pt, bold=False):
+        return QFont("Segoe UI", max(6, round(pt * self.ui_scale())),
+                     QFont.Weight.Bold if bold else QFont.Weight.Normal)
+
+    def counter_autohides(self):
+        return bool(self.opt("distance_mode") or self.opt("counter_autohide"))
+
+    def counter_visible(self):
+        if not self.counter_autohides():
+            return True
+        return (time.monotonic() - self.last_activity) * 1000 < int(self.opt("counter_hide_ms"))
+
+    def toggle_distance(self):
+        on = not self.opt("distance_mode")
+        self.set_opt("distance_mode", on)
+        self.poke()
+        self.flash("Avståndsläge: stor sidräknare, döljs efter "
+                   f"{int(self.opt('counter_hide_ms')) / 1000:g} s utan aktivitet" if on else "Avståndsläge av")
+        self.changed.emit()
 
     def _overlays(self, p):
         if not self.comic:
             return
         n = len(self.comic.pages)
         W, H = self.width(), self.height()
+        u = self.ui_scale()
+        bar = max(2, round(4 * u))
         if self.opt("show_progress") and n > 1:
             frac = (self.spreads[self.sp][-1] + 1) / n if self.spreads else 0
-            p.fillRect(QRectF(0, H - 4, W, 4), QColor(255, 255, 255, 40))
+            p.fillRect(QRectF(0, H - bar, W, bar), QColor(255, 255, 255, 40))
             x0 = W * (1 - frac) if self.rtl else 0
-            p.fillRect(QRectF(x0, H - 4, W * frac, 4), QColor(90, 160, 255, 200))
+            p.fillRect(QRectF(x0, H - bar, W * frac, bar), QColor(90, 160, 255, 200))
         d, tot = self.progress
         if tot and d < tot:  # rutdetektering för hela serien i bakgrunden: tunn orange list ovanför läsförloppet
-            p.fillRect(QRectF(0, H - 6, W * d / tot, 2), QColor(255, 170, 60, 220))
-        if self.opt("show_pagenum") and not self.edit:
+            p.fillRect(QRectF(0, H - bar - max(2, bar // 2), W * d / tot, max(2, bar // 2)), QColor(255, 170, 60, 220))
+        if self.opt("show_pagenum") and not self.edit and self.counter_visible():
             s = self.counter_text()
-            p.setFont(QFont("Segoe UI", 10))
+            k = self.base_ui_scale() * float(self.opt("distance_scale")) if self.opt("distance_mode") else u
+            p.setFont(QFont("Segoe UI", max(6, round(10 * k)),
+                            QFont.Weight.DemiBold if self.opt("distance_mode") else QFont.Weight.Normal))
             fm = p.fontMetrics()
-            w = fm.horizontalAdvance(s) + 16
-            p.fillRect(QRectF(W - w - 8, H - fm.height() - 16, w, fm.height() + 6), QColor(0, 0, 0, 150))
-            p.setPen(QColor(220, 220, 220))
-            p.drawText(QPointF(W - w, H - 13 - fm.descent()), s)
+            pad, edge = round(8 * k), round(8 * k) + bar
+            w, h = fm.horizontalAdvance(s) + 2 * pad, fm.height() + round(6 * k)
+            r = QRectF(W - w - edge, H - h - edge, w, h)
+            p.setPen(Qt.PenStyle.NoPen)
+            p.setBrush(QColor(0, 0, 0, 170 if self.opt("distance_mode") else 150))
+            p.drawRoundedRect(r, h * 0.2, h * 0.2)
+            p.setBrush(Qt.BrushStyle.NoBrush)
+            p.setPen(QColor(235, 235, 235))
+            p.drawText(r, Qt.AlignmentFlag.AlignCenter, s)
 
     def _text(self, p, s, center=False, pos=None):
-        p.setFont(QFont("Segoe UI", 12))
+        p.setFont(self.font(12))
         fm = p.fontMetrics()
+        u = self.ui_scale()
         lines = s.split("\n")
-        w = max(fm.horizontalAdvance(l) for l in lines) + 24
-        h = fm.height() * len(lines) + 16
+        w = max(fm.horizontalAdvance(l) for l in lines) + 24 * u
+        h = fm.height() * len(lines) + 16 * u
         x, y = ((self.width() - w) / 2, (self.height() - h) / 2) if center else (pos or (12, 12))
         p.fillRect(QRectF(x, y, w, h), QColor(0, 0, 0, 200))
         p.setPen(QColor(235, 235, 235))
         for k, l in enumerate(lines):
-            p.drawText(QPointF(x + 12, y + 8 + fm.ascent() + k * fm.height()), l)
+            p.drawText(QPointF(x + 12 * u, y + 8 * u + fm.ascent() + k * fm.height()), l)
 
     def status_parts(self):
         if not self.comic:
@@ -940,11 +1069,12 @@ class Viewer(QWidget):
             self._toast(p, self.msg)
 
     def _toast(self, p, s):
-        p.setFont(QFont("Segoe UI", 11))
+        k = self.ui_scale()
+        p.setFont(QFont("Segoe UI", max(6, round(11 * k))))
         fm = p.fontMetrics()
-        w = fm.horizontalAdvance(s) + 28
-        h = fm.height() + 12
-        r = QRectF((self.width() - w) / 2, 14, w, h)
+        w = fm.horizontalAdvance(s) + 28 * k
+        h = fm.height() + 12 * k
+        r = QRectF((self.width() - w) / 2, 14 * k, w, h)
         p.setPen(Qt.PenStyle.NoPen)
         p.setBrush(QColor(0, 0, 0, 170))
         p.drawRoundedRect(r, h / 2, h / 2)
@@ -1323,7 +1453,7 @@ class Viewer(QWidget):
             p.drawRect(self._to_screen(QRectF(r.x() + q["x"] * r.width(), r.y() + q["y"] * r.height(),
                                               q["w"] * r.width(), q["h"] * r.height())))
         ps, _ = self.panels()
-        p.setFont(QFont("Segoe UI", 16, QFont.Weight.Bold))
+        p.setFont(self.font(16, bold=True))
         for k, r in enumerate(ps):
             sr = self._to_screen(r)
             p.setPen(QPen(QColor(255, 60, 60), 3))
@@ -1365,8 +1495,16 @@ class Viewer(QWidget):
     def wheelEvent(self, e):
         if self.edit:
             return
-        dy = e.angleDelta().y()
-        if e.modifiers() & Qt.KeyboardModifier.ControlModifier:
+        dy = e.angleDelta().y() or e.angleDelta().x()
+        mods = e.modifiers()
+        if self.mag_on or self.mag_hold:  # glaset på: Shift+hjul = storlek, Ctrl+hjul = förstoring
+            if mods & Qt.KeyboardModifier.ShiftModifier:
+                self.mag_resize(1.1 if dy > 0 else 1 / 1.1)
+                return
+            if mods & Qt.KeyboardModifier.ControlModifier:
+                self.mag_zoom_step(1.25 if dy > 0 else 0.8)
+                return
+        if mods & Qt.KeyboardModifier.ControlModifier:
             self.zoom(1.15 if dy > 0 else 1 / 1.15, e.position())
             return
         self.wheel_acc += dy

@@ -15,7 +15,8 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 | Anpassa till skärm, Över/Under bredd, Över/Under höjd | Anpassa till skärm med fyra val: krymp bredare, förstora smalare, krymp högre, förstora lägre | 1 |
 | Anpassa liggande/stående | Anpassa till bredd / höjd (sidan visas i flera steg med överlapp) | 2, 3 |
 | Zoom 100/125/150/200/400 %, zooma in/ut, behåll zoom | Originalstorlek och zoomnivåer i menyn, fri zoom med Ctrl+hjul, panorera genom att dra | 4, +, −, 0 |
-| Förstorare (storlek inställbar) | Förstoringsglas: växla med M eller håll mittenknappen; storlek och förstoring inställbara | M |
+| Förstorare (storlek inställbar) | Förstoringsglas: växla med M eller håll mittenknappen; former rektangel, kvadrat, rund (platta) och lins (rund med förvrängning); Shift+hjul = storlek, Ctrl+hjul = förstoring | M |
+| – | Gränssnittets storlek (text, listor, menyer, dialoger) 50–400 %; avståndsläge: stor sidräknare som döljs efter 1 s utan aktivitet, resten av gränssnittet 1,5× | Ctrl+Shift+Upp/Ned, Shift+F |
 | Miniatyrer / reglage (Ctrl+T, Ctrl+I) | Miniatyrlist längst ner, navigerbar med pilar och Enter; sidreglage; dessutom miniatyröversikt i rutnät | Ctrl+T, Ctrl+I, T |
 | Automatiskt bildspel med intervall (Ctrl+H) | Bildspel som går ruta för ruta i guidat läge, annars del/sida | Ctrl+H, S |
 | Animerade GIF (enkel uppspelning) | Animerad GIF, WebP och APNG: spelas med rätt fördröjningar (0–10 ms = 100 ms som i webbläsare), startar om när sidan visas, paus, bildruta för bildruta, hastighet 0,25–4x, bildspelet väntar ett varv; rutzoom och rutdetektering fungerar på animerade sidor | P, . ,, Ctrl+Upp/Ned |
