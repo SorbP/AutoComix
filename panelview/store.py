@@ -165,14 +165,24 @@ class State:
         self.d["dirs"].setdefault(comic_key(Path(path).parent), {})["rtl"] = rtl
         self.save()
 
-    def set_page(self, path, page):
-        self.d["comics"].setdefault(comic_key(path), {})["page"] = page
+    def set_page(self, path, page, panel=None):
+        c = self.d["comics"].setdefault(comic_key(path), {})
+        c["page"] = page
+        if panel is None:
+            c.pop("panel", None)  # ny sida utan känd ruta: börja från första
+        else:
+            c["panel"] = panel
         self.d["last"] = str(path)
 
     # ---------- historik ----------
-    def add_history(self, path, limit=20):
+    def add_history(self, path, pages=None, limit=20):
+        import time
         h = [x for x in self.d.setdefault("history", []) if comic_key(x) != comic_key(path)]
         self.d["history"] = [str(path)] + h[:limit - 1]
+        c = self.d["comics"].setdefault(comic_key(path), {})
+        c["opened"] = int(time.time())
+        if pages:
+            c["pages"] = pages
         self.save()
 
     def history(self):

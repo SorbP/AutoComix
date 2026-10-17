@@ -8,7 +8,24 @@ from PySide6.QtWidgets import QApplication
 from .mainwindow import MainWindow
 
 
+def _crash_log():
+    """Skriv Python-stack vid hård krasch (segfault, minnesbrist i Qt) till <datamapp>/crash.log."""
+    import faulthandler
+    from . import store
+    try:
+        store.BASE.mkdir(parents=True, exist_ok=True)
+        log = store.BASE / "crash.log"
+        if log.exists() and log.stat().st_size > 1_000_000:
+            log.unlink()
+        f = open(log, "a", encoding="utf-8")
+        faulthandler.enable(f)
+        return f
+    except OSError:
+        return None
+
+
 def main():
+    _log = _crash_log()  # noqa: F841 – filen måste hållas öppen
     app = QApplication(sys.argv)
     app.setApplicationName("PanelView")
     app.setOrganizationName("PanelView")

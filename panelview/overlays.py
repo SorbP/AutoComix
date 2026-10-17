@@ -1,9 +1,26 @@
 """Överlägg på visningsytan som i CDisplayEx: miniatyrlist (Ctrl+T) och sidreglage (Ctrl+I)."""
 from PySide6.QtCore import QObject, QRunnable, QSize, Qt, QThreadPool, Signal
 from PySide6.QtGui import QColor, QIcon, QImage, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QSlider, QWidget
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QProgressBar, QSlider, QWidget
 
 THUMB = 150
+
+
+class Progress(QProgressBar):
+    """Liten förloppslist med text ("Miniatyrer 34/120") som döljer sig själv när arbetet är klart."""
+
+    def __init__(self, text, parent=None):
+        super().__init__(parent)
+        self.setFormat(f"{text} %v/%m")
+        self.setFixedHeight(16)
+        self.setStyleSheet("QProgressBar{background:#222;color:#ddd;border:none;font-size:11px;text-align:center;}"
+                           "QProgressBar::chunk{background:rgba(90,160,255,170);}")
+        self.hide()
+
+    def tick(self, done, total):
+        self.setMaximum(max(total, 1))
+        self.setValue(done)
+        self.setVisible(0 < total and done < total)
 
 
 class _Sig(QObject):
@@ -46,6 +63,8 @@ class ThumbBar(QListWidget):
                            "QListWidget::item:selected{background:rgba(90,160,255,120);}")
         self.comic = None
         self.pix = {}
+        self.done_n = 0
+        self.bar = Progress("Miniatyrer", self)
         self.sig = _Sig(self)
         self.sig.done.connect(self._done)
         self.pool = QThreadPool(self)
@@ -60,6 +79,8 @@ class ThumbBar(QListWidget):
             self.pool.clear()
             self.comic, self.pix = comic, {}
             self.clear()
+            self.done_n = 0
+            self.bar.hide()
             if comic is None:
                 return
             ph = QPixmap(THUMB, THUMB)
@@ -76,6 +97,7 @@ class ThumbBar(QListWidget):
             return
         if not self._queued:  # ladda miniatyrer närmast aktuell sida först
             self._queued = True
+            self.bar.tick(0, len(self.comic.pages))
             for i in sorted(range(len(self.comic.pages)), key=lambda i: abs(i - page)):
                 self.pool.start(_Thumb(self.comic, i, self.sig))
         self.show()
@@ -91,8 +113,16 @@ class ThumbBar(QListWidget):
         self.select(max(0, min(self.count() - 1, self.currentRow() + d)))
 
     def _done(self, comic, i, img):
-        if comic is self.comic and not img.isNull() and i < self.count():
+        if comic is not self.comic:
+            return
+        self.done_n += 1
+        self.bar.tick(self.done_n, self.count())
+        if not img.isNull() and i < self.count():
             self.item(i).setIcon(QIcon(QPixmap.fromImage(img)))
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        self.bar.setGeometry(0, 0, self.width(), 16)  # överst i listan, ovanför miniatyrerna
 
     def shutdown(self):
         self.pool.clear()

@@ -140,3 +140,26 @@ def test_order_random_row_layouts():
             y += h + .02
         got = G.order(rnd.sample(want, len(want)), rtl=False)
         assert got == want
+
+
+def test_set_page_keeps_panel(tmp_path, monkeypatch):
+    from panelview import store
+    monkeypatch.setattr(store, "STATE", tmp_path / "state.json")
+    st = store.State()
+    st.set_page(tmp_path / "bok", 7, 3)
+    assert st.comic(tmp_path / "bok") == {"page": 7, "panel": 3}
+    st.set_page(tmp_path / "bok", 8)  # ny sida utan ruta: rutan från förra sidan gäller inte
+    assert st.comic(tmp_path / "bok") == {"page": 8}
+    assert st.d["last"] == str(tmp_path / "bok")
+
+
+def test_history_keeps_20_newest_with_position(tmp_path, monkeypatch):
+    from panelview import store
+    monkeypatch.setattr(store, "STATE", tmp_path / "state.json")
+    st = store.State()
+    for i in range(25):
+        st.add_history(tmp_path / f"b{i}.cbz", pages=30)
+    st.add_history(tmp_path / "b3.cbz", pages=30)  # öppnad igen: flyttas först, ingen dubblett
+    h = st.d["history"]
+    assert len(h) == 20 and h[0] == str(tmp_path / "b3.cbz") and h.count(str(tmp_path / "b3.cbz")) == 1
+    assert st.comic(tmp_path / "b3.cbz")["pages"] == 30 and st.comic(tmp_path / "b3.cbz")["opened"] > 0

@@ -3,18 +3,22 @@
 Funktionsuppsättningen följer CDisplayEx (se FEATURES.md) plus PanelViews guidade rutzoom.
 """
 import sys
+import time
 from pathlib import Path
 
-from PySide6.QtCore import QByteArray, QRectF, QRunnable, QSize, Qt, QThreadPool, QObject, Signal
-from PySide6.QtGui import QAction, QActionGroup, QColor, QGuiApplication, QIcon, QImage, QKeySequence, QPainter, QPixmap
-from PySide6.QtWidgets import (QCheckBox, QColorDialog, QComboBox, QDialog, QDialogButtonBox, QDoubleSpinBox,
-                               QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QKeySequenceEdit,
-                               QLabel, QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
-                               QPushButton, QSpinBox, QTableWidget, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtCore import QByteArray, QEvent, QRectF, QRunnable, QSize, Qt, QThreadPool, QTimer, QObject, Signal
+from PySide6.QtGui import (QAction, QActionGroup, QColor, QGuiApplication, QIcon, QImage, QKeySequence,
+                           QPainter, QPixmap)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QColorDialog, QComboBox, QDialog,
+                               QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView,
+                               QInputDialog, QKeySequenceEdit, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+                               QMainWindow, QMenu, QMenuBar, QMessageBox, QPushButton, QSpinBox, QTableWidget,
+                               QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from . import __version__
 from .comic import ARCHIVE_EXT, IMAGE_EXT
 from .store import State
+from .overlays import Progress
 from .viewer import DEFAULTS, Viewer
 
 FILTER = "Serier och bilder ({});;Alla filer (*)".format(
@@ -42,10 +46,54 @@ class MainWindow(QMainWindow):
         self.v.finished.connect(self._finished)
         self._restore_geometry()
         self._sync()
+        self._left_full = 0.0
+        self.persist = QTimer(self, singleShot=True, interval=1500, timeout=self._persist)
+        self.v.changed.connect(self.persist.start)
+        self._build_top_bar()
         if path:
             self.v.open(path)
-        elif self.v.opt("resume_on_start"):
-            self.resume_last()
+
+    def _persist(self):
+        """Spara sida/ruta löpande (inte bara vid stängning) så att Ctrl+L/historiken hittar rätt även efter en krasch."""
+        v = self.v
+        if v.comic:
+            self.state.set_page(v.comic.path, v.page, v.pidx)
+        self.state.save()
+
+    # ---------- menyrad i helskärm ----------
+    def _build_top_bar(self):
+        """Helskärm: menyraden visas när musen förs till överkanten. Den ligger ovanpå bilden (flyttar den inte) och
+        delar menyer med den vanliga menyraden."""
+        self.top_bar = QMenuBar(self)
+        for m in self.menus:
+            self.top_bar.addMenu(m)
+            m.aboutToHide.connect(lambda: self.top_hide.start())
+        self.top_bar.hide()
+        self.top_hide = QTimer(self, singleShot=True, interval=500, timeout=self._maybe_hide_top)
+        self.v.installEventFilter(self)
+
+    def eventFilter(self, obj, e):
+        if obj is self.v and e.type() == QEvent.Type.MouseMove and self.isFullScreen():
+            y = self._mouse_y = e.position().y()
+            if y <= 2 and not e.buttons():
+                self._show_top()
+            elif self.top_bar.isVisible() and y > self.top_bar.height() + 40:
+                self.top_hide.start()
+        return False
+
+    def _show_top(self):
+        self.top_hide.stop()
+        if not self.top_bar.isVisible():
+            self.top_bar.setGeometry(0, 0, self.width(), self.top_bar.sizeHint().height())
+            self.top_bar.raise_()
+            self.top_bar.show()
+
+    def _maybe_hide_top(self):
+        near = getattr(self, "_mouse_y", 0) <= self.top_bar.height() + 40  # senaste läget över bilden
+        if QApplication.activePopupWidget() or (near and self.isFullScreen()):
+            self.top_hide.start()  # meny öppen eller musen kvar vid kanten: vänta
+        else:
+            self.top_bar.hide()
 
     # ---------- åtgärder ----------
     def _act(self, key, label, keys=(), fn=None, check=None, menu=None):
@@ -74,6 +122,7 @@ class MainWindow(QMainWindow):
         A("copy_page", "Kopiera sida", ["Ctrl+C"], self.copy_page)
         A("print", "Skriv ut…", ["Ctrl+P"], self.print_page)
         A("close_file", "Stäng fil", ["Ctrl+W"], v.close_comic)
+        A("history", "Visningshistorik…", ["Ctrl+Shift+H"], self.show_history)
         A("clear_history", "Rensa historik", [], self.clear_history)
         A("exit", "Avsluta", ["Ctrl+Q"], self.close)
         # Navigera
@@ -127,7 +176,9 @@ class MainWindow(QMainWindow):
         A("edit", "Redigera rutor (rita/ta bort, sparas)", ["E"], v.toggle_edit, check=lambda: v.edit)
         A("approve", "Sidan är rätt (spara som träningsdata)", ["K", "Ctrl+Return"], v.approve_page)
         A("edit_del", "Ta bort rutan under musen", ["Delete"], v.edit_delete_under_mouse)
+        A("edit_clear", "Ta bort alla rutor (uppslaget)", ["Ctrl+Delete"], v.edit_clear_page)
         A("edit_undo", "Ångra rutändring", ["Ctrl+Z"], v.edit_undo_last)
+        A("edit_redo", "Gör om rutändring", ["Ctrl+Alt+Z"], v.edit_redo_last)
         A("edit_reset", "Automatiska rutor igen (uppslaget)", ["Ctrl+R"], v.edit_reset_page)
         A("bm_add", "Lägg till bokmärke…", ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", "Hantera bokmärken…", ["Ctrl+Shift+B"], self.manage_bookmarks)
@@ -152,7 +203,7 @@ class MainWindow(QMainWindow):
             m.addAction(a[k])
         self.recent_menu = m.addMenu("Öppna senaste")
         self.recent_menu.aboutToShow.connect(self._fill_recent)
-        for k in ("resume", None, "next_file", "prev_file", None, "save_page", "copy_page", "print", None,
+        for k in ("resume", "history", None, "next_file", "prev_file", None, "save_page", "copy_page", "print", None,
                   "close_file", "clear_history", None, "exit"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu("&Navigera")
@@ -181,7 +232,7 @@ class MainWindow(QMainWindow):
                   "pagenum", "progress"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu("&Bild")
-        for k in ("edit", "approve", "edit_del", "edit_undo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
+        for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
         self.bm_menu = mb.addMenu("B&okmärken")
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
@@ -195,11 +246,18 @@ class MainWindow(QMainWindow):
 
     def _fill_recent(self):
         self.recent_menu.clear()
+        self._recent_into(self.recent_menu)
+
+    def _recent_into(self, m):
         hist = self.state.history()
         if not hist:
-            self.recent_menu.addAction("(tom)").setEnabled(False)
-        for h in hist[:15]:
-            self.recent_menu.addAction(Path(h).name, lambda h=h: self.v.open(h)).setToolTip(h)
+            m.addAction("(tom)").setEnabled(False)
+        for h in hist:
+            c = self.state.comic(h)
+            pos = f"   s. {c.get('page', 0) + 1}" + (f"/{c['pages']}" if c.get("pages") else "")
+            m.addAction(Path(h).name + pos, lambda h=h: self.v.open(h)).setToolTip(h)
+        m.addSeparator()
+        m.addAction(self.acts["history"])
 
     def _fill_bookmarks(self):
         m = self.bm_menu
@@ -230,13 +288,7 @@ class MainWindow(QMainWindow):
         m = QMenu(self)
         for k in ("browse", "open_file", "open_folder"):
             m.addAction(a[k])
-        rec = m.addMenu("Öppna senaste")
-        self.recent_menu_ctx = rec
-        hist = self.state.history()
-        for h in hist[:15]:
-            rec.addAction(Path(h).name, lambda h=h: self.v.open(h)).setToolTip(h)
-        if not hist:
-            rec.addAction("(tom)").setEnabled(False)
+        self._recent_into(m.addMenu("Öppna senaste"))
         m.addSeparator()
         for k in ("next_file", "prev_file", "goto", "thumbbar", "slider"):
             m.addAction(a[k])
@@ -316,7 +368,11 @@ class MainWindow(QMainWindow):
         from .browser import BrowserDialog
         d = BrowserDialog(self, self.state, self._start_dir())
         if d.exec() == QDialog.DialogCode.Accepted and d.choice:
-            self.v.open(d.choice)
+            if self.v.open(d.choice) and d.page is not None:
+                self.v.goto_page(d.page, animate=False)  # vald i sidrutnätet
+
+    def show_history(self):
+        HistoryDialog(self).exec()
 
     def resume_last(self):
         last = self.state.d.get("last")
@@ -391,6 +447,7 @@ class MainWindow(QMainWindow):
         self.v.flash(f"Rotation {self.v.opt('rotation')}°")
 
     def toggle_fullscreen(self):
+        self.top_bar.hide()
         if self.isFullScreen():
             self.showNormal()
             self.menuBar().setVisible(self.state.setting("menubar", True))
@@ -433,8 +490,16 @@ class MainWindow(QMainWindow):
             self.v.toggle_slideshow()
         elif self.isFullScreen():
             self.toggle_fullscreen()
-        else:
+            self._left_full = time.monotonic()
+        elif time.monotonic() - self._left_full < 1.0:
+            pass  # andra Esc direkt efter att helskärmen lämnats: aldrig avsluta av misstag
+        elif self.v.opt("esc_quit") == "direct":
             self.close()
+        elif self.v.opt("esc_quit") == "confirm":
+            if QMessageBox.question(self, "Avsluta", "Avsluta PanelView?") == QMessageBox.StandardButton.Yes:
+                self.close()
+        else:
+            self.v.flash("Esc avslutar inte – Ctrl+Q avslutar (ändras i Inställningar → Läsning)")
 
     def pick_bg(self):
         cur = self.v.opt("bg")
@@ -539,6 +604,7 @@ class MainWindow(QMainWindow):
     def closeEvent(self, e):
         if not self.isFullScreen():
             self.state.set_setting("geometry", bytes(self.saveGeometry().toBase64()).decode())
+        self.persist.stop()
         self.v.close_comic()
         if self.v.opt("clear_history_on_exit"):
             self.state.clear_history()
@@ -581,8 +647,11 @@ class ThumbDialog(QDialog):
         self.list.setIconSize(QSize(self.SIZE, self.SIZE))
         self.list.setGridSize(QSize(self.SIZE + 16, self.SIZE + 34))
         self.list.itemActivated.connect(self._pick)
+        self.bar = Progress("Miniatyrer")
+        self.done_n = 0
         lay = QVBoxLayout(self)
         lay.addWidget(self.list)
+        lay.addWidget(self.bar)
         self.sig = _ThumbSig(self)
         self.sig.done.connect(self._done)
         self.pool = QThreadPool(self)
@@ -595,12 +664,15 @@ class ThumbDialog(QDialog):
             it = QListWidgetItem(QIcon(ph), str(i + 1))
             it.setData(Qt.ItemDataRole.UserRole, i)
             self.list.addItem(it)
+        self.bar.tick(0, n)
         for i in order:
             self.pool.start(_Thumb(viewer.comic, i, self.sig, self.SIZE))
         self.list.setCurrentRow(viewer.page)
         self.list.scrollToItem(self.list.currentItem())
 
     def _done(self, i, img):
+        self.done_n += 1
+        self.bar.tick(self.done_n, self.list.count())
         if not img.isNull():
             self.list.item(i).setIcon(QIcon(QPixmap.fromImage(img)))
 
@@ -612,6 +684,84 @@ class ThumbDialog(QDialog):
         self.pool.clear()
         self.pool.waitForDone(2000)
         super().done(r)
+
+
+class HistoryDialog(QDialog):
+    """De senast öppnade serierna (upp till 20) med var man var, när de öppnades och var de ligger."""
+
+    def __init__(self, win):
+        super().__init__(win)
+        self.win = win
+        self.setWindowTitle("Visningshistorik")
+        self.resize(900, 520)
+        self.t = QTableWidget(0, 4)
+        self.t.setHorizontalHeaderLabels(["Serie", "Position", "Senast öppnad", "Mapp"])
+        self.t.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.t.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.t.verticalHeader().hide()
+        h = self.t.horizontalHeader()
+        h.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        for c in (1, 2):
+            h.setSectionResizeMode(c, QHeaderView.ResizeMode.ResizeToContents)
+        self.t.setColumnWidth(3, 280)
+        self.t.cellDoubleClicked.connect(lambda *_: self._go())
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel("Dubbelklicka eller tryck Enter för att fortsätta där du var."))
+        lay.addWidget(self.t)
+        row = QHBoxLayout()
+        for label, fn in (("Öppna", self._go), ("Ta bort", self._rm), ("Rensa allt", self._clear)):
+            b = QPushButton(label)
+            b.clicked.connect(fn)
+            row.addWidget(b)
+        row.addStretch()
+        close = QPushButton("Stäng")
+        close.clicked.connect(self.reject)
+        row.addWidget(close)
+        lay.addLayout(row)
+        self._fill()
+
+    def _fill(self):
+        st = self.win.state
+        self.paths = st.history()
+        self.t.setRowCount(len(self.paths))
+        for r, p in enumerate(self.paths):
+            c = st.comic(p)
+            pos = f"sida {c.get('page', 0) + 1}" + (f" av {c['pages']}" if c.get("pages") else "")
+            if c.get("panel"):
+                pos += f", ruta {c['panel'] + 1}"
+            when = time.strftime("%Y-%m-%d %H:%M", time.localtime(c["opened"])) if c.get("opened") else ""
+            for col, txt in enumerate((Path(p).name, pos, when, str(Path(p).parent))):
+                it = QTableWidgetItem(txt)
+                it.setToolTip(p)
+                self.t.setItem(r, col, it)
+        if self.paths:
+            self.t.selectRow(0)
+
+    def keyPressEvent(self, e):
+        if e.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
+            self._go()
+        elif e.key() == Qt.Key.Key_Delete:
+            self._rm()
+        else:
+            super().keyPressEvent(e)
+
+    def _go(self):
+        r = self.t.currentRow()
+        if 0 <= r < len(self.paths):
+            self.accept()
+            self.win.v.open(self.paths[r])
+
+    def _rm(self):
+        r = self.t.currentRow()
+        if 0 <= r < len(self.paths):
+            st = self.win.state
+            st.d["history"] = [h for h in st.d.get("history", []) if h != self.paths[r]]
+            st.save()
+            self._fill()
+
+    def _clear(self):
+        self.win.clear_history()
+        self._fill()
 
 
 class BookmarkDialog(QDialog):
@@ -733,7 +883,10 @@ class OptionsDialog(QDialog):
                                                             ("pages", "Sida för sida")]))
         f.addRow(chk("slideshow_next_file", "Bildspelet fortsätter med nästa fil i mappen"))
         f.addRow("Sortering", combo("sort", [("natural", "Naturlig (2 före 10)"), ("alpha", "Alfabetisk")]))
-        f.addRow(chk("resume_on_start", "Återuppta senaste serien vid start"))
+        f.addRow(QLabel("<b>Avslutning</b>"))
+        f.addRow("Esc när helskärm och fönster redan är stängda",
+                 combo("esc_quit", [("never", "Avsluta inte (Ctrl+Q avslutar)"), ("confirm", "Fråga först"),
+                                    ("direct", "Avsluta direkt")]))
         tabs.addTab(t, "Läsning")
         # Bild
         t = QWidget()

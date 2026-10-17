@@ -38,8 +38,29 @@ def pick_images(names, sort_key=natural_key):
     return sorted(best.values(), key=sort_key)
 
 
-def _extract(archive, dest, password=None):
-    if Path(archive).suffix.lower() in (".7z", ".cb7"):
+def _run(cmd, progress=None):
+    """Kör ett uppackningsverktyg; 7-Zips procent (-bsp1) skickas till progress. Ger (returkod, utskriftens slut)."""
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
+                         creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    tail = b""
+    while True:
+        chunk = p.stdout.read1(512)
+        if not chunk:
+            break
+        tail = (tail + chunk)[-2000:]
+        if progress:
+            pct = re.findall(rb"(\d+)%", chunk)
+            if pct:
+                progress(int(pct[-1]))
+    code = p.wait()
+    if progress and code == 0:
+        progress(100)  # små arkiv hinner inte skriva ut något över 0 %
+    return code, tail.decode(errors="replace")
+
+
+def _extract(archive, dest, password=None, progress=None):
+    seven = next((e for e in ("7z", r"C:\Program Files\7-Zip\7z.exe") if shutil.which(e) or Path(e).exists()), None)
+    if Path(archive).suffix.lower() in (".7z", ".cb7") and not seven:  # 7-Zip är snabbare och visar förlopp
         try:
             import py7zr
             with py7zr.SevenZipFile(archive, password=password) as z:
@@ -57,7 +78,7 @@ def _extract(archive, dest, password=None):
     tools = []
     for exe in ("7z", r"C:\Program Files\7-Zip\7z.exe"):
         if shutil.which(exe) or Path(exe).exists():
-            tools.append([exe, "x", "-y", f"-p{password or ''}", f"-o{dest}", str(archive)])
+            tools.append([exe, "x", "-y", "-bsp1", f"-p{password or ''}", f"-o{dest}", str(archive)])
             break
     if shutil.which("unrar"):
         tools.append(["unrar", "x", "-o+", str(archive), str(dest) + "\\"])
@@ -65,18 +86,17 @@ def _extract(archive, dest, password=None):
         tools.append(["tar", "-xf", str(archive), "-C", str(dest)])
     err = "inget verktyg (7z/unrar/tar) hittades"
     for cmd in tools:
-        r = subprocess.run(cmd, capture_output=True, text=True,
-                           creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-        if r.returncode == 0:
+        code, out = _run(cmd, progress)
+        if code == 0:
             return
-        err = (r.stderr or r.stdout).strip()[-300:]
+        err = out.strip()[-300:]
         if "password" in err.lower() or "encrypted" in err.lower():
             raise PasswordNeeded()
     raise RuntimeError(f"Kunde inte packa upp {Path(archive).name}: {err}")
 
 
 class Comic:
-    def __init__(self, path, password=None, sort="natural"):
+    def __init__(self, path, password=None, sort="natural", progress=None):
         self.path = Path(path)
         self._zip = self._tmp = self._pdf = None
         self._lock = threading.Lock()
@@ -107,7 +127,7 @@ class Comic:
         elif ext in ARCHIVE_EXT:
             self._tmp = tempfile.TemporaryDirectory(prefix="panelview-")
             try:
-                _extract(self.path, self._tmp.name, password)
+                _extract(self.path, self._tmp.name, password, progress)
             except Exception:
                 self._tmp.cleanup()
                 raise

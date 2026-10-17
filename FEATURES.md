@@ -7,7 +7,7 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 |---|---|---|
 | Ladda filer / Öppna mapp | Filbläddrare med mappträd, fillista och förhandsvisning (även zip/pdf/rar/7z), Öppna fil, Öppna mapp, dra och släpp | L, Ctrl+O, Ctrl+Shift+O |
 | Öppna senaste, Rensa historik, historik på/av, rensa vid stängning | Arkiv → Öppna senaste, Inställningar → Historik | |
-| Återuppta senaste fil (till senaste sida) | Återuppta senaste, valfritt vid start; sidan sparas per serie | Ctrl+L |
+| Återuppta senaste fil (till senaste sida) | Återuppta senaste (sida + ruta), visningshistorik 20 st | Ctrl+L |
 | Ladda nästa/föregående fil, automatiskt nästa fil vid slut, extra musknappar | Nästa/Föregående fil, auto-nästa (tryck igen vid slutet), musknapp bakåt/framåt | N, B |
 | Nästa/föregående sida, första/sista sidan, framåt/bakåt två sidor | Pilar/mellanslag (ruta, del eller sida), PgUp/PgDn (uppslag), Home/End | |
 | Japanskt läge (höger→vänster, hela gränssnittet speglat) | Japanskt läge: pilar, klickzoner, uppslag, förloppslist och miniatyrlist speglas; sparas per serie | R |

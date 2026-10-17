@@ -8,7 +8,17 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
   `panelview/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
   (Windows `%LOCALAPPDATA%\PanelView`, Linux `~/.local/share/PanelView`).
 - En `.cbxy` bredvid serien (t.ex. rättad i `cbxy-editor`) går före cachen.
-- Läsriktning och senaste sida sparas per serie.
+- Läsriktning, sida och ruta sparas löpande per serie. Ctrl+L öppnar senaste serien där du var;
+  Arkiv → Visningshistorik (Ctrl+Shift+H) visar de 20 senaste med position. Vid hård krasch skrivs `crash.log` i datamappen.
+- Helskärm: menyraden visas när musen förs till överkanten.
+- Varje ruta visas hel på en skärm, så stor som möjligt (längsta sidan i förhållande till skärmen styr).
+- Bläddraren (L): "Visa alla sidor" (P) visar arkivets sidor som miniatyrer direkt ur zip/cbz/pdf/mapp (rar/7z via
+  7-Zip) utan uppackning på disk; dubbelklick öppnar på den sidan.
+- Förloppslister: miniatyrer (bläddraren, T, Ctrl+T), rutdetektering för hela serien (tunn orange list + "rutor 12/40"
+  i räknaren) och uppackning av rar/7z (dialog med procent).
+- Redigeringsläget: Ctrl+Delete tar bort alla rutor på uppslaget, Ctrl+Z ångrar och Ctrl+Alt+Z gör om (flera steg).
+- Esc lämnar helskärm/stänger paneler men avslutar inte programmet (Ctrl+Q avslutar). Går att ändra till
+  "fråga först" eller "avsluta direkt"; ett Esc inom 1 s efter att helskärmen lämnats avslutar aldrig.
 
 ## Starta
 - **Windows:** `dist\windows\PanelView.exe`. `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
@@ -55,4 +65,5 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 
 ## Tester
 - `python -m pytest -q tests` – enhetstester.
+- `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.
