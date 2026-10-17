@@ -138,8 +138,76 @@ def main():
     r = sc.page_view(full, QRectF(0, 0, 400, 300), 16 / 9)  # stående skärm -> liggande: sida 1600 bred
     res.append(check("anpassning bredd: fyller bredden", abs(r.width() - 1600) < 1, str(r)))
     w.cycle_second_fit()
-    res.append(check("Shift+F9: bredd -> höjd", w.state.setting("second_fit") == "height"))
+    res.append(check("Shift+F9: bredd -> höjd", w.state.setting("fit_right") == "height"))
+    w.set_fit("original", side=sc.side())
+    r = sc.page_view(full, mv, ar)
+    res.append(check("anpassning original: 100 % i andra skärmens pixlar", abs(r.width() - sc.width()) < 1, str(r)))
     w.set_second_fit("screen")
+
+    # 4b. vänster (1-4) / höger (numpadden), separata värden för spegling och av/fördelning
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+    from panelview import mainwindow as MW
+    w.activateWindow()
+    wait(100)
+
+    def key(k, kp=False):
+        QTest.keyClick(w, k, Qt.KeyboardModifier.KeypadModifier if kp else Qt.KeyboardModifier.NoModifier)
+        wait(50)
+    st = w.state.setting
+    res.append(check("migrering: vänster/höger-nycklar finns", all(st(k) for k in
+                     ("fit_left", "fit_right", "fit_left_mirror", "fit_right_mirror"))))
+    res.append(check("genvägar: 3 och Num+3 skiljs åt",
+                     w.acts["fit_height"].shortcuts()[0] != w.acts["fit_right_height"].shortcuts()[0]
+                     and w.acts["fit_right_height"].shortcuts()[0].toString() == "Num+3"))
+    w.set_second("auto")
+    w.set_fit("screen", side="left")
+    w.set_fit("screen", side="right")
+    key(Qt.Key.Key_3)
+    res.append(check("tangent 3: vänster = höjd, höger orörd", st("fit_left") == "height" and st("fit_right") == "screen",
+                     f"{st('fit_left')}/{st('fit_right')}"))
+    res.append(check("tangent 3: huvudfönstret (vänster) använder höjd", v.fit() == "height"))
+    res.append(check("flash-text", v.msg == "Vänster skärm: anpassa till höjd", v.msg))
+    key(Qt.Key.Key_2, kp=True)
+    res.append(check("Num+2: höger = bredd, vänster orörd", st("fit_right") == "width" and st("fit_left") == "height",
+                     f"{st('fit_left')}/{st('fit_right')}"))
+    res.append(check("Num+2: andra skärmen (höger) använder bredd", sc.fit() == "width" and v.fit() == "height"))
+    res.append(check("meny: bockar vänster höjd / höger bredd / andra skärmen bredd",
+                     w.acts["fit_height"].isChecked() and w.acts["fit_right_width"].isChecked()
+                     and w.acts["second_fit_width"].isChecked() and not w.acts["fit_screen"].isChecked()))
+    w.set_second("mirror")
+    res.append(check("spegling: egna värden (inte fördelningens)", st("fit_left_mirror") != "height" or
+                     st("fit_right_mirror") != "width"))
+    key(Qt.Key.Key_1)
+    key(Qt.Key.Key_4, kp=True)
+    res.append(check("spegling: 1 / Num+4 sätter spegelns nycklar",
+                     st("fit_left_mirror") == "screen" and st("fit_right_mirror") == "original"
+                     and st("fit_left") == "height" and st("fit_right") == "width"))
+    res.append(check("spegling: huvudfönstret skärm, andra skärmen original", v.fit() == "screen" and sc.fit() == "original"))
+    w.set_second("auto")
+    res.append(check("tillbaka till fördelning: dess värden gäller igen", v.fit() == "height" and sc.fit() == "width"))
+    # huvudfönstret på höger skärm: siffrorna 1-4 styr då andra skärmen
+    old_s, old_m = S.side_of, MW.side_of
+    S.side_of = MW.side_of = lambda wd: "right"
+    res.append(check("huvudfönstret höger: andra skärmen = vänster", sc.side() == "left" and sc.fit() == "height"
+                     and v.fit() == "width"))
+    key(Qt.Key.Key_2)
+    res.append(check("huvudfönstret höger: 2 ändrar andra skärmen", sc.fit() == "width" and v.fit() == "width"))
+    S.side_of, MW.side_of = old_s, old_m
+
+    class Fake:
+        def __init__(self, d):
+            self.d = d
+
+        def setting(self, k, default=None):
+            return self.d.get(k, default)
+
+        def set_setting(self, k, val):
+            self.d[k] = val
+    fk = Fake({"fit": "width", "second_fit": "main"})
+    S.migrate_fits(fk)
+    res.append(check("migrering från fit/second_fit", fk.d["fit_left"] == fk.d["fit_left_mirror"] == "width"
+                     and fk.d["fit_right"] == fk.d["fit_right_mirror"] == "main"))
 
     # 5. av
     w.set_second("off")

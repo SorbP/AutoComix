@@ -121,6 +121,7 @@ class Viewer(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMinimumSize(320, 240)
         self.state = state or State()
+        self.fit_key = lambda: "fit"  # andra skärmen byter till vänster/höger-nyckeln (second.fit_key)
         self.comic = self.detector = self.cache = None
         self.sidecar, self.rtl = {}, False
         self.images, self.sizes, self.loading = {}, {}, set()
@@ -175,6 +176,18 @@ class Viewer(QWidget):
     # ---------- inställningar ----------
     def opt(self, k):
         return self.state.setting(k, DEFAULTS.get(k))
+
+    def fit(self):
+        """Anpassning för skärmen huvudfönstret visas på ('main' gäller bara andra skärmen)."""
+        f = self.opt(self.fit_key()) or "screen"
+        return "screen" if f == "main" else f
+
+    def refit(self):
+        """Anpassningen kan ha bytts (läge/skärm): räkna om målen."""
+        if self.comic:
+            self.free, self.custom = False, None
+            self._clamp_retarget(animate=False)
+        self.update()
 
     def set_opt(self, k, v):
         self.state.set_setting(k, v)
@@ -412,7 +425,7 @@ class Viewer(QWidget):
         """Visningsfönster enligt anpassningsläget, i läsordning."""
         W, H = max(self.width(), 1), self.area_h()
         ar = W / H
-        fit = self.opt("fit")
+        fit = self.fit()
         if fit == "width":
             vw, vh = full.width(), full.width() / ar
         elif fit == "height":

@@ -12,9 +12,9 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 | Nästa/föregående sida, första/sista sidan, framåt/bakåt två sidor | Pilar/mellanslag (ruta, del eller sida), PgUp/PgDn (uppslag), Home/End | |
 | Japanskt läge (höger→vänster, hela gränssnittet speglat) | Japanskt läge: pilar, klickzoner, uppslag, förloppslist och miniatyrlist speglas; sparas per serie | R |
 | Dubbel sida, liggande sida = uppslag, omslag, skugga, delning | Dubbelsida, liggande sidor visas ensamma, omslaget ensamt, skugga i bokryggen | Shift+D |
-| Anpassa till skärm, Över/Under bredd, Över/Under höjd | Anpassa till skärm med fyra val: krymp bredare, förstora smalare, krymp högre, förstora lägre | 1 |
-| Anpassa liggande/stående | Anpassa till bredd / höjd (sidan visas i flera steg med överlapp) | 2, 3 |
-| Zoom 100/125/150/200/400 %, zooma in/ut, behåll zoom | Originalstorlek och zoomnivåer i menyn, fri zoom med Ctrl+hjul, panorera genom att dra | 4, +, −, 0 |
+| Anpassa till skärm, Över/Under bredd, Över/Under höjd | Anpassa till skärm med fyra val: krymp bredare, förstora smalare, krymp högre, förstora lägre; 1–4 = vänster skärm, numpaddens 1–4 = höger skärm | 1, Num 1 |
+| Anpassa liggande/stående | Anpassa till bredd / höjd (sidan visas i flera steg med överlapp) | 2, 3, Num 2, Num 3 |
+| Zoom 100/125/150/200/400 %, zooma in/ut, behåll zoom | Originalstorlek och zoomnivåer i menyn, fri zoom med Ctrl+hjul, panorera genom att dra | 4, Num 4, +, −, 0 |
 | Förstorare (storlek inställbar) | Förstoringsglas: växla med M eller håll mittenknappen; former rektangel, kvadrat, rund (platta) och lins (rund med förvrängning); Shift+hjul = storlek, Ctrl+hjul = förstoring | M |
 | – | Gränssnittets storlek (text, listor, menyer, dialoger) 50–400 %; avståndsläge: stor sidräknare som döljs efter 1 s utan aktivitet, resten av gränssnittet 1,5× | Ctrl+Shift+Upp/Ned, Shift+F |
 | Miniatyrer / reglage (Ctrl+T, Ctrl+I) | Miniatyrlist längst ner, navigerbar med pilar och Enter; sidreglage; dessutom miniatyröversikt i rutnät | Ctrl+T, Ctrl+I, T |
@@ -36,6 +36,7 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 | Kontrollera uppdateringar, Leap Motion, DjVu, utforskarmenyns miniatyrer, språkval | Inte med (föråldrat/plattformsspecifikt). Gränssnittet är på svenska | |
 
 ## Utöver CDisplayEx
+- Andra skärmen (F9: av/spegling/fördelning liggande–stående). Anpassningen gäller per fysisk skärm (vänster = minst x): 1–4 ovanför bokstäverna = vänster skärm, numpaddens 1–4 = höger skärm, med egna värden vid spegling. Shift+F9 växlar andra skärmens anpassning (även "samma utsnitt som huvudfönstret").
 - Guidat läge: rutorna hittas automatiskt (OpenCV + YOLO-modell) och visas en i taget, centrerade med svart runt.
 - Dubbelklick på en ruta zoomar dit även om detekteringen missat den.
 - Redigeringsläge (E): rita/ta bort rutor, sparas per sida och blir träningsdata för en omtränad modell.

@@ -19,7 +19,7 @@ from . import __version__
 from .comic import ARCHIVE_EXT, IMAGE_EXT
 from .store import State
 from .overlays import Progress
-from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SecondScreen
+from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SIDES, SecondScreen, fit_key, migrate_fits, side_of
 from .viewer import DEFAULTS, MAG_SHAPES, Viewer
 
 FILTER = "Serier och bilder ({});;Alla filer (*)".format(
@@ -38,6 +38,7 @@ class MainWindow(QMainWindow):
         self.v = Viewer(self.state)
         self.setCentralWidget(self.v)
         self.second = SecondScreen(self.v)
+        migrate_fits(self.state)
         self.setAcceptDrops(True)
         self.resize(1280, 900)
         self.acts = {}
@@ -166,11 +167,15 @@ class MainWindow(QMainWindow):
         A("double", "Dubbelsida", ["Shift+D"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
         A("cover_single", "Omslaget ensamt", [], lambda: self._toggle("cover_single"), check=lambda: v.opt("cover_single"))
         A("shadow", "Skugga i bokryggen", [], lambda: self._toggle("shadow"), check=lambda: v.opt("shadow"))
-        for i, (k, label) in enumerate(FITS):
-            A("fit_" + k, label, [str(i + 1)], lambda k=k: self.set_fit(k), check=lambda k=k: v.opt("fit") == k and (k != "original" or v.opt("zoom") == 1.0))
+        # 1-4 = vänster skärm, Num+1-4 (numpadden) = höger skärm; "fit_*" behåller namnet (egna tangenter finns kvar)
+        for side, pre, keys in (("left", "fit_", "{}"), ("right", "fit_right_", "Num+{}")):
+            for i, (k, label) in enumerate(FITS):
+                A(pre + k, f"{dict(SIDES)[side]}: {label[0].lower()}{label[1:]}", [keys.format(i + 1)],
+                  lambda k=k, side=side: self.set_fit(k, side=side),
+                  check=lambda k=k, side=side: self.fit_of(side) == k and (k != "original" or v.opt("zoom") == 1.0))
         for z in ZOOMS:
             A(f"zoom_{int(z * 100)}", f"Zoom {int(z * 100)} %", [], lambda z=z: self.set_fit("original", z),
-              check=lambda z=z: v.opt("fit") == "original" and v.opt("zoom") == z)
+              check=lambda z=z: self.fit_of(side_of(self)) == "original" and v.opt("zoom") == z)
         for k, label in (("shrink_w", "Krymp bilder bredare än skärmen"), ("grow_w", "Förstora bilder smalare än skärmen"),
                          ("shrink_h", "Krymp bilder högre än skärmen"), ("grow_h", "Förstora bilder lägre än skärmen")):
             A(k, label, [], lambda k=k: self._toggle(k), check=lambda k=k: v.opt(k))
@@ -197,7 +202,7 @@ class MainWindow(QMainWindow):
         A("second_cycle", "Andra skärmen: växla läge (av/spegling/fördelning)", ["F9"], self.cycle_second)
         for k, label in SECOND_FITS:
             A("second_fit_" + k, label, [], lambda k=k: self.set_second_fit(k),
-              check=lambda k=k: self.state.setting("second_fit", "screen") == k)
+              check=lambda k=k: self.second.fit() == k)
         A("second_fit_cycle", "Andra skärmen: växla anpassning (skärm/bredd/höjd/som huvudfönstret)", ["Shift+F9"],
           self.cycle_second_fit)
         A("ui_bigger", "Större gränssnitt", ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
@@ -261,10 +266,13 @@ class MainWindow(QMainWindow):
             m.addSeparator() if k is None else m.addAction(a[k])
         fm = m.addMenu("Anpassning")
         g = QActionGroup(self)
-        for k, _ in FITS:
-            fm.addAction(a["fit_" + k])
-            g.addAction(a["fit_" + k])
-        fm.addSeparator()
+        for pre in ("fit_", "fit_right_"):
+            g = QActionGroup(self)
+            for k, _ in FITS:
+                fm.addAction(a[pre + k])
+                g.addAction(a[pre + k])
+            fm.addSeparator()
+        g = QActionGroup(self)
         for z in ZOOMS:
             fm.addAction(a[f"zoom_{int(z * 100)}"])
             g.addAction(a[f"zoom_{int(z * 100)}"])
@@ -536,11 +544,19 @@ class MainWindow(QMainWindow):
         a = self.acts.get(k)
         return a.text().replace("&", "") if a else k
 
-    def set_fit(self, fit, zoom=1.0):
-        self.v.state.set_setting("zoom", zoom)
-        self.v.set_opt("fit", fit)
+    def fit_of(self, side):
+        """Anpassningen för vänster/höger skärm i aktuellt läge (spegling har egna värden)."""
+        return self.state.setting(fit_key(side, self.second.mode), "screen")
+
+    def set_fit(self, fit, zoom=1.0, side=None):
+        """side: 'left'/'right' (fysisk skärm); None = huvudfönstrets skärm."""
+        side = side or side_of(self)
+        if fit == "original":
+            self.v.state.set_setting("zoom", zoom)
+        self.v.set_opt(fit_key(side, self.second.mode), fit)
+        self.second.update()
         label = dict(FITS)[fit] if fit != "original" or zoom == 1.0 else f"Zoom {int(zoom * 100)} %"
-        self.v.flash(label)
+        self.v.flash(f"{dict(SIDES)[side]}: {label[0].lower()}{label[1:]}")
 
     def rotate(self, d):
         self.v.set_opt("rotation", (self.v.opt("rotation") + d) % 360)
@@ -558,7 +574,10 @@ class MainWindow(QMainWindow):
         self._sync()
 
     def set_second(self, mode, save=True):
+        before = self.v.fit()
         msg = self.second.set_mode(mode)
+        if self.v.fit() != before:  # spegling har egna anpassningar
+            self.v.refit()
         if save:
             self.state.set_setting("second_screen", self.second.mode)
         label = dict(SECOND_MODES)[self.second.mode]
@@ -570,19 +589,21 @@ class MainWindow(QMainWindow):
         self.set_second(keys[(keys.index(self.second.mode) + 1) % len(keys)])
 
     def set_second_fit(self, fit):
-        self.state.set_setting("second_fit", fit)
+        self.state.set_setting(fit_key(self.second.side(), self.second.mode), fit)
         self.second.update()
         self.v.flash(dict(SECOND_FITS)[fit])
         self._sync()
 
     def cycle_second_fit(self):
         keys = [k for k, _ in SECOND_FITS]
-        self.set_second_fit(keys[(keys.index(self.state.setting("second_fit", "screen")) + 1) % len(keys)])
+        cur = self.second.fit()
+        self.set_second_fit(keys[(keys.index(cur) + 1) % len(keys)] if cur in keys else keys[0])
 
     def _screen_moved(self, _scr):
         """Huvudfönstret flyttat till en annan skärm: andra skärmen flyttar till en skärm som inte är huvudfönstrets."""
         if self.second.mode != "off":
             self.second.relocate()
+        self.v.refit()  # ny sida (vänster/höger) -> den sidans anpassning
 
     def toggle_menubar(self):
         on = not self.state.setting("menubar", True)
@@ -1014,7 +1035,10 @@ class OptionsDialog(QDialog):
         f = QFormLayout(t)
         f.addRow(chk("guided", "Guidat läge: zooma ruta för ruta"))
         f.addRow(chk("overview", "Visa hela sidan innan rutorna"))
-        f.addRow("Anpassning", combo("fit", FITS))
+        fits = list(FITS) + [("main", "Samma utsnitt som huvudfönstret (bara andra skärmen)")]
+        mode = "spegling" if win.second.mode == "mirror" else "av/fördelning"
+        for side, label in SIDES:
+            f.addRow(f"Anpassning, {label.lower()} ({mode})", combo(fit_key(side, win.second.mode), fits))
         f.addRow(chk("double", "Dubbelsida"))
         f.addRow(chk("cover_single", "Omslaget visas ensamt i dubbelsidesläge"))
         f.addRow(chk("shadow", "Skugga i bokryggen"))

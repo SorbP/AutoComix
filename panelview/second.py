@@ -13,6 +13,28 @@ MODES = (("off", "Av"), ("mirror", "Spegling"), ("auto", "Automatisk fördelning
 # Anpassning av hela sidor på andra skärmen (rutor visas alltid hela och så stora som möjligt)
 FITS = (("screen", "Andra skärmen: anpassa till skärm"), ("width", "Andra skärmen: anpassa till bredd"),
         ("height", "Andra skärmen: anpassa till höjd"), ("main", "Andra skärmen: samma utsnitt som huvudfönstret"))
+SIDES = (("left", "Vänster skärm"), ("right", "Höger skärm"))
+
+
+def side_of(widget):
+    """'left'/'right' efter den fysiska skärm widgeten visas på (minst x = vänster). En skärm: vänster."""
+    scrs = QGuiApplication.screens()
+    if len(scrs) < 2:
+        return "left"
+    return "left" if widget.screen() is min(scrs, key=lambda s: s.geometry().x()) else "right"
+
+
+def fit_key(side, mode):
+    """Inställningsnyckel för anpassningen: egna värden per sida, och separata vid spegling."""
+    return f"fit_{side}" + ("_mirror" if mode == "mirror" else "")
+
+
+def migrate_fits(state):
+    """Första gången: vänster = huvudfönstrets gamla 'fit', höger = andra skärmens gamla 'second_fit'."""
+    for side, old in (("left", "fit"), ("right", "second_fit")):
+        for mode in ("off", "mirror"):
+            if state.setting(fit_key(side, mode)) is None:
+                state.set_setting(fit_key(side, mode), state.setting(old, "screen"))
 
 
 def wide(r):
@@ -68,6 +90,7 @@ class SecondScreen(QWidget):
         self.live = True        # visar aktuell ruta (annars self.held)
         self.held = None        # senaste bilden som hörde till den här skärmen
         self.main_last = None   # senaste bilden huvudskärmen visade – fryses där när aktuell bild flyttas hit
+        viewer.fit_key = lambda: fit_key(side_of(viewer.window()), self.mode)
         viewer.painted.connect(self._follow)
         QGuiApplication.instance().screenAdded.connect(lambda _s: self.relocate())
         QGuiApplication.instance().screenRemoved.connect(lambda _s: self.relocate())
@@ -90,6 +113,15 @@ class SecondScreen(QWidget):
 
     def main_wide(self):
         return wide(QRectF(self._main_screen().geometry()))
+
+    def side(self):
+        """Den här skärmens sida; utan egen skärm (dold, eller på huvudfönstrets skärm) motsatt huvudfönstret."""
+        if self.isVisible() and self.screen() is not self._main_screen():
+            return side_of(self)
+        return "right" if side_of(self.v.window()) == "left" else "left"
+
+    def fit(self):
+        return self.v.state.setting(fit_key(self.side(), self.mode), "screen")
 
     def same_orientation(self):
         return self.here_wide() == self.main_wide()
@@ -180,13 +212,16 @@ class SecondScreen(QWidget):
     def page_view(self, full, main_view, ar):
         """Utsnitt för en hel sida enligt andra skärmens egen anpassning. Bläddrar huvudfönstret i sidan
         (bredd/höjd/zoom) följer utsnittet med i samma riktning."""
-        fit = self.v.state.setting("second_fit", "screen")
+        fit = self.fit()
         if fit == "main":
             return fit_aspect(main_view, ar, full, clamp=True)
         if fit == "width":
             w, h = full.width(), full.width() / ar
         elif fit == "height":
             w, h = full.height() * ar, full.height()
+        elif fit == "original":  # 100 % (eller vald zoom) i den här skärmens pixlar
+            z = float(self.v.opt("zoom"))
+            w, h = self.width() / z, self.height() / z
         else:
             return fit_aspect(full, ar, full, clamp=False)
         c = main_view.center()
