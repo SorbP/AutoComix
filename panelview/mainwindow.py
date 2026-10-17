@@ -28,7 +28,7 @@ FILTER = "Serier och bilder ({});;Alla filer (*)".format(
 FITS = [("screen", "Anpassa till skärm"), ("width", "Anpassa till bredd"), ("height", "Anpassa till höjd"),
         ("original", "Originalstorlek (100 %)")]
 ZOOMS = [1.25, 1.5, 2.0, 4.0]
-SLIDE_STEPS = (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000)  # bildspelets tider (ms), Alt+Upp/Ned
+SLIDE_STEPS = (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000)  # bildspelets tider (ms) i menyn
 
 
 class MainWindow(QMainWindow):
@@ -146,8 +146,8 @@ class MainWindow(QMainWindow):
         A("thumbs", "Miniatyröversikt…", ["T"], self.thumbnails)
         A("slideshow", "Automatiskt bildspel (ruta för ruta i guidat läge)", ["Ctrl+H", "S"], v.toggle_slideshow,
           check=lambda: v.slideshow.isActive())
-        A("slide_longer", "Bildspel: längre tid per steg", ["Alt+Up"], lambda: self.slide_ms_step(1))
-        A("slide_shorter", "Bildspel: kortare tid per steg", ["Alt+Down"], lambda: self.slide_ms_step(-1))
+        A("slide_longer", "Bildspel: längre tid per steg", ["Alt+Up", "Ctrl+Num++"], lambda: self.slide_ms_step(1))
+        A("slide_shorter", "Bildspel: kortare tid per steg", ["Alt+Down", "Ctrl+Num+-"], lambda: self.slide_ms_step(-1))
         # Animation (GIF/WebP/APNG)
         A("anim_play", "Spela animationer", ["P", "Ctrl+Space"], v.toggle_anim, check=lambda: v.opt("anim_play"))
         A("anim_next", "Nästa bildruta", ["."], lambda: v.anim_step(1))
@@ -414,12 +414,9 @@ class MainWindow(QMainWindow):
         self.v.flash(f"Bildspel: {int(ms)} ms per steg")
 
     def slide_ms_step(self, d):
-        """Nästa längre (d=1) eller kortare (d=-1) tid i SLIDE_STEPS, räknat från nuvarande tid."""
+        """100 ms längre (d=1) eller kortare (d=-1), 100 ms–10 min."""
         cur = int(self.v.opt("slideshow_ms"))
-        if d > 0:
-            ms = next((s for s in SLIDE_STEPS if s > cur), SLIDE_STEPS[-1])
-        else:
-            ms = next((s for s in reversed(SLIDE_STEPS) if s < cur), SLIDE_STEPS[0])
+        ms = max(100, min(600000, round(cur / 100) * 100 + d * 100))
         self.set_slide_ms(ms)
         self.v.flash(f"Bildspel: {ms / 1000:g} s per steg")
 

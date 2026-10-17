@@ -18,7 +18,7 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 | Förstorare (storlek inställbar) | Förstoringsglas: växla med M eller håll mittenknappen; former rektangel, kvadrat, rund (platta) och lins (rund med förvrängning); Shift+hjul = storlek, Ctrl+hjul = förstoring | M |
 | – | Gränssnittets storlek (text, listor, menyer, dialoger) 50–400 %; avståndsläge: stor sidräknare som döljs efter 1 s utan aktivitet, resten av gränssnittet 1,5× | Ctrl+Shift+Upp/Ned, Shift+F |
 | Miniatyrer / reglage (Ctrl+T, Ctrl+I) | Miniatyrlist längst ner, navigerbar med pilar och Enter; sidreglage; dessutom miniatyröversikt i rutnät | Ctrl+T, Ctrl+I, T |
-| Automatiskt bildspel med intervall (Ctrl+H) | Bildspel som går ruta för ruta i guidat läge, annars del/sida | Ctrl+H, S |
+| Automatiskt bildspel med intervall (Ctrl+H) | Bildspel som går ruta för ruta i guidat läge, annars del/sida; tiden ändras i steg om 100 ms | Ctrl+H, S, Alt+Upp/Ned, Ctrl+Num +/− |
 | Animerade GIF (enkel uppspelning) | Animerad GIF, WebP och APNG: spelas med rätt fördröjningar (0–10 ms = 100 ms som i webbläsare), startar om när sidan visas, paus, bildruta för bildruta, hastighet 0,25–4x, bildspelet väntar ett varv; rutzoom och rutdetektering fungerar på animerade sidor | P, . ,, Ctrl+Upp/Ned |
 | Rotera (alla bilder) | Rotera vänster/höger, rutorna roteras med | [ ] |
 | Automatisk färgkorrigering, RGB-gamma, vibrance | Automatisk färgkorrigering (vitbalans + kontrast), gamma, lyster | A |

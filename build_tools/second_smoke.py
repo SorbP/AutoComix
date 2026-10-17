@@ -204,6 +204,21 @@ def main():
 
         def set_setting(self, k, val):
             self.d[k] = val
+    # bildspelets tid: Ctrl+Num+/- (och Alt+Upp/Ned) i steg om 100 ms; Ctrl+vanligt +/- zoomar som förut
+    w.set_slide_ms(1000)
+    QTest.keyClick(w, Qt.Key.Key_Plus, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier)
+    wait(50)
+    res.append(check("Ctrl+Num+: bildspel 1100 ms", st("slideshow_ms") == 1100, str(st("slideshow_ms"))))
+    QTest.keyClick(w, Qt.Key.Key_Minus, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier)
+    QTest.keyClick(w, Qt.Key.Key_Minus, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier)
+    wait(50)
+    res.append(check("Ctrl+Num-: bildspel 900 ms", st("slideshow_ms") == 900, str(st("slideshow_ms"))))
+    QTest.keyClick(w, Qt.Key.Key_Up, Qt.KeyboardModifier.AltModifier)
+    wait(50)
+    res.append(check("Alt+Upp: bildspel 1000 ms", st("slideshow_ms") == 1000, str(st("slideshow_ms"))))
+    QTest.keyClick(w, Qt.Key.Key_Minus, Qt.KeyboardModifier.ControlModifier)
+    wait(50)
+    res.append(check("Ctrl+- (vanligt): rör inte bildspelet", st("slideshow_ms") == 1000, str(st("slideshow_ms"))))
     fk = Fake({"fit": "width", "second_fit": "main"})
     S.migrate_fits(fk)
     res.append(check("migrering från fit/second_fit", fk.d["fit_left"] == fk.d["fit_left_mirror"] == "width"
