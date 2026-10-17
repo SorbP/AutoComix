@@ -139,7 +139,7 @@ def main():
     res.append(check("anpassning bredd: fyller bredden", abs(r.width() - 1600) < 1, str(r)))
     w.cycle_second_fit()
     res.append(check("Shift+F9: bredd -> höjd", w.state.setting("fit_right") == "height"))
-    w.set_fit("original", side=sc.side())
+    w.set_second_fit("original")
     r = sc.page_view(full, mv, ar)
     res.append(check("anpassning original: 100 % i andra skärmens pixlar", abs(r.width() - sc.width()) < 1, str(r)))
     w.set_second_fit("screen")
@@ -222,4 +222,11 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        rc = main()
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        rc = 1
+    sys.stdout.flush()
+    os._exit(rc)  # bakgrundstrådar får inte hålla kvar processen (hängde vid fel)

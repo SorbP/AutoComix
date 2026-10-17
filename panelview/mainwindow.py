@@ -591,7 +591,7 @@ class MainWindow(QMainWindow):
     def set_second_fit(self, fit):
         self.state.set_setting(fit_key(self.second.side(), self.second.mode), fit)
         self.second.update()
-        self.v.flash(dict(SECOND_FITS)[fit])
+        self.v.flash(dict(SECOND_FITS).get(fit) or f"Andra skärmen: {dict(FITS)[fit].lower()}")
         self._sync()
 
     def cycle_second_fit(self):
