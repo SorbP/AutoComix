@@ -121,6 +121,25 @@ def test_comic_dir_and_cbz(tmp_path):
     assert [p.name for p in Comic(d).siblings()] == ["bok", "bok.cbz"]
 
 
+def test_sort_by_mtime_dir_and_zip(tmp_path):
+    import os
+    from PIL import Image
+    from panelview.browser import PageSource
+    d = tmp_path / "slump"
+    d.mkdir()
+    for i, n in enumerate(["zz.png", "aa.png", "mm.png"]):  # tillagda i ordningen zz, aa, mm
+        Image.new("RGB", (8, 8)).save(d / n)
+        os.utime(d / n, (1_600_000_000 + i * 60,) * 2)
+    assert Comic(d).pages == ["aa.png", "mm.png", "zz.png"]
+    assert Comic(d, sort="mtime").pages == ["zz.png", "aa.png", "mm.png"]
+    assert PageSource(d, "mtime").names == ["zz.png", "aa.png", "mm.png"]
+    z = tmp_path / "s.cbz"
+    with zipfile.ZipFile(z, "w") as zf:
+        for i, n in enumerate(["zz.png", "aa.png", "mm.png"]):
+            zf.writestr(zipfile.ZipInfo(n, (2020, 1, 1, 12, i, 0)), (d / n).read_bytes())
+    assert Comic(z, sort="mtime").pages == ["zz.png", "aa.png", "mm.png"]
+
+
 def test_comicinfo_manga_hint(tmp_path):
     import io
     from PIL import Image

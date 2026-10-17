@@ -17,7 +17,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileSystemModel, QHBo
                                QVBoxLayout, QWidget)
 
 from .overlays import Progress
-from .comic import ARCHIVE_EXT, IMAGE_EXT, alpha_key, natural_key, pick_images
+from .comic import ARCHIVE_EXT, IMAGE_EXT, file_mtime, pick_images, sort_key, zip_mtime
 
 PREVIEW_MAX = 1600
 FLAGS = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -36,7 +36,6 @@ class PageSource:
 
     def __init__(self, path, sort="natural"):
         p = self.path = Path(path)
-        key = alpha_key if sort == "alpha" else natural_key
         ext = p.suffix.lower()
         self._lock = threading.Lock()
         self._zip = self._pdf = None
@@ -45,11 +44,12 @@ class PageSource:
         self.names = []
         if p.is_dir():
             self.kind = "dir"
-            self.names = pick_images((q.relative_to(p).as_posix() for q in p.rglob("*") if q.is_file()), key)
+            self.names = pick_images((q.relative_to(p).as_posix() for q in p.rglob("*") if q.is_file()),
+                                     sort_key(sort, file_mtime(p)))
         elif ext in (".zip", ".cbz") and zipfile.is_zipfile(p):
             self.kind = "zip"
             self._zip = zipfile.ZipFile(p)
-            self.names = pick_images(self._zip.namelist(), key)
+            self.names = pick_images(self._zip.namelist(), sort_key(sort, zip_mtime(self._zip)))
         elif ext == ".pdf":
             import pypdfium2 as pdfium
             self.kind = "pdf"
@@ -61,19 +61,20 @@ class PageSource:
                 raise RuntimeError("7-Zip behövs för rar/7z")
             self.kind = "7z"
             self._entries = []  # (namn med /, namn i arkivet, storlek) i arkivets ordning
-            cur = {}
+            cur, mod = {}, {}
             r = subprocess.run([self._exe, "l", "-ba", "-slt", str(p)], capture_output=True, text=True,
                                stdin=subprocess.DEVNULL, creationflags=FLAGS, timeout=30)
             for ln in r.stdout.splitlines() + [""]:
                 if not ln.strip():
                     if "Path" in cur and cur.get("Folder") != "+":
                         self._entries.append((cur["Path"].replace("\\", "/"), cur["Path"], int(cur.get("Size") or 0)))
+                        mod[cur["Path"].replace("\\", "/")] = cur.get("Modified", "")
                     cur = {}
                 elif " = " in ln:
                     k, v = ln.split(" = ", 1)
                     cur[k] = v
             orig = {e[0]: e[1] for e in self._entries}
-            self.names = pick_images(orig, key)
+            self.names = pick_images(orig, sort_key(sort, mod.__getitem__))
             self._orig = orig
 
     def read(self, i, pdf_scale=1.0):

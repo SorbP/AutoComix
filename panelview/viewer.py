@@ -202,8 +202,10 @@ class Viewer(QWidget):
             self.anim.setDuration(v)
         elif k == "slideshow_ms" and self.slideshow.isActive():
             self.slideshow.start(int(v))
-        elif k == "sort" and self.comic:
-            self.open(self.comic.path)
+        elif k == "sort" and self.comic:  # öppna om i ny ordning, stanna på samma bild
+            name = self.comic.pages[self.page] if 0 <= self.page < len(self.comic.pages) else None
+            if self.open(self.comic.path) is not False and name in self.comic.pages:
+                self.goto_page(self.comic.pages.index(name), animate=False)
         elif self.comic:
             self.free, self.custom = False, None
             self._clamp_retarget(animate=False)
@@ -1780,6 +1782,10 @@ class Viewer(QWidget):
             e.acceptProposedAction()
 
     def dropEvent(self, e):
-        urls = e.mimeData().urls()
-        if urls:
-            self.open(urls[0].toLocalFile())
+        """Flera filer ur samma mapp: öppna mappen från början (i vald sortering) i stället för vid den första filen."""
+        ps = [Path(u.toLocalFile()) for u in e.mimeData().urls() if u.toLocalFile()]
+        if len(ps) > 1 and all(p.is_file() and p.suffix.lower() in IMAGE_EXT for p in ps) \
+                and len({p.parent for p in ps}) == 1:
+            self.open(ps[0].parent)
+        elif ps:
+            self.open(ps[0])

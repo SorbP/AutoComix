@@ -29,7 +29,7 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 | Spara till fil / urklipp, Skriv ut | Spara sida som, Kopiera sida, Skriv ut | Ctrl+S, Ctrl+C, Ctrl+P |
 | Konfigurerbara genvägar (primära + sekundära) | Inställningar → Tangenter, två genvägar per funktion | |
 | Sidcache i bakgrunden | Uppslag före/efter laddas i bakgrundstrådar | |
-| Sortering (alfabetisk), undermappar | Naturlig eller alfabetisk sortering, bilder i undermappar tas med | |
+| Sortering (alfabetisk), undermappar | Naturlig, alfabetisk eller efter ändringsdatum (slumpmässiga filnamn; även zip/rar/7z), bilder i undermappar tas med; flera bilder släppta ur samma mapp öppnar mappen från början | Ctrl+D |
 | Format: JPEG, PNG, GIF, WebP, TIFF, BMP, CBZ/CBR/CB7, PDF, krypterade arkiv | Samma (PDF via pdfium, CB7 via py7zr, CBR via 7z/unrar/tar), lösenordsfråga | |
 | Verktygsfält i helskärm, dölj information | Menyrad (Ctrl+M), högerklicksmeny överallt, informationsrad (I), sidnummer, förloppslist | |
 | Dölj muspekaren | Muspekaren göms efter 2 s i helskärm | |

@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QColo
                                QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from . import __version__
-from .comic import ARCHIVE_EXT, IMAGE_EXT
+from .comic import ARCHIVE_EXT, IMAGE_EXT, SORTS
 from .store import State
 from .overlays import Progress
 from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SIDES, SecondScreen, fit_key, migrate_fits, side_of
@@ -127,6 +127,8 @@ class MainWindow(QMainWindow):
         A("copy_page", "Kopiera sida", ["Ctrl+C"], self.copy_page)
         A("print", "Skriv ut…", ["Ctrl+P"], self.print_page)
         A("close_file", "Stäng fil", ["Ctrl+W"], v.close_comic)
+        A("sort_mtime", "Sortera sidor efter ändringsdatum (för slumpmässiga filnamn)", ["Ctrl+D"], self.toggle_sort_mtime,
+          check=lambda: v.opt("sort") == "mtime")
         A("history", "Visningshistorik…", ["Ctrl+Shift+H"], self.show_history)
         A("clear_history", "Rensa historik", [], self.clear_history)
         A("exit", "Avsluta", ["Ctrl+Q"], self.close)
@@ -243,7 +245,7 @@ class MainWindow(QMainWindow):
         mb = self.menuBar()
         a = self.acts
         m = mb.addMenu("&Arkiv")
-        for k in ("browse", "open_file", "open_folder"):
+        for k in ("browse", "open_file", "open_folder", "sort_mtime"):
             m.addAction(a[k])
         self.recent_menu = m.addMenu("Öppna senaste")
         self.recent_menu.aboutToShow.connect(self._fill_recent)
@@ -555,6 +557,11 @@ class MainWindow(QMainWindow):
         label = dict(FITS)[fit] if fit != "original" or zoom == 1.0 else f"Zoom {int(zoom * 100)} %"
         self.v.flash(f"{dict(SIDES)[side]}: {label[0].lower()}{label[1:]}")
 
+    def toggle_sort_mtime(self):
+        """Ändringsdatum <-> naturlig ordning; serien öppnas om i den nya ordningen."""
+        self.v.set_opt("sort", "natural" if self.v.opt("sort") == "mtime" else "mtime")
+        self.v.flash("Sidor sorteras efter " + ("ändringsdatum" if self.v.opt("sort") == "mtime" else "namn"))
+
     def rotate(self, d):
         self.v.set_opt("rotation", (self.v.opt("rotation") + d) % 360)
         self.v.flash(f"Rotation {self.v.opt('rotation')}°")
@@ -748,9 +755,7 @@ class MainWindow(QMainWindow):
             e.acceptProposedAction()
 
     def dropEvent(self, e):
-        urls = e.mimeData().urls()
-        if urls:
-            self.v.open(urls[0].toLocalFile())
+        self.v.dropEvent(e)
 
     def closeEvent(self, e):
         if not self.isFullScreen():
@@ -1044,7 +1049,7 @@ class OptionsDialog(QDialog):
         f.addRow("Bildspel, läge", combo("slideshow_mode", [("guided", "Ruta för ruta (i guidat läge)"),
                                                             ("pages", "Sida för sida")]))
         f.addRow(chk("slideshow_next_file", "Bildspelet fortsätter med nästa fil i mappen"))
-        f.addRow("Sortering", combo("sort", [("natural", "Naturlig (2 före 10)"), ("alpha", "Alfabetisk")]))
+        f.addRow("Sortering", combo("sort", SORTS))
         f.addRow(QLabel("<b>Avslutning</b>"))
         f.addRow("Esc när helskärm och fönster redan är stängda",
                  combo("esc_quit", [("never", "Avsluta inte (Ctrl+Q avslutar)"), ("confirm", "Fråga först"),

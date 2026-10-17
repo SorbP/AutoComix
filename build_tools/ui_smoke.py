@@ -100,6 +100,20 @@ def main():
     v.mag_zoom_step(1.25)
     res.append(check("mer förstoring", v.opt("mag_zoom") > z))
     v.toggle_magnifier()
+    # sortering efter ändringsdatum (Ctrl+D): 02 äldst -> först; samma bild visas efter omsorteringen
+    import os
+    for k in range(3):
+        os.utime(tmp / f"{k:02d}.png", (1_600_000_000 - k * 60,) * 2)
+    v.goto_page(v.comic.pages.index("00.png"), animate=False)
+    w.acts["sort_mtime"].trigger()
+    wait(300)
+    ps = v.comic.pages
+    res.append(check("Ctrl+D: sorterat efter ändringsdatum", ps.index("02.png") < ps.index("01.png") < ps.index("00.png")
+                     and w.acts["sort_mtime"].isChecked(), str(ps)))
+    res.append(check("Ctrl+D: står kvar på samma bild", ps[v.page] == "00.png", ps[v.page]))
+    w.acts["sort_mtime"].trigger()
+    wait(300)
+    res.append(check("Ctrl+D igen: namnordning", v.opt("sort") == "natural" and v.comic.pages.index("00.png") == 0))
     w.close()
     print(f"\n{sum(res)}/{len(res)} OK")
     return 0 if all(res) else 1

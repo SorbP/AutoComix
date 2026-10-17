@@ -24,6 +24,33 @@ def alpha_key(s):
     return s.lower()
 
 
+SORTS = (("natural", "Naturlig (2 före 10)"), ("alpha", "Alfabetisk"), ("mtime", "Ändringsdatum (äldst först)"))
+
+
+def sort_key(sort, mtime=None):
+    """Sorteringsnyckel för sidnamn. 'mtime': mtime(namn) = ändringsdatum (slumpmässiga namn), sedan naturlig."""
+    if sort == "alpha":
+        return alpha_key
+    if sort != "mtime" or mtime is None:
+        return natural_key
+
+    def key(n):
+        try:
+            t = mtime(n)
+        except (OSError, KeyError, ValueError, OverflowError):
+            t = 0
+        return (t, natural_key(n))
+    return key
+
+
+def file_mtime(root):
+    return lambda n: (Path(root) / n).stat().st_mtime
+
+
+def zip_mtime(zf):
+    return lambda n: zf.getinfo(n).date_time
+
+
 def pick_images(names, sort_key=natural_key):
     """Bildnamn i naturlig ordning; samma namn i flera format (x.png + x.webp) => behåll bästa."""
     best = {}
@@ -100,7 +127,6 @@ class Comic:
         self.path = Path(path)
         self._zip = self._tmp = self._pdf = None
         self._lock = threading.Lock()
-        key = alpha_key if sort == "alpha" else natural_key
         ext = self.path.suffix.lower()
         if self.path.is_dir():
             root = self.path
@@ -119,7 +145,7 @@ class Comic:
             self._zip = zipfile.ZipFile(self.path)
             if password:
                 self._zip.setpassword(password.encode())
-            self.pages = pick_images(self._zip.namelist(), key)
+            self.pages = pick_images(self._zip.namelist(), sort_key(sort, zip_mtime(self._zip)))
             self._check()
             if any(i.flag_bits & 1 for i in self._zip.infolist()) and not password:
                 raise PasswordNeeded()
@@ -135,7 +161,8 @@ class Comic:
         else:
             raise ValueError(f"Okänt format: {self.path.name}")
         self.root = root
-        self.pages = pick_images((p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()), key)
+        self.pages = pick_images((p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()),
+                                 sort_key(sort, file_mtime(root)))  # uppackade rar/7z behåller datumen
         self._check()
 
     def rtl_hint(self):
