@@ -124,7 +124,24 @@ def main():
     res.append(check("samma orientering: ingen frysning", v.frozen is None and sc.live))
     S.SecondScreen.here_wide = lambda self: False
 
-    # 4. av
+    # 4. egen anpassning av hela sidor (liggande sida 1600x900 på stående skärm 9:16)
+    from PySide6.QtCore import QRectF
+    full, mv, ar = QRectF(0, 0, 1600, 900), QRectF(800, 0, 800, 900), 9 / 16
+    w.set_second_fit("screen")
+    r = sc.page_view(full, mv, ar)
+    res.append(check("anpassning skärm: hela sidans bredd syns", r.width() >= 1600 and r.left() <= 0, str(r)))
+    w.set_second_fit("height")
+    r = sc.page_view(full, mv, ar)
+    res.append(check("anpassning höjd: fyller höjden och följer huvudfönstrets utsnitt (höger halva)",
+                     abs(r.height() - 900) < 1 and r.center().x() > 800, str(r)))
+    w.set_second_fit("width")
+    r = sc.page_view(full, QRectF(0, 0, 400, 300), 16 / 9)  # stående skärm -> liggande: sida 1600 bred
+    res.append(check("anpassning bredd: fyller bredden", abs(r.width() - 1600) < 1, str(r)))
+    w.cycle_second_fit()
+    res.append(check("Shift+F9: bredd -> höjd", w.state.setting("second_fit") == "height"))
+    w.set_second_fit("screen")
+
+    # 5. av
     w.set_second("off")
     wait(100)
     res.append(check("av: fönstret dolt och huvudfönstret live", not sc.isVisible() and v.frozen is None))

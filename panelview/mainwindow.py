@@ -19,7 +19,7 @@ from . import __version__
 from .comic import ARCHIVE_EXT, IMAGE_EXT
 from .store import State
 from .overlays import Progress
-from .second import MODES as SECOND_MODES, SecondScreen
+from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SecondScreen
 from .viewer import DEFAULTS, MAG_SHAPES, Viewer
 
 FILTER = "Serier och bilder ({});;Alla filer (*)".format(
@@ -192,6 +192,11 @@ class MainWindow(QMainWindow):
         for k, label in SECOND_MODES:
             A("second_" + k, label, [], lambda k=k: self.set_second(k), check=lambda k=k: self.second.mode == k)
         A("second_cycle", "Andra skärmen: växla läge (av/spegling/fördelning)", ["F9"], self.cycle_second)
+        for k, label in SECOND_FITS:
+            A("second_fit_" + k, label, [], lambda k=k: self.set_second_fit(k),
+              check=lambda k=k: self.state.setting("second_fit", "screen") == k)
+        A("second_fit_cycle", "Andra skärmen: växla anpassning (skärm/bredd/höjd/som huvudfönstret)", ["Shift+F9"],
+          self.cycle_second_fit)
         A("ui_bigger", "Större gränssnitt", ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
         A("ui_smaller", "Mindre gränssnitt", ["Ctrl+Shift+Down"], lambda: self.ui_scale_step(-1))
         # Bild
@@ -271,8 +276,13 @@ class MainWindow(QMainWindow):
         for k, _ in SECOND_MODES:
             dm.addAction(a["second_" + k])
             g.addAction(a["second_" + k])
-        dm.addSeparator()
         dm.addAction(a["second_cycle"])
+        dm.addSeparator()
+        g = QActionGroup(self)
+        for k, _ in SECOND_FITS:
+            dm.addAction(a["second_fit_" + k])
+            g.addAction(a["second_fit_" + k])
+        dm.addAction(a["second_fit_cycle"])
         m = mb.addMenu("&Bild")
         for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
@@ -536,6 +546,16 @@ class MainWindow(QMainWindow):
     def cycle_second(self):
         keys = [k for k, _ in SECOND_MODES]
         self.set_second(keys[(keys.index(self.second.mode) + 1) % len(keys)])
+
+    def set_second_fit(self, fit):
+        self.state.set_setting("second_fit", fit)
+        self.second.update()
+        self.v.flash(dict(SECOND_FITS)[fit])
+        self._sync()
+
+    def cycle_second_fit(self):
+        keys = [k for k, _ in SECOND_FITS]
+        self.set_second_fit(keys[(keys.index(self.state.setting("second_fit", "screen")) + 1) % len(keys)])
 
     def _screen_moved(self, _scr):
         """Huvudfönstret flyttat till en annan skärm: andra skärmen flyttar till en skärm som inte är huvudfönstrets."""

@@ -24,6 +24,8 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
   skärmen, anpassad till dess format. **Automatisk fördelning** visar liggande rutor/sidor på den liggande skärmen och
   stående på den stående; den andra skärmen behåller sin senaste bild. Båda styrs från huvudfönstret (tangenter,
   handkontroll) och läget sparas till nästa start. Har skärmarna samma orientering fungerar fördelningen som spegling.
+  Hela sidor har en egen anpassning på andra skärmen (Shift+F9): skärm, bredd, höjd eller samma utsnitt som
+  huvudfönstret – så huvudfönstret kan stå på "anpassa till bredd" och den stående skärmen visa hela sidan.
 - Bläddraren (L): "Visa alla sidor" (P) visar arkivets sidor som miniatyrer direkt ur zip/cbz/pdf/mapp (rar/7z via
   7-Zip) utan uppackning på disk; dubbelklick öppnar på den sidan.
 - Förloppslister: miniatyrer (bläddraren, T, Ctrl+T), rutdetektering för hela serien (tunn orange list + "rutor 12/40"
@@ -50,7 +52,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
   Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
-- `F9` andra skärmen: av → spegling → automatisk fördelning
+- `F9` andra skärmen: av → spegling → automatisk fördelning, `Shift+F9` andra skärmens anpassning
 - `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
 
 ## Bygga

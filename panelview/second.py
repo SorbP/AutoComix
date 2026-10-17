@@ -10,6 +10,9 @@ from PySide6.QtGui import QColor, QGuiApplication, QPainter
 from PySide6.QtWidgets import QWidget
 
 MODES = (("off", "Av"), ("mirror", "Spegling"), ("auto", "Automatisk fördelning (liggande/stående)"))
+# Anpassning av hela sidor på andra skärmen (rutor visas alltid hela och så stora som möjligt)
+FITS = (("screen", "Andra skärmen: anpassa till skärm"), ("width", "Andra skärmen: anpassa till bredd"),
+        ("height", "Andra skärmen: anpassa till höjd"), ("main", "Andra skärmen: samma utsnitt som huvudfönstret"))
 
 
 def wide(r):
@@ -165,8 +168,28 @@ class SecondScreen(QWidget):
             return
         full = QRectF(0, 0, img.width(), img.height())
         dim = v.opt("dim") and not (self.live and v.free)
-        base = focus if focus != full else view  # ruta: bara rutan; hel sida: huvudfönstrets utsnitt
-        own = fit_aspect(base, self.width() / max(self.height(), 1), full, clamp=not (dim and focus != full))
+        ar = self.width() / max(self.height(), 1)
+        if focus != full:  # ruta: hela rutan, så stor som möjligt
+            own = fit_aspect(focus, ar, full, clamp=not dim)
+        else:
+            own = self.page_view(full, view, ar)
         q = v.opt("quality")
         paint_frame(p, self.width(), self.height(), (img, own, focus, bg), dim,
                     q == "best" or (q == "smooth" and not v.animating))
+
+    def page_view(self, full, main_view, ar):
+        """Utsnitt för en hel sida enligt andra skärmens egen anpassning. Bläddrar huvudfönstret i sidan
+        (bredd/höjd/zoom) följer utsnittet med i samma riktning."""
+        fit = self.v.state.setting("second_fit", "screen")
+        if fit == "main":
+            return fit_aspect(main_view, ar, full, clamp=True)
+        if fit == "width":
+            w, h = full.width(), full.width() / ar
+        elif fit == "height":
+            w, h = full.height() * ar, full.height()
+        else:
+            return fit_aspect(full, ar, full, clamp=False)
+        c = main_view.center()
+        x = (full.width() - w) / 2 if w >= full.width() else min(max(c.x() - w / 2, 0), full.width() - w)
+        y = (full.height() - h) / 2 if h >= full.height() else min(max(c.y() - h / 2, 0), full.height() - h)
+        return QRectF(x, y, w, h)
