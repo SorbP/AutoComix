@@ -28,6 +28,7 @@ FILTER = "Serier och bilder ({});;Alla filer (*)".format(
 FITS = [("screen", "Anpassa till skärm"), ("width", "Anpassa till bredd"), ("height", "Anpassa till höjd"),
         ("original", "Originalstorlek (100 %)")]
 ZOOMS = [1.25, 1.5, 2.0, 4.0]
+SLIDE_STEPS = (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000)  # bildspelets tider (ms), Alt+Upp/Ned
 
 
 class MainWindow(QMainWindow):
@@ -144,6 +145,8 @@ class MainWindow(QMainWindow):
         A("thumbs", "Miniatyröversikt…", ["T"], self.thumbnails)
         A("slideshow", "Automatiskt bildspel (ruta för ruta i guidat läge)", ["Ctrl+H", "S"], v.toggle_slideshow,
           check=lambda: v.slideshow.isActive())
+        A("slide_longer", "Bildspel: längre tid per steg", ["Alt+Up"], lambda: self.slide_ms_step(1))
+        A("slide_shorter", "Bildspel: kortare tid per steg", ["Alt+Down"], lambda: self.slide_ms_step(-1))
         # Animation (GIF/WebP/APNG)
         A("anim_play", "Spela animationer", ["P", "Ctrl+Space"], v.toggle_anim, check=lambda: v.opt("anim_play"))
         A("anim_next", "Nästa bildruta", ["."], lambda: v.anim_step(1))
@@ -367,12 +370,15 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         cur = int(v.opt("slideshow_ms"))
         g = QActionGroup(m)
-        for ms in (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000):
+        for k in ("slide_longer", "slide_shorter"):
+            m.addAction(self.acts[k])
+        m.addSeparator()
+        for ms in SLIDE_STEPS:
             act = m.addAction(f"{ms} ms", lambda ms=ms: self.set_slide_ms(ms))
             act.setCheckable(True)
             act.setChecked(ms == cur)
             g.addAction(act)
-        custom = m.addAction(f"Egen tid… ({cur} ms)" if cur not in (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000)
+        custom = m.addAction(f"Egen tid… ({cur} ms)" if cur not in SLIDE_STEPS
                              else "Egen tid…", self.ask_slide_ms)
         custom.setCheckable(True)
         custom.setChecked(not any(x.isChecked() for x in g.actions()))
@@ -392,6 +398,16 @@ class MainWindow(QMainWindow):
     def set_slide_ms(self, ms):
         self.v.set_opt("slideshow_ms", int(ms))
         self.v.flash(f"Bildspel: {int(ms)} ms per steg")
+
+    def slide_ms_step(self, d):
+        """Nästa längre (d=1) eller kortare (d=-1) tid i SLIDE_STEPS, räknat från nuvarande tid."""
+        cur = int(self.v.opt("slideshow_ms"))
+        if d > 0:
+            ms = next((s for s in SLIDE_STEPS if s > cur), SLIDE_STEPS[-1])
+        else:
+            ms = next((s for s in reversed(SLIDE_STEPS) if s < cur), SLIDE_STEPS[0])
+        self.set_slide_ms(ms)
+        self.v.flash(f"Bildspel: {ms / 1000:g} s per steg")
 
     def ask_slide_ms(self):
         ms, ok = QInputDialog.getInt(self, "Bildspel", "Tid per steg (millisekunder):",

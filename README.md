@@ -52,8 +52,16 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
   Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
+- `Alt+Upp`/`Alt+Ned` bildspel: längre/kortare tid per steg
 - `F9` andra skärmen: av → spegling → automatisk fördelning, `Shift+F9` andra skärmens anpassning
 - `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
+
+## Fjärrkontroll i mobilen (Unified Remote)
+`remote\installera_unified_remote.ps1` kopierar `remote\unified\PanelView` till Unified Remotes mapp för egna
+fjärrkontroller. Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **PanelView** under fjärrkontrollerna
+i mobilen. Fliken *Läs*: nästa/föregående, sida, bildspel på/av och snabbare/långsammare. Fliken *Mer*: första/sista
+sidan, filer, senaste serien, starta PanelView, andra skärmen, zoom, helskärm. Knapparna skickar tangenter och växlar
+först till PanelView-fönstret.
 
 ## Bygga
 ```

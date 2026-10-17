@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+	<tabs>
+		<tab text="Läs">
+			<row>
+				<button text="Föregående" color="grey" ontap="prev" />
+				<button text="Nästa" color="green" ontap="next" weight="2" />
+			</row>
+			<row weight="wrap">
+				<button text="◀ Sida" ontap="prev_page" />
+				<button text="Sida ▶" ontap="next_page" />
+			</row>
+			<row weight="wrap">
+				<button text="Bildspel på/av" color="orange" ontap="slideshow" />
+			</row>
+			<row weight="wrap">
+				<button text="Snabbare (− tid)" ontap="slide_shorter" />
+				<button text="Långsammare (+ tid)" ontap="slide_longer" />
+			</row>
+			<row weight="wrap">
+				<button text="Guidat G" ontap="guided" />
+				<button text="Helsida först V" ontap="overview" />
+				<button text="Anim. P" ontap="anim" />
+			</row>
+		</tab>
+		<tab text="Mer">
+			<row weight="wrap">
+				<button text="Första sidan" ontap="first" />
+				<button text="Sista sidan" ontap="last" />
+			</row>
+			<row weight="wrap">
+				<button text="◀ Förra filen" ontap="prev_file" />
+				<button text="Nästa fil ▶" ontap="next_file" />
+			</row>
+			<row weight="wrap">
+				<button text="Senaste serien" ontap="resume" />
+				<button text="Starta PanelView" ontap="launch" />
+			</row>
+			<row weight="wrap">
+				<button text="Andra skärmen F9" color="blue" ontap="second" />
+				<button text="Anpassning ⇧F9" color="blue" ontap="second_fit" />
+			</row>
+			<row weight="wrap">
+				<button text="Zoom +" ontap="zoom_in" />
+				<button text="Zoom 0" ontap="zoom_reset" />
+				<button text="Zoom −" ontap="zoom_out" />
+			</row>
+			<row weight="wrap">
+				<button text="Helskärm F" ontap="fullscreen" />
+				<button text="Avstånd ⇧F" ontap="distance" />
+				<button text="Esc" color="red" ontap="escape" />
+			</row>
+		</tab>
+	</tabs>
+</layout>
