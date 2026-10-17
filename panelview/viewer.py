@@ -18,6 +18,7 @@ from . import imaging
 from .comic import IMAGE_EXT, Comic, PasswordNeeded
 from .detector import Detector
 from .overlays import PageSlider, ThumbBar
+from .second import paint_frame
 from .store import PanelCache, State, UserPanels, load_sidecar, save_training_example, training_counts
 
 MARGIN = 0.012     # luft runt rutan, andel av sidan
@@ -111,6 +112,7 @@ class Viewer(QWidget):
     contextMenu = Signal(QPointF)      # högerklick
     passwordNeeded = Signal(str)       # krypterat arkiv
     finished = Signal()                # slutet av serien nått (för "nästa fil")
+    painted = Signal()                 # efter varje ritning (andra skärmen följer efter)
 
     def __init__(self, state=None):
         super().__init__()
@@ -149,6 +151,7 @@ class Viewer(QWidget):
         self.edit, self.edit_drag, self.edit_undo, self.edit_redo = False, None, [], []  # stegen = listor av (sida, rutor)
         self.edit_grab = None  # (sida, index, kanter, ursprungsruta, startpunkt) vid storleksändring/flytt
         self.user = None
+        self.frozen = None  # (bild, visningsfönster, fokus, bakgrund) som visas i stället – andra skärmens fördelning
         self.mouse = QPointF()
         self.anim = QVariantAnimation(self, startValue=0.0, endValue=1.0, duration=self.opt("anim_ms"),
                                       easingCurve=QEasingCurve.Type.OutCubic)
@@ -275,6 +278,7 @@ class Viewer(QWidget):
             self.state.save()
             self.comic.close()
         self.comic = None
+        self.frozen = None
         self._anim_clear()
         self.images.clear()
         self.sizes.clear()
@@ -820,14 +824,29 @@ class Viewer(QWidget):
         c = self.opt("bg")
         return QColor(12, 12, 12) if c == "auto" else QColor(c)
 
+    def frame(self, final=False):
+        """(bild, visningsfönster, fokus, bakgrund) som visas nu, eller dit animeringen är på väg (final)."""
+        sp = self._spread(self.sp) if self.comic and self.spreads else None
+        if sp is None or self.view.isEmpty():
+            return None
+        v, f = (self.a1, self.f1) if final and self.animating else (self.view, self.focus)
+        return sp[0], QRectF(v), QRectF(f), sp[3]
+
     def paintEvent(self, _):
+        self._paint()
+        self.painted.emit()
+
+    def _paint(self):
         if self.anims:
             self._anim_sync()
         p = QPainter(self)
         bg = self.bg_color()
         p.fillRect(self.rect(), bg)
         sp = self._spread(self.sp) if self.comic and self.spreads else None
-        if sp is not None and not self.view.isEmpty():
+        if self.frozen is not None and self.comic:  # aktuell bild visas på andra skärmen: behåll den förra här
+            q = self.opt("quality")
+            paint_frame(p, self.width(), self.area_h(), self.frozen, self.opt("dim"), q in ("best", "smooth"))
+        elif sp is not None and not self.view.isEmpty():
             img = sp[0]
             q = self.opt("quality")
             p.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform,

@@ -19,6 +19,7 @@ from . import __version__
 from .comic import ARCHIVE_EXT, IMAGE_EXT
 from .store import State
 from .overlays import Progress
+from .second import MODES as SECOND_MODES, SecondScreen
 from .viewer import DEFAULTS, MAG_SHAPES, Viewer
 
 FILTER = "Serier och bilder ({});;Alla filer (*)".format(
@@ -35,6 +36,7 @@ class MainWindow(QMainWindow):
         self.state = State()
         self.v = Viewer(self.state)
         self.setCentralWidget(self.v)
+        self.second = SecondScreen(self.v)
         self.setAcceptDrops(True)
         self.resize(1280, 900)
         self.acts = {}
@@ -187,6 +189,9 @@ class MainWindow(QMainWindow):
         A("distance", "Avståndsläge (stor sidräknare, döljs vid inaktivitet)", ["Shift+F"],
           lambda: (v.toggle_distance(), self.apply_ui_scale()),
           check=lambda: v.opt("distance_mode"))
+        for k, label in SECOND_MODES:
+            A("second_" + k, label, [], lambda k=k: self.set_second(k), check=lambda k=k: self.second.mode == k)
+        A("second_cycle", "Andra skärmen: växla läge (av/spegling/fördelning)", ["F9"], self.cycle_second)
         A("ui_bigger", "Större gränssnitt", ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
         A("ui_smaller", "Mindre gränssnitt", ["Ctrl+Shift+Down"], lambda: self.ui_scale_step(-1))
         # Bild
@@ -259,8 +264,15 @@ class MainWindow(QMainWindow):
         for k in ("magnifier", None, *("mag_" + x for x, _ in MAG_SHAPES), None,
                   "mag_bigger", "mag_smaller", "mag_more", "mag_less"):
             gm.addSeparator() if k is None else gm.addAction(a[k])
-        for k in ("info", "pagenum", "progress", None, "distance", "ui_bigger", "ui_smaller"):
+        for k in ("info", "pagenum", "progress", None, "distance", "ui_bigger", "ui_smaller", None):
             m.addSeparator() if k is None else m.addAction(a[k])
+        dm = m.addMenu("Andra skärmen")
+        g = QActionGroup(self)
+        for k, _ in SECOND_MODES:
+            dm.addAction(a["second_" + k])
+            g.addAction(a["second_" + k])
+        dm.addSeparator()
+        dm.addAction(a["second_cycle"])
         m = mb.addMenu("&Bild")
         for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
@@ -513,6 +525,23 @@ class MainWindow(QMainWindow):
         self.state.set_setting("fullscreen", self.isFullScreen())
         self._sync()
 
+    def set_second(self, mode, save=True):
+        msg = self.second.set_mode(mode)
+        if save:
+            self.state.set_setting("second_screen", self.second.mode)
+        label = dict(SECOND_MODES)[self.second.mode]
+        self.v.flash(msg or f"Andra skärmen: {label}")
+        self._sync()
+
+    def cycle_second(self):
+        keys = [k for k, _ in SECOND_MODES]
+        self.set_second(keys[(keys.index(self.second.mode) + 1) % len(keys)])
+
+    def _screen_moved(self, _scr):
+        """Huvudfönstret flyttat till en annan skärm: andra skärmen flyttar till en skärm som inte är huvudfönstrets."""
+        if self.second.mode != "off":
+            self.second.relocate()
+
     def toggle_menubar(self):
         on = not self.state.setting("menubar", True)
         self.state.set_setting("menubar", on)
@@ -643,6 +672,10 @@ class MainWindow(QMainWindow):
             self.showFullScreen()
         else:
             self.show()
+        self.windowHandle().screenChanged.connect(self._screen_moved)
+        mode = self.state.setting("second_screen", "off")
+        if mode != "off":  # efter att huvudfönstret hamnat på sin skärm
+            QTimer.singleShot(0, lambda: self.set_second(mode, save=False))
         self._sync()
 
     def keyPressEvent(self, e):
@@ -661,6 +694,7 @@ class MainWindow(QMainWindow):
         if not self.isFullScreen():
             self.state.set_setting("geometry", bytes(self.saveGeometry().toBase64()).decode())
         self.persist.stop()
+        self.second.close()
         self.v.close_comic()
         if self.v.opt("clear_history_on_exit"):
             self.state.clear_history()

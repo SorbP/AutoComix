@@ -20,6 +20,10 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
   `.`/`,` = bildruta fram/bak, Ctrl+Upp/Ned = hastighet. Räknaren visar `▶ 3/40`. Bildspelet väntar tills
   animationen gått ett varv (Navigera → Animation). Max 256 MB per animation; större skalas ner.
 - Varje ruta visas hel på en skärm, så stor som möjligt (längsta sidan i förhållande till skärmen styr).
+- Andra skärmen (F9 växlar, eller Visa → Andra skärmen): **Spegling** visar samma ruta/sida i helskärm på den andra
+  skärmen, anpassad till dess format. **Automatisk fördelning** visar liggande rutor/sidor på den liggande skärmen och
+  stående på den stående; den andra skärmen behåller sin senaste bild. Båda styrs från huvudfönstret (tangenter,
+  handkontroll) och läget sparas till nästa start. Har skärmarna samma orientering fungerar fördelningen som spegling.
 - Bläddraren (L): "Visa alla sidor" (P) visar arkivets sidor som miniatyrer direkt ur zip/cbz/pdf/mapp (rar/7z via
   7-Zip) utan uppackning på disk; dubbelklick öppnar på den sidan.
 - Förloppslister: miniatyrer (bläddraren, T, Ctrl+T), rutdetektering för hela serien (tunn orange list + "rutor 12/40"
@@ -46,6 +50,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `E` redigera rutor (dra utanför = ny ruta, dra i ruta = flytta, dra i kant/hörn = ändra storlek,
   Shift+dra = ny ruta även ovanpå en ruta, högerklick/Delete = ta bort, K = sidan är rätt (träningsdata),
   Ctrl+Z = ångra, Ctrl+R = automatiskt igen, `E` igen = klar)
+- `F9` andra skärmen: av → spegling → automatisk fördelning
 - `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
 
 ## Bygga
@@ -75,5 +80,6 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 - `python -m pytest -q tests` – enhetstester.
 - `python build_tools/anim_smoke.py` – animerade sidor: avkodning GIF/WebP/APNG, uppspelning, paus, steg, hastighet, bildspel.
 - `python build_tools/ui_smoke.py` – gränssnittets storlek, avståndsläge, förstoringsglasets former.
+- `python build_tools/second_smoke.py` – andra skärmen: spegling, fördelning liggande/stående, F9.
 - `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.
