@@ -7,6 +7,8 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime. Hybridlogiken finns i
   `panelview/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
+- Fler än 100 oskannade sidor (ställbart): frågar om alla ska skannas nu eller 100 i taget; nästa 100 skannas
+  när du är 10 sidor från slutet av de skannade (Inställningar → Många oskannade sidor / Sidor per sats).
 - En `.cbxy` bredvid serien (t.ex. rättad i `cbxy-editor`) går före cachen.
 - Läsriktning, sida och ruta sparas löpande per serie. Ctrl+L öppnar senaste serien där du var;
   Arkiv → Visningshistorik (Ctrl+Shift+H) visar de 20 senaste med position. Vid hård krasch skrivs `crash.log` i datamappen.

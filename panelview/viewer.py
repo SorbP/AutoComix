@@ -32,7 +32,7 @@ DEFAULTS = {
     "double": False, "cover_single": True, "shadow": True,
     "rotation": 0, "auto_color": False, "gamma": 1.0, "vibrance": 0.0,
     "bg": "#0c0c0c", "quality": "smooth", "anim": True, "anim_ms": 320,
-    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "auto_next_file": True, "history": True, "clear_history_on_exit": False,
+    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "detect_large": "ask", "detect_batch": 100, "auto_next_file": True, "history": True, "clear_history_on_exit": False,
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
@@ -243,6 +243,8 @@ class Viewer(QWidget):
         self.detector.pageDone.connect(self._on_detected)
         self.detector.progress.connect(self._on_progress)
         self.detector.set_focus(start)
+        if self._scan_in_batches(comic):
+            self.detector.set_batch(self.opt("detect_batch"))
         self.detector.start()
         self._layout()
         self.goto_page(start, forward=True, animate=False)
@@ -1171,6 +1173,32 @@ class Viewer(QWidget):
     def reset_zoom(self):
         self.free, self.custom = False, None
         self._retarget()
+
+    def _scan_in_batches(self, comic):
+        """Fler oskannade sidor än detect_batch: skanna alla nu eller en sats i taget (frågar om detect_large=ask)."""
+        n = int(self.opt("detect_batch"))
+        mode = self.opt("detect_large")
+        if n <= 0 or mode == "all":
+            return False
+        left = sum(self.cache.get(p) is None for p in comic.pages)
+        if left <= n:
+            return False
+        if mode == "batch":
+            return True
+        from PySide6.QtWidgets import QCheckBox, QMessageBox
+        box = QMessageBox(QMessageBox.Icon.Question, "AutoComix",
+                          f"{comic.title} har {left} sidor som inte är skannade efter rutor.\n\n"
+                          f"Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
+                          f"av de skannade)?", parent=self.window())
+        every = box.addButton("Skanna alla nu", QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(f"{n} i taget", QMessageBox.ButtonRole.RejectRole)
+        keep = QCheckBox("Kom ihåg valet (ändras under Inställningar)")
+        box.setCheckBox(keep)
+        box.exec()
+        batch = box.clickedButton() is not every
+        if keep.isChecked():
+            self.set_opt("detect_large", "batch" if batch else "all")
+        return batch
 
     # ---------- bildspel / förstoringsglas ----------
     def toggle_slideshow(self):

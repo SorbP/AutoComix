@@ -1058,6 +1058,9 @@ class OptionsDialog(QDialog):
         f.addRow(chk("slideshow_next_file", "Bildspelet fortsätter med nästa fil i mappen"))
         f.addRow(chk("slideshow_loop", "Bildspelet börjar om från början vid slutet"))
         f.addRow("Sortering", combo("sort", SORTS))
+        f.addRow("Många oskannade sidor", combo("detect_large", [("ask", "Fråga"), ("all", "Skanna alla direkt"),
+                                                                ("batch", "Skanna en sats i taget")]))
+        f.addRow("Sidor per sats", num("detect_batch", 0, 10000, 10, 0, " (0 = alltid alla)"))
         f.addRow(QLabel("<b>Avslutning</b>"))
         f.addRow("Esc när helskärm och fönster redan är stängda",
                  combo("esc_quit", [("never", "Avsluta inte (Ctrl+Q avslutar)"), ("confirm", "Fråga först"),

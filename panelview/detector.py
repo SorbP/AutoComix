@@ -92,9 +92,23 @@ class Detector(QThread):
         self._stop = threading.Event()
         self._wake = threading.Event()
         self.ml_ok = True
+        self.batch = 0  # >0: skanna bara sidorna lo..hi-1, nästa sats när läsaren är 10 sidor från kanten
+        self.lo = self.hi = 0
+
+    def set_batch(self, n):
+        self.batch = int(n)
+        self.lo, self.hi = max(0, self.focus - 10), self.focus + self.batch
 
     def set_focus(self, i):
         self.focus = i
+        if self.batch:
+            if i < self.lo or i >= self.hi:  # hopp utanför fönstret: ny sats från den sidan
+                self.lo, self.hi = max(0, i - 10), i + self.batch
+            else:
+                if i >= self.hi - 10:
+                    self.hi += self.batch
+                if self.lo and i < self.lo + 10:
+                    self.lo = max(0, self.lo - self.batch)
         self._wake.set()
 
     def stop(self):
@@ -103,18 +117,25 @@ class Detector(QThread):
         self.wait(5000)
 
     def _todo(self):
+        """(sidor att skanna nu i prioritetsordning, antal oskannade totalt)."""
         n = len(self.comic.pages)
-        todo = [i for i in range(n) if self.cache.get(self.comic.pages[i]) is None]
+        left = [i for i in range(n) if self.cache.get(self.comic.pages[i]) is None]
+        todo = [i for i in left if self.lo <= i < self.hi] if self.batch else left
         # Närmast framför aktuell sida först, sidor bakåt får lägre prioritet.
-        return sorted(todo, key=lambda i: (i - self.focus) if i >= self.focus else n + self.focus - i)
+        return sorted(todo, key=lambda i: (i - self.focus) if i >= self.focus else n + self.focus - i), len(left)
 
     def run(self):
         n = len(self.comic.pages)
         while not self._stop.is_set():
-            todo = self._todo()
-            self.progress.emit(n - len(todo), n)
+            self._wake.clear()
+            todo, left = self._todo()
+            self.progress.emit(n - left, n)
             if not todo:
-                break
+                if not left:
+                    break
+                self.cache.save()  # satsen klar: vänta tills läsaren närmar sig nästa
+                self._wake.wait()
+                continue
             i = todo[0]
             try:
                 cv, ml, self.ml_ok = detect_bytes(self.comic.read(i), self.ml_ok)
