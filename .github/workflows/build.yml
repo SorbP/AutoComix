@@ -1,6 +1,7 @@
-# Bygger AutoComix för Windows och Linux och kör ett självtest per plattform.
+# Bygger AutoComix (äldre versioner: PanelView) för Windows och Linux och kör ett självtest per plattform.
 # Startas bara manuellt (Actions -> Build -> Run workflow). Varje version taggas (v2.x.y) utan att bygga;
 # ange taggen i fältet "release" för att bygga den versionen och lägga filerna under Releases.
+# Licenstexterna (AGPL-3.0 + tredjepart) läggs alltid till från main, så även äldre versioner får dem.
 name: Build
 on:
   workflow_dispatch:
@@ -19,44 +20,56 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: windows-latest, name: windows-x64, out: dist/AutoComix/AutoComix.exe}
-          - {os: ubuntu-22.04, name: linux-x64, out: dist/AutoComix/AutoComix}       # glibc 2.35 => kör på de flesta distar
+          - {os: windows-latest, name: windows-x64}
+          - {os: ubuntu-22.04, name: linux-x64}       # glibc 2.35 => kör på de flesta distar
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with: {ref: "${{ inputs.release || github.ref }}"}
+      - uses: actions/checkout@v4   # licensskriptet och licenstexterna från main
+        with: {ref: main, path: _ci}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Linux-bibliotek för Qt
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libfontconfig1 libdbus-1-3
       - name: Beroenden
-        run: pip install -r requirements.txt pyinstaller pillow pytest
+        run: pip install -r requirements.txt pyinstaller pillow pytest packaging
       - name: Tester
-        run: python -m pytest -q tests
+        run: python -m pytest -q tests --ignore=_ci
       - name: Bygg
-        run: pyinstaller --noconfirm AutoComix.spec
+        shell: bash
+        run: |
+          spec=$(ls *.spec | head -1); app=$(basename "$spec" .spec)
+          pyinstaller --noconfirm "$spec"
+          if [ -d "dist/$app" ]; then exe="dist/$app/$app"; else exe="dist/$app"; fi   # mappläge från 2.17.0
+          [ "$RUNNER_OS" = "Windows" ] && exe="$exe.exe"
+          echo "APP=$app" >> "$GITHUB_ENV"; echo "EXE=$exe" >> "$GITHUB_ENV"
+          echo "PKG=$app-${{ inputs.release || 'dev' }}-${{ matrix.name }}" >> "$GITHUB_ENV"
       - name: Självtest
         shell: bash
         env: {QT_QPA_PLATFORM: offscreen}
         run: |
           python build_tools/make_test_cbz.py test.cbz
-          "${{ matrix.out }}" test.cbz --window --selftest=res.json || true
+          "$EXE" test.cbz --window --selftest=res.json || true
           cat res.json
           python -c "import json,sys; r=json.load(open('res.json')); sys.exit(0 if r['ok'] and r['panels']>0 else 1)"
-      - name: Packa
+      - name: Packa (med licenser)
         shell: bash
         run: |
-          cd dist
-          if [ "$RUNNER_OS" = "Windows" ]; then 7z a ../AutoComix-${{ matrix.name }}.zip AutoComix;
-          else tar czf ../AutoComix-${{ matrix.name }}.tar.gz AutoComix; fi
+          mkdir -p "pkg/$APP"
+          if [ -d "dist/$APP" ]; then cp -r "dist/$APP/." "pkg/$APP/"; else cp "$EXE" "pkg/$APP/"; fi
+          cp requirements.txt _ci/requirements.txt   # licenser för de beroenden den här versionen har
+          python _ci/build_tools/collect_licenses.py "pkg/$APP"
+          cd pkg
+          if [ "$RUNNER_OS" = "Windows" ]; then 7z a "../$PKG.zip" "$APP"; else tar czf "../$PKG.tar.gz" "$APP"; fi
       - uses: actions/upload-artifact@v4
         if: ${{ inputs.release == '' }}  # releaser läggs i Releases (räknas inte mot lagringskvoten)
         with:
-          name: AutoComix-${{ matrix.name }}
-          path: AutoComix-${{ matrix.name }}.*
+          name: ${{ env.PKG }}
+          path: ${{ env.PKG }}.*
           retention-days: 1
       - name: Release
         if: ${{ inputs.release != '' }}
         uses: softprops/action-gh-release@v2
-        with: {tag_name: "${{ inputs.release }}", files: "AutoComix-${{ matrix.name }}.*"}
+        with: {tag_name: "${{ inputs.release }}", name: "${{ env.APP }} ${{ inputs.release }}", files: "${{ env.PKG }}.*"}

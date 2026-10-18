@@ -34,9 +34,8 @@ Källkod: https://github.com/SorbP/PanelView
 
 Inbyggda bibliotek under LGPL (Qt/PySide6/shiboken6: LGPL-3.0; py7zr, pybcj, pyppmd, inflate64,
 multivolumefile: LGPL-2.1 eller senare) är omodifierade. Deras källkod finns hos respektive projekt
-(länkar i licenses/<paket>/). Programmet är byggt i mappläge, så biblioteken ligger som separata filer
-under _internal/ och kan bytas mot andra kompatibla versioner. Vill du bygga om allt: klona källkoden
-och kör pyinstaller AutoComix.spec (se README.md).
+(länkar i licenses/<paket>/). {bygge} Vill du bygga om allt: klona källkoden och kör pyinstaller
+med .spec-filen i repot (se README.md); taggen för varje version finns på GitHub.
 
 Rutmodellen models/panels_int8.onnx kommer från mosesb/best-comic-panel-detection (märkt Apache-2.0),
 som är tränad med Ultralytics/YOLOv12 (AGPL-3.0). Den sprids här under AGPL-3.0 tillsammans med programmet.
@@ -74,7 +73,10 @@ def collect(dst):
     shutil.copytree(ROOT / "licenses", lic)
     shutil.copy(ROOT / "LICENSE", dst / "LICENSE")
     shutil.copy(ROOT / "LICENSES.md", dst / "LICENSES.md")
-    (dst / "KÄLLKOD.txt").write_text(KALLKOD, encoding="utf-8")
+    bygge = ("Programmet är byggt i mappläge, så biblioteken ligger som separata filer under _internal/ och kan\n"
+             "bytas mot andra kompatibla versioner." if (dst / "_internal").is_dir() else
+             "Den här äldre versionen är en enda körbar fil; biblioteken byts ut genom att bygga om från källkoden.")
+    (dst / "KÄLLKOD.txt").write_text(KALLKOD.format(bygge=bygge), encoding="utf-8")
     shutil.copy(ROOT / "panelview" / "vendor" / "LICENSE_cbxy", lic / "cbxy-LICENSE.txt")
     py = Path(sys.base_prefix) / "LICENSE.txt"
     if py.exists():
