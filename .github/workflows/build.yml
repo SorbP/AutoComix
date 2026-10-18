@@ -1,10 +1,14 @@
 # Bygger AutoComix för Windows och Linux och kör ett självtest per plattform.
-# Starta manuellt (Actions -> Build -> Run workflow) eller pusha en tagg v* för att skapa en release.
+# Startas bara manuellt (Actions -> Build -> Run workflow). Varje version taggas (v2.x.y) utan att bygga;
+# ange taggen i fältet "release" för att bygga den versionen och lägga filerna under Releases.
 name: Build
 on:
   workflow_dispatch:
-  push:
-    tags: ["v*"]
+    inputs:
+      release:
+        description: "Tagg att släppa, t.ex. v2.18.0 (tomt = bara bygga aktuell gren)"
+        required: false
+        default: ""
 
 permissions:
   contents: write   # för att skapa release med filerna
@@ -20,6 +24,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with: {ref: "${{ inputs.release || github.ref }}"}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - name: Linux-bibliotek för Qt
@@ -46,12 +51,12 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then 7z a ../AutoComix-${{ matrix.name }}.zip AutoComix;
           else tar czf ../AutoComix-${{ matrix.name }}.tar.gz AutoComix; fi
       - uses: actions/upload-artifact@v4
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}  # taggar läggs i Releases (räknas inte mot lagringskvoten)
+        if: ${{ inputs.release == '' }}  # releaser läggs i Releases (räknas inte mot lagringskvoten)
         with:
           name: AutoComix-${{ matrix.name }}
           path: AutoComix-${{ matrix.name }}.*
           retention-days: 1
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: ${{ inputs.release != '' }}
         uses: softprops/action-gh-release@v2
-        with: {files: "AutoComix-${{ matrix.name }}.*"}
+        with: {tag_name: "${{ inputs.release }}", files: "AutoComix-${{ matrix.name }}.*"}

@@ -90,7 +90,8 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
    på var femte rättad sida och installerar bara en bättre modell, i `<datamapp>/models/panels_int8.onnx`.
 3. AutoComix använder den nya modellen vid nästa start och detekterar om sidorna. Ingen ombyggnad behövs.
 4. För att bygga in modellen i programmet: kopiera den till `models/`, bygg och tagga en ny version
-   (`git tag v2.x.0 && git push origin v2.x.0`), så bygger GitHub nya filer under Releases.
+   och kör Actions → Build → Run workflow med taggen (t.ex. `v2.x.0`) i fältet release, så bygger GitHub nya filer
+   under Releases. Varje version taggas, men bara manuellt startade byggen skapar releaser (från 2.17.0, mappbygget).
 
 ## Tester
 - `python -m pytest -q tests` – enhetstester.
