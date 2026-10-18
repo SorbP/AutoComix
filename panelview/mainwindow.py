@@ -1,6 +1,6 @@
 """Huvudfönster: menyer, kortkommandon (ändringsbara), dialoger för inställningar, bokmärken, miniatyrer och utskrift.
 
-Funktionsuppsättningen följer CDisplayEx (se FEATURES.md) plus PanelViews guidade rutzoom.
+Funktionsuppsättningen följer CDisplayEx (se FEATURES.md) plus AutoComix guidade rutzoom.
 """
 import sys
 import time
@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
         # Inställningar / hjälp
         A("options", "Inställningar…", ["Ctrl+,", "F12"], self.options)
         A("help", "Kortkommandon", ["H", "F1", "?"], self.toggle_help, check=lambda: v.show_help)
-        A("about", "Om PanelView", [], self.about)
+        A("about", "Om AutoComix", [], self.about)
         A("escape", "Lämna helskärm / stäng hjälp / avsluta", ["Esc"], self.escape)
         self._apply_keys()
 
@@ -350,7 +350,7 @@ class MainWindow(QMainWindow):
         for k in ("save_page", "copy_page", "print", "close_file", "next_file", "prev_file", "goto", "thumbs",
                   "slideshow", "bm_add", "rtl"):
             self.acts[k].setEnabled(has)
-        self.setWindowTitle(f"PanelView – {self.v.comic.title}" if has else "PanelView")
+        self.setWindowTitle(f"AutoComix – {self.v.comic.title}" if has else "AutoComix")
         self.v.help_text = self.help_text()
 
     def _context(self, pos):
@@ -653,7 +653,7 @@ class MainWindow(QMainWindow):
         elif self.v.opt("esc_quit") == "direct":
             self.close()
         elif self.v.opt("esc_quit") == "confirm":
-            if QMessageBox.question(self, "Avsluta", "Avsluta PanelView?") == QMessageBox.StandardButton.Yes:
+            if QMessageBox.question(self, "Avsluta", "Avsluta AutoComix?") == QMessageBox.StandardButton.Yes:
                 self.close()
         else:
             self.v.flash("Esc avslutar inte – Ctrl+Q avslutar (ändras i Inställningar → Läsning)")
@@ -724,11 +724,11 @@ class MainWindow(QMainWindow):
                  "Mittenknapp (håll)         förstoringsglas",
                  "Högerklick                 meny",
                  "Musknappar bakåt/framåt    föregående / nästa fil"]
-        return "PanelView – kortkommandon\n\n" + "\n".join(rows)
+        return "AutoComix – kortkommandon\n\n" + "\n".join(rows)
 
     def about(self):
-        QMessageBox.about(self, "Om PanelView",
-                          f"<b>PanelView {__version__}</b><br>Serieläsare med automatisk zoom ruta för ruta.<br><br>"
+        QMessageBox.about(self, "Om AutoComix",
+                          f"<b>AutoComix {__version__}</b><br>Serieläsare med automatisk zoom ruta för ruta.<br><br>"
                           "Rutdetektering: cbxy (MIT) och YOLO-modellen mosesb/best-comic-panel-detection (Apache-2.0)"
                           " via ONNX Runtime.<br>Gränssnitt: Qt / PySide6 (LGPL). PDF: pdfium (BSD/Apache).")
 

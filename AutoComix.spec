@@ -1,6 +1,6 @@
-# PyInstaller: bygger PanelView som en körbar fil per plattform.
-#   Windows: dist/PanelView.exe   Linux: dist/PanelView
-# Kör:  pyinstaller PanelView.spec   (på respektive plattform; korskompilering stöds inte av PyInstaller)
+# PyInstaller: bygger AutoComix som en körbar fil per plattform.
+#   Windows: dist/AutoComix.exe   Linux: dist/AutoComix
+# Kör:  pyinstaller AutoComix.spec   (på respektive plattform; korskompilering stöds inte av PyInstaller)
 import sys
 
 block_cipher = None
@@ -11,10 +11,10 @@ excl = ["tkinter", "matplotlib", "scipy", "pandas", "torch", "ultralytics", "PIL
         "PySide6.Qt3DCore", "PySide6.QtMultimedia", "PySide6.QtCharts", "PySide6.QtDataVisualization",
         "PySide6.QtPdf", "PySide6.QtSql", "PySide6.QtNetwork", "PySide6.QtOpenGL", "PySide6.QtSvg"]
 
-a = Analysis(["PanelView.pyw"], pathex=["."], datas=datas, hiddenimports=["py7zr", "pypdfium2"],
+a = Analysis(["AutoComix.pyw"], pathex=["."], datas=datas, hiddenimports=["py7zr", "pypdfium2"],
              excludes=excl, noarchive=False)
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 icon = "assets/icon.ico" if sys.platform == "win32" else None
 
-exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="PanelView", console=False, icon=icon,
+exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], name="AutoComix", console=False, icon=icon,
           upx=False, runtime_tmpdir=None)

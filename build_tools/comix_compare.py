@@ -1,4 +1,4 @@
-"""Jämför CoMix-rutorna (Faster R-CNN, maskinritade) med PanelViews detektering på samma sidor.
+"""Jämför CoMix-rutorna (Faster R-CNN, maskinritade) med AutoComix detektering på samma sidor.
 
 Sidor där båda är överens (alla rutor matchar med IoU > 0.75) är pålitliga träningsexempel.
   python build_tools/comix_compare.py <mapp med *.jpg + *.json> [antal att rita]

@@ -1,17 +1,17 @@
-"""Tränar om rutmodellen och installerar den i PanelView om hela läsaren blir bättre.
+"""Tränar om rutmodellen och installerar den i AutoComix om hela läsaren blir bättre.
 
 Data:
   - Dina rättade/godkända sidor (redigeringsläget, E/K) i <datamapp>/training. Var femte sida hålls utanför
     träningen och används bara för att mäta.
   - Externa dataset i YOLO-format med train/ och val/ (t.ex. CoMix, se build_tools/comix_to_yolo.py).
 
-Flöde: finjustera YOLO på grafikkortet -> exportera till ONNX int8 -> mät hela PanelView-kedjan (eval_pages.py)
+Flöde: finjustera YOLO på grafikkortet -> exportera till ONNX int8 -> mät hela AutoComix-kedjan (eval_pages.py)
 med gammal och ny modell på dina provsidor och de externa valideringssidorna -> installera bara om andelen
 helt rätt sidor ökar. Resultaten loggas i <datamapp>/training/historik.jsonl.
 
 Kör (med .venv-export som har ultralytics + torch med CUDA):
   .venv-export/Scripts/python build_tools/train_model.py [--extra datasets/comix_yolo] [--epochs 40] [--force]
-Datamapp: Windows %LOCALAPPDATA%\\PanelView, Linux ~/.local/share/PanelView.
+Datamapp: Windows %LOCALAPPDATA%\\AutoComix, Linux ~/.local/share/AutoComix.
 """
 import argparse
 import json
@@ -115,7 +115,7 @@ def main():
     shutil.copy2(cand, cur.with_suffix(".tmp"))
     cur.with_suffix(".tmp").replace(cur)
     shutil.copy2(best, BASE / "models" / "panels_ft.pt")
-    print(f"Installerad: {cur}  (PanelView detekterar om sidorna vid nästa start)")
+    print(f"Installerad: {cur}  (AutoComix detekterar om sidorna vid nästa start)")
 
 
 if __name__ == "__main__":

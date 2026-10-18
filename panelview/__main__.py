@@ -27,8 +27,8 @@ def _crash_log():
 def main():
     _log = _crash_log()  # noqa: F841 – filen måste hållas öppen
     app = QApplication(sys.argv)
-    app.setApplicationName("PanelView")
-    app.setOrganizationName("PanelView")
+    app.setApplicationName("AutoComix")
+    app.setOrganizationName("AutoComix")
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     if (base / "assets" / "icon.png").exists():
         app.setWindowIcon(QIcon(str(base / "assets" / "icon.png")))

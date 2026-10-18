@@ -1,4 +1,4 @@
-# PanelView
+# AutoComix
 
 Serieläsare med CDisplayEx:s funktioner plus automatisk zoom ruta för ruta. Körs på Windows och Linux.
 Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEATURES.md).
@@ -6,7 +6,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - Öppnar bildmappar, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` och `.pdf`. Krypterade arkiv ger en lösenordsfråga.
 - Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime. Hybridlogiken finns i
   `panelview/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
-  (Windows `%LOCALAPPDATA%\PanelView`, Linux `~/.local/share/PanelView`).
+  (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - En `.cbxy` bredvid serien (t.ex. rättad i `cbxy-editor`) går före cachen.
 - Läsriktning, sida och ruta sparas löpande per serie. Ctrl+L öppnar senaste serien där du var;
   Arkiv → Visningshistorik (Ctrl+Shift+H) visar de 20 senaste med position. Vid hård krasch skrivs `crash.log` i datamappen.
@@ -35,9 +35,9 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
   "fråga först" eller "avsluta direkt"; ett Esc inom 1 s efter att helskärmen lämnats avslutar aldrig.
 
 ## Starta
-- **Windows:** `dist\windows\PanelView.exe`. `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
-  **Öppna i PanelView** i högerklicksmenyn (`.\install.ps1 -Uninstall` tar bort dem).
-- **Linux:** `dist/linux/PanelView` (lokalt bygge kräver glibc 2.39; CI-bygget på Ubuntu 22.04 kör på äldre distar).
+- **Windows:** `dist\windows\AutoComix.exe`. `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
+  **Öppna i AutoComix** i högerklicksmenyn (`.\install.ps1 -Uninstall` tar bort dem).
+- **Linux:** `dist/linux/AutoComix` (lokalt bygge kräver glibc 2.39; CI-bygget på Ubuntu 22.04 kör på äldre distar).
 - Startad utan fil öppnas ett tomt fönster: dra in en mapp, ett arkiv, en PDF eller en bild.
   Släpp på ikonen, eller ange en sökväg, så öppnas serien direkt i helskärm (`--window` för fönster).
 
@@ -61,18 +61,18 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
 - `F` helskärm, `I` informationsrad (annars bara räknaren nere till höger), `Ctrl+B` bokmärke, högerklick = meny
 
 ## Fjärrkontroll i mobilen (Unified Remote)
-`remote\installera_unified_remote.ps1` kopierar `remote\unified\PanelView` till Unified Remotes mapp för egna
-fjärrkontroller. Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **PanelView** under fjärrkontrollerna
+`remote\installera_unified_remote.ps1` kopierar `remote\unified\AutoComix` till Unified Remotes mapp för egna
+fjärrkontroller. Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **AutoComix** under fjärrkontrollerna
 i mobilen. Fliken *Läs*: nästa/föregående, sida, bildspel på/av och snabbare/långsammare. Fliken *Mer*: första/sista
-sidan, filer, senaste serien, starta PanelView, andra skärmen, zoom, helskärm. Knapparna skickar tangenter och växlar
-först till PanelView-fönstret.
+sidan, filer, senaste serien, starta AutoComix, andra skärmen, zoom, helskärm. Knapparna skickar tangenter och växlar
+först till AutoComix-fönstret.
 
 ## Bygga
 ```
 uv venv -p 3.12 .venv
 uv pip install -p .venv -r requirements.txt pyinstaller pillow pytest
 .venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python -m PyInstaller PanelView.spec        # -> dist/PanelView(.exe)
+.venv/Scripts/python -m PyInstaller AutoComix.spec        # -> dist/AutoComix(.exe)
 ```
 PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger båda
 (Windows och Linux) och kör ett självtest (`--selftest=res.json`).
@@ -86,7 +86,7 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 2. När minst 30 sidor är rättade: `.venv-export/Scripts/python build_tools/train_model.py`
    (kräver ultralytics och PyTorch med CUDA för rimlig tid). Skriptet mäter träffsäkerheten före/efter
    på var femte rättad sida och installerar bara en bättre modell, i `<datamapp>/models/panels_int8.onnx`.
-3. PanelView använder den nya modellen vid nästa start och detekterar om sidorna. Ingen ombyggnad behövs.
+3. AutoComix använder den nya modellen vid nästa start och detekterar om sidorna. Ingen ombyggnad behövs.
 4. För att bygga in modellen i programmet: kopiera den till `models/`, bygg och tagga en ny version
    (`git tag v2.x.0 && git push origin v2.x.0`), så bygger GitHub nya filer under Releases.
 

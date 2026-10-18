@@ -34,7 +34,7 @@
 			</row>
 			<row weight="wrap">
 				<button text="Senaste serien" ontap="resume" />
-				<button text="Starta PanelView" ontap="launch" />
+				<button text="Starta AutoComix" ontap="launch" />
 			</row>
 			<row weight="wrap">
 				<button text="Andra skärmen F9" color="blue" ontap="second" />

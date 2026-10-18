@@ -1,6 +1,6 @@
 """Packar upp CoMix-shards (WebDataset .tar) till YOLO-format: <ut>/{train,val}/{images,labels}.
 
-Bara berättarsidor (page_class == story). Rutorna är CoMix Faster R-CNN-detektioner, städade med PanelViews dedupe.
+Bara berättarsidor (page_class == story). Rutorna är CoMix Faster R-CNN-detektioner, städade med AutoComix dedupe.
   python build_tools/comix_to_yolo.py datasets/comix datasets/comix_yolo
 """
 import io

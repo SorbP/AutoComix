@@ -1,15 +1,15 @@
 local keyboard = libs.keyboard;
 local win = libs.win;
 
--- PanelView måste ha fokus för att tangenterna ska nå fram (andra skärmens fönster tar aldrig fokus).
+-- AutoComix måste ha fokus för att tangenterna ska nå fram (andra skärmens fönster tar aldrig fokus).
 local function key(...)
-	pcall(function () win.switchtowait("PanelView.exe"); end);
+	pcall(function () win.switchtowait("AutoComix.exe"); end);
 	keyboard.stroke(...);
 end
 
---@help Starta PanelView
+--@help Starta AutoComix
 actions.launch = function ()
-	os.start("D:\\ClaudeBox\\PanelView\\dist\\windows\\PanelView.exe");
+	os.start("D:\\ClaudeBox\\PanelView\\dist\\windows\\AutoComix.exe");
 end
 
 -- Läsa

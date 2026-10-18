@@ -1,4 +1,4 @@
-"""Utvärderar hela PanelView-kedjan (CV + modell + städning + läsordning) mot facit i YOLO-format.
+"""Utvärderar hela AutoComix-kedjan (CV + modell + städning + läsordning) mot facit i YOLO-format.
 
 Mått: hittade rutor (andel facit-rutor som hittas, IoU > 0.5), felaktiga rutor (andel hittade som inte finns),
 helt rätt sidor (alla rutor hittade, inga extra, rätt ordning).

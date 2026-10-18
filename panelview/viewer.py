@@ -270,7 +270,7 @@ class Viewer(QWidget):
         while th.is_alive():
             if dlg is None and time.monotonic() - t0 > 0.4:  # snabba arkiv: ingen dialog som blinkar förbi
                 dlg = QProgressDialog(f"Packar upp {path.name}…", None, 0, 100, self.window())
-                dlg.setWindowTitle("PanelView")
+                dlg.setWindowTitle("AutoComix")
                 dlg.setWindowModality(Qt.WindowModality.WindowModal)
                 dlg.setMinimumDuration(0)
                 dlg.show()

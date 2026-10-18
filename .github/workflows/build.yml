@@ -1,4 +1,4 @@
-# Bygger PanelView för Windows och Linux och kör ett självtest per plattform.
+# Bygger AutoComix för Windows och Linux och kör ett självtest per plattform.
 # Starta manuellt (Actions -> Build -> Run workflow) eller pusha en tagg v* för att skapa en release.
 name: Build
 on:
@@ -15,8 +15,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - {os: windows-latest, name: windows-x64, out: dist/PanelView.exe}
-          - {os: ubuntu-22.04, name: linux-x64, out: dist/PanelView}       # glibc 2.35 => kör på de flesta distar
+          - {os: windows-latest, name: windows-x64, out: dist/AutoComix.exe}
+          - {os: ubuntu-22.04, name: linux-x64, out: dist/AutoComix}       # glibc 2.35 => kör på de flesta distar
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
       - name: Tester
         run: python -m pytest -q tests
       - name: Bygg
-        run: pyinstaller --noconfirm PanelView.spec
+        run: pyinstaller --noconfirm AutoComix.spec
       - name: Självtest
         shell: bash
         env: {QT_QPA_PLATFORM: offscreen}
@@ -43,15 +43,15 @@ jobs:
         shell: bash
         run: |
           cd dist
-          if [ "$RUNNER_OS" = "Windows" ]; then 7z a ../PanelView-${{ matrix.name }}.zip PanelView.exe;
-          else tar czf ../PanelView-${{ matrix.name }}.tar.gz PanelView; fi
+          if [ "$RUNNER_OS" = "Windows" ]; then 7z a ../AutoComix-${{ matrix.name }}.zip AutoComix.exe;
+          else tar czf ../AutoComix-${{ matrix.name }}.tar.gz AutoComix; fi
       - uses: actions/upload-artifact@v4
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}  # taggar läggs i Releases (räknas inte mot lagringskvoten)
         with:
-          name: PanelView-${{ matrix.name }}
-          path: PanelView-${{ matrix.name }}.*
+          name: AutoComix-${{ matrix.name }}
+          path: AutoComix-${{ matrix.name }}.*
           retention-days: 1
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
-        with: {files: "PanelView-${{ matrix.name }}.*"}
+        with: {files: "AutoComix-${{ matrix.name }}.*"}

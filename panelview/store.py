@@ -10,11 +10,23 @@ import sys
 
 def _base():
     if sys.platform == "win32":
-        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "PanelView"
-    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "PanelView"
+        return Path(os.environ.get("LOCALAPPDATA", Path.home())) / "AutoComix"
+    return Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local" / "share")) / "AutoComix"
 
 
-BASE = _base()
+def _migrate(base):
+    """Programmet hette PanelView före 2.16: flytta den gamla datamappen (inställningar, cache, modeller) en gång."""
+    old = base.with_name("PanelView")
+    if old.is_dir() and not base.exists():
+        try:
+            old.rename(base)
+        except OSError:  # t.ex. öppen fil i en gammal instans: kopiera i stället, den gamla mappen ligger kvar
+            import shutil
+            shutil.copytree(old, base)
+    return base
+
+
+BASE = _migrate(_base())
 CACHE = BASE / "cache"
 STATE = BASE / "state.json"
 CACHE_VERSION = 2  # höjs när rutdetekteringen ändras

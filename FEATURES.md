@@ -1,9 +1,9 @@
-# Funktioner: CDisplayEx → PanelView
+# Funktioner: CDisplayEx → AutoComix
 
 Källa för CDisplayEx-funktionerna: programmets egna menytexter (översättningsfilerna `*.mo` i installationsmappen)
-och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskrivet ovanpå PanelViews rutzoom.
+och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskrivet ovanpå AutoComix rutzoom.
 
-| CDisplayEx | PanelView | Genväg |
+| CDisplayEx | AutoComix | Genväg |
 |---|---|---|
 | Ladda filer / Öppna mapp | Filbläddrare med mappträd, fillista och förhandsvisning (även zip/pdf/rar/7z), Öppna fil, Öppna mapp, dra och släpp | L, Ctrl+O, Ctrl+Shift+O |
 | Öppna senaste, Rensa historik, historik på/av, rensa vid stängning | Arkiv → Öppna senaste, Inställningar → Historik | |

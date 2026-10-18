@@ -84,7 +84,7 @@ class SecondScreen(QWidget):
                          | Qt.WindowType.WindowDoesNotAcceptFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setCursor(Qt.CursorShape.BlankCursor)
-        self.setWindowTitle("PanelView – andra skärmen")
+        self.setWindowTitle("AutoComix – andra skärmen")
         self.v = viewer
         self.mode = "off"
         self.live = True        # visar aktuell ruta (annars self.held)
