@@ -1,7 +1,7 @@
 # Licenser
 
 **AutoComix** – Copyright (C) 2026 Stefan Persson. Fri programvara under
-[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Källkod: https://github.com/SorbP/PanelView
+[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Källkod: https://github.com/SorbP/AutoComix
 
 AGPL-3.0 är vald för att rutmodellen är tränad med Ultralytics/YOLOv12 (AGPL-3.0); alla övriga delar är
 förenliga med den. Den byggda programmappen innehåller de fullständiga licenstexterna i `licenses/`

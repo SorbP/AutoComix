@@ -30,7 +30,7 @@ NOTES = {
 SKIP_FILES = {"LicenseRef-Qt-Commercial.txt"}  # PySide6 används inte under den kommersiella licensen
 
 KALLKOD = """AutoComix är fri programvara under GNU Affero General Public License v3.0 (se LICENSE).
-Källkod: https://github.com/SorbP/PanelView
+Källkod: https://github.com/SorbP/AutoComix
 
 Inbyggda bibliotek under LGPL (Qt/PySide6/shiboken6: LGPL-3.0; py7zr, pybcj, pyppmd, inflate64,
 multivolumefile: LGPL-2.1 eller senare) är omodifierade. Deras källkod finns hos respektive projekt
