@@ -9,7 +9,7 @@ end
 
 --@help Starta AutoComix
 actions.launch = function ()
-	os.start("D:\\ClaudeBox\\PanelView\\dist\\windows\\AutoComix.exe");
+	os.start("D:\\ClaudeBox\\PanelView\\dist\\windows\\AutoComix\\AutoComix.exe");
 end
 
 -- Läsa

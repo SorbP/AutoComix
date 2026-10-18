@@ -729,8 +729,12 @@ class MainWindow(QMainWindow):
     def about(self):
         QMessageBox.about(self, "Om AutoComix",
                           f"<b>AutoComix {__version__}</b><br>Serieläsare med automatisk zoom ruta för ruta.<br><br>"
-                          "Rutdetektering: cbxy (MIT) och YOLO-modellen mosesb/best-comic-panel-detection (Apache-2.0)"
-                          " via ONNX Runtime.<br>Gränssnitt: Qt / PySide6 (LGPL). PDF: pdfium (BSD/Apache).")
+                          "Copyright © 2026 Stefan Persson. Fri programvara under GNU AGPL-3.0, utan garanti.<br>"
+                          "Källkod: <a href='https://github.com/SorbP/PanelView'>github.com/SorbP/PanelView</a><br><br>"
+                          "Rutdetektering: cbxy (MIT) och YOLO-modellen mosesb/best-comic-panel-detection "
+                          "(tränad med Ultralytics/YOLOv12, AGPL-3.0) via ONNX Runtime (MIT).<br>"
+                          "Gränssnitt: Qt / PySide6 (LGPL-3.0). PDF: pdfium (BSD/Apache). Arkiv: py7zr (LGPL-2.1+).<br>"
+                          "Alla licenstexter finns i mappen licenses bredvid programmet.")
 
     # ---------- fönster ----------
     def _restore_geometry(self):

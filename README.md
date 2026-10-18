@@ -35,9 +35,9 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.md](FEAT
   "fråga först" eller "avsluta direkt"; ett Esc inom 1 s efter att helskärmen lämnats avslutar aldrig.
 
 ## Starta
-- **Windows:** `dist\windows\AutoComix.exe`. `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
+- **Windows:** `dist\windows\AutoComix\AutoComix.exe` (hela mappen hör till programmet). `.\install.ps1` lägger till skrivbordsikon, Startmenyn och
   **Öppna i AutoComix** i högerklicksmenyn (`.\install.ps1 -Uninstall` tar bort dem).
-- **Linux:** `dist/linux/AutoComix` (lokalt bygge kräver glibc 2.39; CI-bygget på Ubuntu 22.04 kör på äldre distar).
+- **Linux:** `dist/linux/AutoComix/AutoComix` (lokalt bygge kräver glibc 2.39; CI-bygget på Ubuntu 22.04 kör på äldre distar).
 - Startad utan fil öppnas ett tomt fönster: dra in en mapp, ett arkiv, en PDF eller en bild.
   Släpp på ikonen, eller ange en sökväg, så öppnas serien direkt i helskärm (`--window` för fönster).
 
@@ -72,7 +72,7 @@ först till AutoComix-fönstret.
 uv venv -p 3.12 .venv
 uv pip install -p .venv -r requirements.txt pyinstaller pillow pytest
 .venv/Scripts/python -m pytest -q tests
-.venv/Scripts/python -m PyInstaller AutoComix.spec        # -> dist/AutoComix(.exe)
+.venv/Scripts/python -m PyInstaller AutoComix.spec        # -> dist/AutoComix/ (mapp med AutoComix(.exe), _internal/, licenses/)
 ```
 PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger båda
 (Windows och Linux) och kör ett självtest (`--selftest=res.json`).
@@ -98,3 +98,9 @@ Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel
 - `python build_tools/second_smoke.py` – andra skärmen: spegling, fördelning liggande/stående, F9.
 - `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.
+
+## Licens
+AutoComix är fri programvara: Copyright (C) 2026 Stefan Persson, licensierad under
+[GNU Affero General Public License v3.0](LICENSE). Du får använda, ändra och sprida programmet,
+även kommersiellt, så länge källkoden följer med under samma licens. Tredjepartslicenser och
+modellernas ursprung: [LICENSES.md](LICENSES.md).

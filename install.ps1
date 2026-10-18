@@ -1,7 +1,7 @@
 ﻿# Lägger till "Öppna i AutoComix" i högerklicksmenyn (mappar + seriearkiv) och en Startmeny-genväg.
 # Kräver inte admin (HKCU). Ta bort med: .\install.ps1 -Uninstall
 param([switch]$Uninstall)
-$exe = Join-Path $PSScriptRoot 'dist\windows\AutoComix.exe'
+$exe = Join-Path $PSScriptRoot 'dist\windows\AutoComix\AutoComix.exe'
 if (Test-Path $exe) {            # färdigbyggd .exe (pyinstaller AutoComix.spec)
     $pyw = $exe; $app = $null
     $cmd = "`"$exe`" `"%1`""
