@@ -148,6 +148,20 @@ def main():
     wait(700)
     res.append(check("bildspel väntar på varv, går sedan vidare", waiting and not v.slideshow.isActive(),
                      f"väntade={waiting} aktivt nu={v.slideshow.isActive()}"))
+    # 5. slinga: vid slutet börjar bildspelet om från första sidan och fortsätter
+    v.state.set_setting("slideshow_loop", True)
+    v.goto_page(4, animate=False)
+    wait(50)
+    v.toggle_slideshow()
+    looped = False
+    for _ in range(60):
+        wait(25)
+        if v.page == 0:
+            looped = True
+            break
+    res.append(check("slinga: börjar om från början", looped and v.slideshow.isActive(),
+                     f"sida={v.page} aktivt={v.slideshow.isActive()}"))
+    v.state.set_setting("slideshow_loop", False)
     v.slideshow.stop()
     v.close_comic()
     res.append(check("stängning rensar", not v.anims and not v.frame_timer.isActive()))

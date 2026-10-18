@@ -32,7 +32,7 @@ DEFAULTS = {
     "double": False, "cover_single": True, "shadow": True,
     "rotation": 0, "auto_color": False, "gamma": 1.0, "vibrance": 0.0,
     "bg": "#0c0c0c", "quality": "smooth", "anim": True, "anim_ms": 320,
-    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "auto_next_file": True, "history": True, "clear_history_on_exit": False,
+    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "auto_next_file": True, "history": True, "clear_history_on_exit": False,
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
@@ -1184,7 +1184,7 @@ class Viewer(QWidget):
         self.changed.emit()
 
     def _slide(self):
-        """Ett steg i bildspelet: nästa ruta (guidat läge) eller nästa sida; vid slutet ev. nästa fil."""
+        """Ett steg i bildspelet: nästa ruta (guidat läge) eller nästa sida; vid slutet ev. nästa fil eller om från början."""
         if self.comic and self.opt("slideshow_wait_anim") and self.opt("anim_play"):
             if any(self.anims[p]["loops"] < 1 for p in self.anim_pages()):
                 self.slideshow.setInterval(250)  # animationen har inte gått ett varv än: kolla snart igen
@@ -1205,6 +1205,10 @@ class Viewer(QWidget):
                 self.sibling(1)
                 self.slideshow.start(int(self.opt("slideshow_ms")))
                 return
+        if self.comic and self.opt("slideshow_loop"):
+            self.first()  # slingan: börja om från första sidan/rutan i samma fil
+            self.flash("Bildspelet börjar om")
+            return
         self.slideshow.stop()
         self.flash("Bildspelet är slut")
         self.changed.emit()

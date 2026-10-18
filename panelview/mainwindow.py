@@ -379,7 +379,7 @@ class MainWindow(QMainWindow):
         m.exec(pos.toPoint())
 
     def slideshow_menu(self, m=None):
-        """Bildspel: start/stopp, tid i millisekunder, läge och nästa fil."""
+        """Bildspel: start/stopp, tid i millisekunder, läge, nästa fil och slinga."""
         v = self.v
         m = m or QMenu("Bildspel", self)
         m.addAction(self.acts["slideshow"])
@@ -409,6 +409,9 @@ class MainWindow(QMainWindow):
         nf = m.addAction("Fortsätt med nästa fil i mappen", lambda: v.set_opt("slideshow_next_file", not v.opt("slideshow_next_file")))
         nf.setCheckable(True)
         nf.setChecked(bool(v.opt("slideshow_next_file")))
+        lp = m.addAction("Börja om från början vid slutet", lambda: v.set_opt("slideshow_loop", not v.opt("slideshow_loop")))
+        lp.setCheckable(True)
+        lp.setChecked(bool(v.opt("slideshow_loop")))
         return m
 
     def set_slide_ms(self, ms):
@@ -1049,6 +1052,7 @@ class OptionsDialog(QDialog):
         f.addRow("Bildspel, läge", combo("slideshow_mode", [("guided", "Ruta för ruta (i guidat läge)"),
                                                             ("pages", "Sida för sida")]))
         f.addRow(chk("slideshow_next_file", "Bildspelet fortsätter med nästa fil i mappen"))
+        f.addRow(chk("slideshow_loop", "Bildspelet börjar om från början vid slutet"))
         f.addRow("Sortering", combo("sort", SORTS))
         f.addRow(QLabel("<b>Avslutning</b>"))
         f.addRow("Esc när helskärm och fönster redan är stängda",
