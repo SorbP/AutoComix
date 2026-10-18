@@ -44,8 +44,8 @@ som är tränad med Ultralytics/YOLOv12 (AGPL-3.0). Den sprids här under AGPL-3
 
 def packages():
     """Alla installerade distributioner som requirements.txt drar in (rekursivt, utan extras)."""
-    roots = [Requirement(l).name for l in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines()
-             if l.strip() and not l.startswith("#")]
+    lines = (l.split("#", 1)[0].strip() for l in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines())
+    roots = list(dict.fromkeys(Requirement(l).name for l in lines if l))
     seen, out, stack = set(), [], roots
     while stack:
         name = stack.pop()
