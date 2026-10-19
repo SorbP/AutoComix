@@ -79,6 +79,8 @@ uv pip install -p .venv -r requirements.txt pyinstaller pillow pytest
 PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger båda
 (Windows och Linux) och kör ett självtest (`--selftest=res.json`).
 
+Ändringar per version: [CHANGELOG.md](CHANGELOG.md).
+
 Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel-detection` och kvantiserad till int8
 (se `build_tools/compare_ml.py`: 95 av 100 originalrutor återfunna, fp32 98 av 100).
 
