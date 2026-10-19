@@ -2,9 +2,9 @@
 
   python build_tools/collect_licenses.py <utmapp>
 
-Utmappen får: LICENSE (AutoComix, AGPL-3.0), LICENSES.md, standardtexterna i licenses/, en mapp per inbyggt
-Python-paket med paketets egna licensfiler (ur dist-info), Pythons licens och KÄLLKOD.txt (var källkoden finns
-och hur LGPL-biblioteken byts ut). Paketen hittas från requirements.txt och deras beroenden, så listan följer med
+Utmappen får: LICENSE (AutoComix, AGPL-3.0), LICENSES.md/LICENSES.sv.md, standardtexterna i licenses/, en mapp per inbyggt
+Python-paket med paketets egna licensfiler (ur dist-info), Pythons licens och SOURCE.txt/KÄLLKOD.txt (var
+källkoden finns och hur LGPL-biblioteken byts ut). Paketen hittas från requirements.txt och deras beroenden, så listan följer med
 när beroendena ändras.
 """
 import importlib.metadata as md
@@ -35,10 +35,25 @@ Källkod: https://github.com/SorbP/AutoComix
 Inbyggda bibliotek under LGPL (Qt/PySide6/shiboken6: LGPL-3.0; py7zr, pybcj, pyppmd, inflate64,
 multivolumefile: LGPL-2.1 eller senare) är omodifierade. Deras källkod finns hos respektive projekt
 (länkar i licenses/<paket>/). {bygge} Vill du bygga om allt: klona källkoden och kör pyinstaller
-med .spec-filen i repot (se README.md); taggen för varje version finns på GitHub.
+med .spec-filen i repot (se README.sv.md); taggen för varje version finns på GitHub.
 
 Rutmodellen models/panels_int8.onnx kommer från mosesb/best-comic-panel-detection (märkt Apache-2.0),
 som är tränad med Ultralytics/YOLOv12 (AGPL-3.0). Den sprids här under AGPL-3.0 tillsammans med programmet.
+"""
+
+SOURCE = """AutoComix is free software under the GNU Affero General Public License v3.0 (see LICENSE).
+Source code: https://github.com/SorbP/AutoComix
+
+The bundled LGPL libraries (Qt/PySide6/shiboken6: LGPL-3.0; py7zr, pybcj, pyppmd, inflate64,
+multivolumefile: LGPL-2.1 or later) are unmodified. Their source code is available from each project
+(links in licenses/<package>/). {build} To rebuild everything: clone the source code and run pyinstaller
+with the .spec file in the repository (see README.md); every version has a tag on GitHub.
+
+The panel model models/panels_int8.onnx comes from mosesb/best-comic-panel-detection (labelled Apache-2.0),
+which is trained with Ultralytics/YOLOv12 (AGPL-3.0). It is distributed here under the AGPL-3.0 together
+with the program.
+
+Svenska: se KÄLLKOD.txt.
 """
 
 
@@ -72,11 +87,17 @@ def collect(dst):
         shutil.rmtree(lic)
     shutil.copytree(ROOT / "licenses", lic)
     shutil.copy(ROOT / "LICENSE", dst / "LICENSE")
-    shutil.copy(ROOT / "LICENSES.md", dst / "LICENSES.md")
+    for name in ("LICENSES.md", "LICENSES.sv.md"):
+        if (ROOT / name).exists():
+            shutil.copy(ROOT / name, dst / name)
     bygge = ("Programmet är byggt i mappläge, så biblioteken ligger som separata filer under _internal/ och kan\n"
              "bytas mot andra kompatibla versioner." if (dst / "_internal").is_dir() else
              "Den här äldre versionen är en enda körbar fil; biblioteken byts ut genom att bygga om från källkoden.")
+    build = ("The program is built in folder mode, so the libraries are separate files under _internal/ and can\n"
+             "be replaced with other compatible versions." if (dst / "_internal").is_dir() else
+             "This older version is a single executable; the libraries are replaced by rebuilding from source.")
     (dst / "KÄLLKOD.txt").write_text(KALLKOD.format(bygge=bygge), encoding="utf-8")
+    (dst / "SOURCE.txt").write_text(SOURCE.format(build=build), encoding="utf-8")
     shutil.copy(ROOT / "panelview" / "vendor" / "LICENSE_cbxy", lic / "cbxy-LICENSE.txt")
     py = Path(sys.base_prefix) / "LICENSE.txt"
     if py.exists():

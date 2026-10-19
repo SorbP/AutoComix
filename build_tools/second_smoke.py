@@ -167,7 +167,7 @@ def main():
     res.append(check("tangent 3: vänster = höjd, höger orörd", st("fit_left") == "height" and st("fit_right") == "screen",
                      f"{st('fit_left')}/{st('fit_right')}"))
     res.append(check("tangent 3: huvudfönstret (vänster) använder höjd", v.fit() == "height"))
-    res.append(check("flash-text", v.msg == "Vänster skärm: anpassa till höjd", v.msg))
+    res.append(check("flash-text", v.msg == "Vänster skärm: Anpassa till höjd", v.msg))
     key(Qt.Key.Key_2, kp=True)
     res.append(check("Num+2: höger = bredd, vänster orörd", st("fit_right") == "width" and st("fit_left") == "height",
                      f"{st('fit_left')}/{st('fit_right')}"))

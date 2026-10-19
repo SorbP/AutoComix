@@ -3,6 +3,8 @@ from PySide6.QtCore import QObject, QRunnable, QSize, Qt, QThreadPool, Signal
 from PySide6.QtGui import QColor, QIcon, QImage, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QProgressBar, QSlider, QWidget
 
+from .i18n import tr
+
 THUMB = 150
 
 
@@ -78,7 +80,7 @@ class ThumbBar(QListWidget):
         self.comic = None
         self.pix = {}
         self.done_n = 0
-        self.bar = Progress("Miniatyrer", self)
+        self.bar = Progress(tr("Miniatyrer"), self)
         self.sig = _Sig(self)
         self.sig.done.connect(self._done)
         self.pool = QThreadPool(self)

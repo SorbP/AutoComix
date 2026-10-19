@@ -1,45 +1,51 @@
-# Funktioner: CDisplayEx → AutoComix
+# Features: CDisplayEx → AutoComix
 
-Källa för CDisplayEx-funktionerna: programmets egna menytexter (översättningsfilerna `*.mo` i installationsmappen)
-och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskrivet ovanpå AutoComix rutzoom.
+*English · [Svenska](FEATURES.sv.md)*
 
-| CDisplayEx | AutoComix | Genväg |
+Source for the CDisplayEx features: the program's own menu texts (the translation files `*.mo` in the installation
+folder) and `release_notes.txt` (1.5–1.10.33). No code is copied; everything is written from scratch on top of
+AutoComix's panel zoom.
+
+| CDisplayEx | AutoComix | Shortcut |
 |---|---|---|
-| Ladda filer / Öppna mapp | Filbläddrare med mappträd, fillista och förhandsvisning (även zip/pdf/rar/7z), Öppna fil, Öppna mapp, dra och släpp | L, Ctrl+O, Ctrl+Shift+O |
-| Öppna senaste, Rensa historik, historik på/av, rensa vid stängning | Arkiv → Öppna senaste, Inställningar → Historik | |
-| Återuppta senaste fil (till senaste sida) | Återuppta senaste (sida + ruta), visningshistorik 20 st | Ctrl+L |
-| Ladda nästa/föregående fil, automatiskt nästa fil vid slut, extra musknappar | Nästa/Föregående fil, auto-nästa (tryck igen vid slutet), musknapp bakåt/framåt | N, B |
-| Nästa/föregående sida, första/sista sidan, framåt/bakåt två sidor | Pilar/mellanslag (ruta, del eller sida), PgUp/PgDn (uppslag), Home/End | |
-| Japanskt läge (höger→vänster, hela gränssnittet speglat) | Japanskt läge: pilar, klickzoner, uppslag, förloppslist och miniatyrlist speglas; sparas per serie | R |
-| Dubbel sida, liggande sida = uppslag, omslag, skugga, delning | Dubbelsida, liggande sidor visas ensamma, omslaget ensamt, skugga i bokryggen | Shift+D |
-| Anpassa till skärm, Över/Under bredd, Över/Under höjd | Anpassa till skärm med fyra val: krymp bredare, förstora smalare, krymp högre, förstora lägre; 1–4 = vänster skärm, numpaddens 1–4 = höger skärm | 1, Num 1 |
-| Anpassa liggande/stående | Anpassa till bredd / höjd (sidan visas i flera steg med överlapp) | 2, 3, Num 2, Num 3 |
-| Zoom 100/125/150/200/400 %, zooma in/ut, behåll zoom | Originalstorlek och zoomnivåer i menyn, fri zoom med Ctrl+hjul, panorera genom att dra | 4, Num 4, +, −, 0 |
-| Förstorare (storlek inställbar) | Förstoringsglas: växla med M eller håll mittenknappen; former rektangel, kvadrat, rund (platta) och lins (rund med förvrängning); Shift+hjul = storlek, Ctrl+hjul = förstoring | M |
-| – | Gränssnittets storlek (text, listor, menyer, dialoger) 50–400 %; avståndsläge: stor sidräknare som döljs efter 1 s utan aktivitet, resten av gränssnittet 1,5× | Ctrl+Shift+Upp/Ned, Shift+F |
-| Miniatyrer / reglage (Ctrl+T, Ctrl+I) | Miniatyrlist längst ner, navigerbar med pilar och Enter; sidreglage; dessutom miniatyröversikt i rutnät | Ctrl+T, Ctrl+I, T |
-| Automatiskt bildspel med intervall (Ctrl+H) | Bildspel som går ruta för ruta i guidat läge, annars del/sida; tiden ändras i steg om 100 ms | Ctrl+H, S, Alt+Upp/Ned, Ctrl+Num +/− |
-| Animerade GIF (enkel uppspelning) | Animerad GIF, WebP och APNG: spelas med rätt fördröjningar (0–10 ms = 100 ms som i webbläsare), startar om när sidan visas, paus, bildruta för bildruta, hastighet 0,25–4x, bildspelet väntar ett varv; rutzoom och rutdetektering fungerar på animerade sidor | P, . ,, Ctrl+Upp/Ned |
-| Rotera (alla bilder) | Rotera vänster/höger, rutorna roteras med | [ ] |
-| Automatisk färgkorrigering, RGB-gamma, vibrance | Automatisk färgkorrigering (vitbalans + kontrast), gamma, lyster | A |
-| Bakgrundsfärg, automatisk bakgrundsfärg | Bakgrundsfärg eller automatisk (sidans kantfärg) | |
-| Storleksalgoritm (Närmaste/Linjär/Lanczos) | Skalning: snabb, jämn, bästa | |
-| Mjuk rullning | Animerad övergång, inställbar tid | |
-| Bokmärken med namn | Lägg till/hantera/byt namn; senaste 15 i menyn | Ctrl+B, Ctrl+Shift+B |
-| Spara till fil / urklipp, Skriv ut | Spara sida som, Kopiera sida, Skriv ut | Ctrl+S, Ctrl+C, Ctrl+P |
-| Konfigurerbara genvägar (primära + sekundära) | Inställningar → Tangenter, två genvägar per funktion | |
-| Sidcache i bakgrunden | Uppslag före/efter laddas i bakgrundstrådar | |
-| Sortering (alfabetisk), undermappar | Naturlig, alfabetisk eller efter ändringsdatum (slumpmässiga filnamn; även zip/rar/7z), bilder i undermappar tas med; flera bilder släppta ur samma mapp öppnar mappen från början | Ctrl+D |
-| Format: JPEG, PNG, GIF, WebP, TIFF, BMP, CBZ/CBR/CB7, PDF, krypterade arkiv | Samma (PDF via pdfium, CB7 via py7zr, CBR via 7z/unrar/tar), lösenordsfråga | |
-| Verktygsfält i helskärm, dölj information | Menyrad (Ctrl+M), högerklicksmeny överallt, informationsrad (I), sidnummer, förloppslist | |
-| Dölj muspekaren | Muspekaren göms efter 2 s i helskärm | |
-| Kontrollera uppdateringar, Leap Motion, DjVu, utforskarmenyns miniatyrer, språkval | Inte med (föråldrat/plattformsspecifikt). Gränssnittet är på svenska | |
+| Load files / Open folder | File browser with folder tree, file list and preview (also zip/pdf/rar/7z), Open file, Open folder, drag and drop | L, Ctrl+O, Ctrl+Shift+O |
+| Open recent, Clear history, history on/off, clear on close | File → Open recent, Settings → History | |
+| Resume last file (at the last page) | Resume last (page + panel), viewing history of 20 | Ctrl+L |
+| Load next/previous file, automatically next file at the end, extra mouse buttons | Next/Previous file, auto-next (press again at the end), mouse back/forward buttons | N, B |
+| Next/previous page, first/last page, forward/back two pages | Arrows/space (panel, part or page), PgUp/PgDn (spread), Home/End | |
+| Japanese mode (right→left, whole interface mirrored) | Manga mode: arrows, click zones, spreads, progress bar and thumbnail bar are mirrored; saved per comic | R |
+| Double page, landscape page = spread, cover, shadow, splitting | Double page, landscape pages are shown alone, the cover alone, shadow in the spine | Shift+D |
+| Fit to screen, Over/Under width, Over/Under height | Fit to screen with four options: shrink wider, enlarge narrower, shrink taller, enlarge shorter; 1–4 = left screen, numpad 1–4 = right screen | 1, Num 1 |
+| Fit landscape/portrait | Fit to width / height (the page is shown in several steps with overlap) | 2, 3, Num 2, Num 3 |
+| Zoom 100/125/150/200/400 %, zoom in/out, keep zoom | Original size and zoom levels in the menu, free zoom with Ctrl+wheel, pan by dragging | 4, Num 4, +, −, 0 |
+| Magnifier (adjustable size) | Magnifier: toggle with M or hold the middle button; shapes rectangle, square, round (flat) and lens (round with distortion); Shift+wheel = size, Ctrl+wheel = magnification | M |
+| – | Interface size (text, lists, menus, dialogs) 50–400 %; distance mode: large page counter that hides after 1 s without activity, the rest of the interface 1.5× | Ctrl+Shift+Up/Down, Shift+F |
+| Thumbnails / slider (Ctrl+T, Ctrl+I) | Thumbnail bar at the bottom, navigable with arrows and Enter; page slider; plus a thumbnail overview in a grid | Ctrl+T, Ctrl+I, T |
+| Automatic slideshow with interval (Ctrl+H) | Slideshow that goes panel by panel in guided mode, otherwise part/page; the time changes in steps of 100 ms | Ctrl+H, S, Alt+Up/Down, Ctrl+Num +/− |
+| Animated GIF (simple playback) | Animated GIF, WebP and APNG: played with the right delays (0–10 ms = 100 ms as in browsers), restart when the page is shown, pause, frame by frame, speed 0.25–4x, the slideshow waits one loop; panel zoom and panel detection work on animated pages | P, . ,, Ctrl+Up/Down |
+| Rotate (all images) | Rotate left/right, the panels rotate along | [ ] |
+| Automatic color correction, RGB gamma, vibrance | Automatic color correction (white balance + contrast), gamma, vibrance | A |
+| Background color, automatic background color | Background color or automatic (the page's edge color) | |
+| Resize algorithm (Nearest/Linear/Lanczos) | Scaling: fast, smooth, best | |
+| Smooth scrolling | Animated transition, adjustable time | |
+| Named bookmarks | Add/manage/rename; the last 15 in the menu | Ctrl+B, Ctrl+Shift+B |
+| Save to file / clipboard, Print | Save page as, Copy page, Print | Ctrl+S, Ctrl+C, Ctrl+P |
+| Configurable shortcuts (primary + secondary) | Settings → Keys, two shortcuts per function | |
+| Page cache in the background | Spreads before/after are loaded in background threads | |
+| Sorting (alphabetical), subfolders | Natural, alphabetical or by date modified (random file names; also zip/rar/7z), images in subfolders are included; several images dropped from the same folder open the folder from the start | Ctrl+D |
+| Formats: JPEG, PNG, GIF, WebP, TIFF, BMP, CBZ/CBR/CB7, PDF, encrypted archives | The same (PDF via pdfium, CB7 via py7zr, CBR via 7z/unrar/tar), password prompt | |
+| Toolbar in full screen, hide information | Menu bar (Ctrl+M), right-click menu everywhere, information bar (I), page number, progress bar | |
+| Hide the mouse pointer | The mouse pointer is hidden after 2 s in full screen | |
+| Language selection | Twelve languages (Settings → Display → Language), automatically from the system language | |
+| Check for updates, Leap Motion, DjVu, Explorer thumbnails | Not included (outdated/platform specific) | |
 
-## Utöver CDisplayEx
-- Andra skärmen (F9: av/spegling/fördelning liggande–stående). Anpassningen gäller per fysisk skärm (vänster = minst x): 1–4 ovanför bokstäverna = vänster skärm, numpaddens 1–4 = höger skärm, med egna värden vid spegling. Shift+F9 växlar andra skärmens anpassning (även "samma utsnitt som huvudfönstret").
-- Guidat läge: rutorna hittas automatiskt (OpenCV + YOLO-modell) och visas en i taget, centrerade med svart runt.
-- Dubbelklick på en ruta zoomar dit även om detekteringen missat den.
-- Redigeringsläge (E): rita/ta bort rutor, sparas per sida och blir träningsdata för en omtränad modell.
-- Läsordning rad för rad (vänster→höger, uppifrån och ned), läsriktning ur ComicInfo.xml.
-- Rättade rutor från `cbxy-editor` (`.cbxy` bredvid serien) används före den automatiska detekteringen.
-- Körbar fil för Windows och Linux (PyInstaller, självtest i CI).
+## Beyond CDisplayEx
+- Second screen (F9: off/mirror/landscape–portrait distribution). The fit applies per physical screen (left = smallest x): 1–4 above the letters = left screen, numpad 1–4 = right screen, with separate values when mirroring. Shift+F9 switches the second screen's fit (also "same view as the main window").
+- Guided mode: the panels are found automatically (OpenCV + YOLO model) and shown one at a time, centered with black around them.
+- Double-clicking a panel zooms there even if detection missed it.
+- Edit mode (E): draw/delete panels, saved per page and used as training data for a retrained model. K = the page is correct (also saved as training data).
+- Reading order row by row (left→right, top to bottom), reading direction from ComicInfo.xml; changeable per page (X).
+- Scanning in batches for large comics (more than 100 unscanned pages).
+- Corrected panels from `cbxy-editor` (`.cbxy` next to the comic) take precedence over automatic detection.
+- Remote control on the phone via Unified Remote.
+- Executable for Windows and Linux (PyInstaller, self-test in CI).

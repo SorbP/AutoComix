@@ -9,11 +9,13 @@ from PySide6.QtCore import QRectF, Qt
 from PySide6.QtGui import QColor, QGuiApplication, QPainter
 from PySide6.QtWidgets import QWidget
 
-MODES = (("off", "Av"), ("mirror", "Spegling"), ("auto", "Automatisk fördelning (liggande/stående)"))
+from .i18n import tr
+
+MODES = (("off", tr("Av")), ("mirror", tr("Spegling")), ("auto", tr("Automatisk fördelning (liggande/stående)")))
 # Anpassning av hela sidor på andra skärmen (rutor visas alltid hela och så stora som möjligt)
-FITS = (("screen", "Andra skärmen: anpassa till skärm"), ("width", "Andra skärmen: anpassa till bredd"),
-        ("height", "Andra skärmen: anpassa till höjd"), ("main", "Andra skärmen: samma utsnitt som huvudfönstret"))
-SIDES = (("left", "Vänster skärm"), ("right", "Höger skärm"))
+FITS = (("screen", tr("Andra skärmen: anpassa till skärm")), ("width", tr("Andra skärmen: anpassa till bredd")),
+        ("height", tr("Andra skärmen: anpassa till höjd")), ("main", tr("Andra skärmen: samma utsnitt som huvudfönstret")))
+SIDES = (("left", tr("Vänster skärm")), ("right", tr("Höger skärm")))
 
 
 def side_of(widget):
@@ -84,7 +86,7 @@ class SecondScreen(QWidget):
                          | Qt.WindowType.WindowDoesNotAcceptFocus)
         self.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
         self.setCursor(Qt.CursorShape.BlankCursor)
-        self.setWindowTitle("AutoComix – andra skärmen")
+        self.setWindowTitle(tr("AutoComix – andra skärmen"))
         self.v = viewer
         self.mode = "off"
         self.live = True        # visar aktuell ruta (annars self.held)
@@ -138,10 +140,10 @@ class SecondScreen(QWidget):
             return ""
         if not self.relocate():
             self.mode = "off"
-            return "Hittar ingen andra skärm"
+            return tr("Hittar ingen andra skärm")
         self._follow()
         if mode == "auto" and self.same_orientation():
-            return "Skärmarna har samma orientering – fördelningen fungerar som spegling"
+            return tr("Skärmarna har samma orientering – fördelningen fungerar som spegling")
         return ""
 
     def relocate(self):

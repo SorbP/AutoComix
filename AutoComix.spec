@@ -1,6 +1,6 @@
 # PyInstaller: bygger AutoComix i mappläge per plattform (Qt/LGPL-biblioteken ligger som separata, utbytbara filer).
 #   Windows: dist/AutoComix/AutoComix.exe   Linux: dist/AutoComix/AutoComix
-# Licenstexterna (LICENSE, LICENSES.md, licenses/, KÄLLKOD.txt) läggs överst i programmappen.
+# Licenstexterna (LICENSE, LICENSES.md/LICENSES.sv.md, licenses/, SOURCE.txt, KÄLLKOD.txt) läggs överst i programmappen.
 # Kör:  pyinstaller AutoComix.spec   (på respektive plattform; korskompilering stöds inte av PyInstaller)
 import sys
 from pathlib import Path
@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(SPECPATH) / "build_tools"))
 import collect_licenses  # noqa: E402
 
 block_cipher = None
-datas = [("models/panels_int8.onnx", "models"), ("assets/icon.png", "assets")]
+datas = [("models/panels_int8.onnx", "models"), ("assets/icon.png", "assets"), ("panelview/lang", "panelview/lang")]
 excl = ["tkinter", "matplotlib", "scipy", "pandas", "torch", "ultralytics", "PIL.ImageQt",
         "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.QtQml", "PySide6.QtQuick",
         "PySide6.Qt3DCore", "PySide6.QtMultimedia", "PySide6.QtCharts", "PySide6.QtDataVisualization",

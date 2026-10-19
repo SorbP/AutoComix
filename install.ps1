@@ -1,4 +1,4 @@
-﻿# Lägger till "Öppna i AutoComix" i högerklicksmenyn (mappar + seriearkiv) och en Startmeny-genväg.
+﻿# Lägger till "Öppna i AutoComix" ("Open in AutoComix" i icke-svenska Windows) i högerklicksmenyn (mappar + seriearkiv) och en Startmeny-genväg.
 # Kräver inte admin (HKCU). Ta bort med: .\install.ps1 -Uninstall
 param([switch]$Uninstall)
 $exe = Join-Path $PSScriptRoot 'dist\windows\AutoComix\AutoComix.exe'
@@ -24,12 +24,14 @@ $lnks | % { $o = $_ -replace 'AutoComix\.lnk$', 'PanelView.lnk'; if (Test-Path $
 if ($Uninstall) {
     $keys | % { if (Test-Path $_) { Remove-Item $_ -Recurse -Force } }
     $lnks | % { if (Test-Path $_) { Remove-Item $_ -Force } }
-    'AutoComix avinstallerad.'
+    if ((Get-UICulture).TwoLetterISOLanguageName -eq 'sv') { 'AutoComix avinstallerad.' } else { 'AutoComix uninstalled.' }
     return
 }
+$sv = (Get-UICulture).TwoLetterISOLanguageName -eq 'sv'  # menytexten på svenska bara i svenska Windows
+$label = if ($sv) { 'Öppna i AutoComix' } else { 'Open in AutoComix' }
 foreach ($k in $keys) {
     New-Item -Path "$k\command" -Force | Out-Null
-    Set-ItemProperty -Path $k -Name '(default)' -Value 'Öppna i AutoComix'
+    Set-ItemProperty -Path $k -Name '(default)' -Value $label
     Set-ItemProperty -Path $k -Name 'Icon' -Value $pyw
     Set-ItemProperty -Path "$k\command" -Name '(default)' -Value $cmd
 }
@@ -37,4 +39,5 @@ foreach ($lnk in $lnks) {
     $s = (New-Object -ComObject WScript.Shell).CreateShortcut($lnk)
     $s.TargetPath = $pyw; if ($app) { $s.Arguments = "`"$app`"" }; $s.WorkingDirectory = $PSScriptRoot; $s.Save()
 }
-"AutoComix installerad: skrivbordsikon + Startmenyn, högerklick på mapp/arkiv -> 'Öppna i AutoComix'."
+if ($sv) { "AutoComix installerad: skrivbordsikon + Startmenyn, högerklick på mapp/arkiv -> '$label'." }
+else { "AutoComix installed: desktop icon + Start menu, right-click a folder/archive -> '$label'." }

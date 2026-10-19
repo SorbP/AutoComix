@@ -5,8 +5,6 @@ from pathlib import Path
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication
 
-from .mainwindow import MainWindow
-
 
 def _crash_log():
     """Skriv Python-stack vid hård krasch (segfault, minnesbrist i Qt) till <datamapp>/crash.log."""
@@ -32,6 +30,11 @@ def main():
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
     if (base / "assets" / "icon.png").exists():
         app.setWindowIcon(QIcon(str(base / "assets" / "icon.png")))
+    from . import i18n, store
+    import os
+    i18n.setup(app, os.environ.get("AUTOCOMIX_LANG")  # för test: språk utan att ändra inställningen
+               or store._read_json(store.STATE, {}).get("settings", {}).get("language", "auto"))
+    from .mainwindow import MainWindow  # efter språket: listor på modulnivå översätts vid import
     paths = [a for a in sys.argv[1:] if not a.startswith("--")]
     selftest = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--selftest=")), None)
     w = MainWindow(paths[0] if paths else None)
@@ -47,6 +50,8 @@ def _selftest(app, w, out):
     import json
     import time
 
+    from . import i18n
+
     from PySide6.QtCore import QTimer
     t0 = time.time()
 
@@ -55,7 +60,9 @@ def _selftest(app, w, out):
         ps, ready = v.panels() if v.comic and v.spreads else ([], False)
         if ready or time.time() - t0 > 90:
             res = {"ok": bool(ready), "pages": len(v.comic.pages) if v.comic else 0, "panels": len(ps),
-                   "ml": bool(v.detector and v.detector.ml_ok), "seconds": round(time.time() - t0, 1)}
+                   "ml": bool(v.detector and v.detector.ml_ok), "seconds": round(time.time() - t0, 1),
+                   "lang": i18n.current, "lang_files": len(list(i18n.lang_dir().glob("*.json"))),
+                   "qt_translation": i18n.qt_loaded}
             Path(out).write_text(json.dumps(res), encoding="utf-8")
             w.close()
             app.quit()

@@ -1,32 +1,34 @@
-# Licenser
+# Licenses
 
-**AutoComix** – Copyright (C) 2026 Stefan Persson. Fri programvara under
-[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Källkod: https://github.com/SorbP/AutoComix
+*English · [Svenska](LICENSES.sv.md)*
 
-AGPL-3.0 är vald för att rutmodellen är tränad med Ultralytics/YOLOv12 (AGPL-3.0); alla övriga delar är
-förenliga med den. Den byggda programmappen innehåller de fullständiga licenstexterna i `licenses/`
-(samlas in av `build_tools/collect_licenses.py` vid bygget) och `KÄLLKOD.txt`.
+**AutoComix** – Copyright (C) 2026 Stefan Persson. Free software under the
+[GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). Source code: https://github.com/SorbP/AutoComix
 
-## Modeller
-- **models/panels_int8.onnx** – exporterad och kvantiserad från
-  [mosesb/best-comic-panel-detection](https://huggingface.co/mosesb/best-comic-panel-detection). Märkt Apache-2.0,
-  men tränad från en YOLOv12x-checkpoint med Ultralytics (båda AGPL-3.0); sprids därför under AGPL-3.0.
-- **weights/yolo26n.pt** – Ultralytics YOLO26n, AGPL-3.0. Bara utgångspunkt för omträning, byggs inte in.
-- Omtränade modeller (`build_tools/train_model.py`, Ultralytics) är AGPL-3.0. Träningsbilder sprids inte.
+The AGPL-3.0 was chosen because the panel model is trained with Ultralytics/YOLOv12 (AGPL-3.0); all other parts are
+compatible with it. The built program folder contains the full license texts in `licenses/`
+(collected by `build_tools/collect_licenses.py` during the build) and `SOURCE.txt` (Swedish: `KÄLLKOD.txt`).
 
-## Inbyggda bibliotek
-| Paket | Licens |
+## Models
+- **models/panels_int8.onnx** – exported and quantized from
+  [mosesb/best-comic-panel-detection](https://huggingface.co/mosesb/best-comic-panel-detection). Labelled Apache-2.0,
+  but trained from a YOLOv12x checkpoint with Ultralytics (both AGPL-3.0); therefore distributed under the AGPL-3.0.
+- **weights/yolo26n.pt** – Ultralytics YOLO26n, AGPL-3.0. Only a starting point for retraining, not built in.
+- Retrained models (`build_tools/train_model.py`, Ultralytics) are AGPL-3.0. Training images are not distributed.
+
+## Bundled libraries
+| Package | License |
 |---|---|
-| Qt / PySide6 / shiboken6 | LGPL-3.0 (omodifierade, separata filer i mappbygget) |
-| py7zr, pybcj, pyppmd, inflate64, multivolumefile | LGPL-2.1 eller senare |
-| cbxy 0.1.2 (CV-delen i `panelview/vendor/`) | MIT (`LICENSE_cbxy`) |
-| OpenCV, ONNX Runtime-beroendet flatbuffers, pypdfium2 (Apache-2.0-delen) | Apache-2.0 |
+| Qt / PySide6 / shiboken6 | LGPL-3.0 (unmodified, separate files in the folder build) |
+| py7zr, pybcj, pyppmd, inflate64, multivolumefile | LGPL-2.1 or later |
+| cbxy 0.1.2 (the CV part in `panelview/vendor/`) | MIT (`LICENSE_cbxy`) |
+| OpenCV, the ONNX Runtime dependency flatbuffers, pypdfium2 (the Apache-2.0 part) | Apache-2.0 |
 | ONNX Runtime, brotli, texttable | MIT |
 | Pillow | MIT-CMU |
-| NumPy, PDFium, protobuf, psutil, pycryptodomex | BSD-3 (m.fl., se respektive mapp) |
+| NumPy, PDFium, protobuf, psutil, pycryptodomex | BSD-3 (and others, see each folder) |
 | backports.zstd / Zstandard | PSF-2.0 / BSD |
-| packaging | Apache-2.0 eller BSD-2 |
+| packaging | Apache-2.0 or BSD-2 |
 | Python | PSF-2.0 |
 
-PyInstallers startprogram är GPL-2.0 med undantag som tillåter valfri licens för det byggda programmet.
-7-Zip (för rar/7z) byggs inte in; användaren installerar det själv.
+PyInstaller's bootloader is GPL-2.0 with an exception that allows any license for the built program.
+7-Zip (for rar/7z) is not built in; users install it themselves.

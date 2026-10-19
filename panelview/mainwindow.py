@@ -1,6 +1,6 @@
 """Huvudfönster: menyer, kortkommandon (ändringsbara), dialoger för inställningar, bokmärken, miniatyrer och utskrift.
 
-Funktionsuppsättningen följer CDisplayEx (se FEATURES.md) plus AutoComix guidade rutzoom.
+Funktionsuppsättningen följer CDisplayEx (se FEATURES.sv.md) plus AutoComix guidade rutzoom.
 """
 import sys
 import time
@@ -16,17 +16,18 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QColo
                                QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from . import __version__
+from .i18n import LANGUAGES, tr
 from .comic import ARCHIVE_EXT, IMAGE_EXT, SORTS
 from .store import State
 from .overlays import Progress
 from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SIDES, SecondScreen, fit_key, migrate_fits, side_of
 from .viewer import DEFAULTS, MAG_SHAPES, Viewer
 
-FILTER = "Serier och bilder ({});;Alla filer (*)".format(
+FILTER = tr("Serier och bilder ({});;Alla filer (*)").format(
     " ".join(f"*{e}" for e in sorted(ARCHIVE_EXT | set(IMAGE_EXT))))
 
-FITS = [("screen", "Anpassa till skärm"), ("width", "Anpassa till bredd"), ("height", "Anpassa till höjd"),
-        ("original", "Originalstorlek (100 %)")]
+FITS = [("screen", tr("Anpassa till skärm")), ("width", tr("Anpassa till bredd")), ("height", tr("Anpassa till höjd")),
+        ("original", tr("Originalstorlek (100 %)"))]
 ZOOMS = [1.25, 1.5, 2.0, 4.0]
 SLIDE_STEPS = (500, 1000, 1500, 2000, 3000, 5000, 8000, 10000, 15000, 30000)  # bildspelets tider (ms) i menyn
 
@@ -117,122 +118,122 @@ class MainWindow(QMainWindow):
     def _build_actions(self):
         v, A = self.v, self._act
         # Arkiv
-        A("open_file", "Öppna fil…", ["Ctrl+O", "O"], self.open_file)
-        A("open_folder", "Öppna mapp…", ["Ctrl+Shift+O", "Shift+O"], self.open_folder)
-        A("browse", "Bläddra bland serier (med förhandsvisning)…", ["L"], self.browse)
-        A("resume", "Återuppta senaste", ["Ctrl+L"], self.resume_last)
-        A("next_file", "Nästa fil", ["N", "Ctrl+Right"], lambda: v.sibling(1))
-        A("prev_file", "Föregående fil", ["B", "Shift+N", "Ctrl+Left"], lambda: v.sibling(-1))
-        A("save_page", "Spara sida som…", ["Ctrl+S"], self.save_page)
-        A("copy_page", "Kopiera sida", ["Ctrl+C"], self.copy_page)
-        A("print", "Skriv ut…", ["Ctrl+P"], self.print_page)
-        A("close_file", "Stäng fil", ["Ctrl+W"], v.close_comic)
-        A("sort_mtime", "Sortera sidor efter ändringsdatum (för slumpmässiga filnamn)", ["Ctrl+D"], self.toggle_sort_mtime,
+        A("open_file", tr("Öppna fil…"), ["Ctrl+O", "O"], self.open_file)
+        A("open_folder", tr("Öppna mapp…"), ["Ctrl+Shift+O", "Shift+O"], self.open_folder)
+        A("browse", tr("Bläddra bland serier (med förhandsvisning)…"), ["L"], self.browse)
+        A("resume", tr("Återuppta senaste"), ["Ctrl+L"], self.resume_last)
+        A("next_file", tr("Nästa fil"), ["N", "Ctrl+Right"], lambda: v.sibling(1))
+        A("prev_file", tr("Föregående fil"), ["B", "Shift+N", "Ctrl+Left"], lambda: v.sibling(-1))
+        A("save_page", tr("Spara sida som…"), ["Ctrl+S"], self.save_page)
+        A("copy_page", tr("Kopiera sida"), ["Ctrl+C"], self.copy_page)
+        A("print", tr("Skriv ut…"), ["Ctrl+P"], self.print_page)
+        A("close_file", tr("Stäng fil"), ["Ctrl+W"], v.close_comic)
+        A("sort_mtime", tr("Sortera sidor efter ändringsdatum (för slumpmässiga filnamn)"), ["Ctrl+D"], self.toggle_sort_mtime,
           check=lambda: v.opt("sort") == "mtime")
-        A("history", "Visningshistorik…", ["Ctrl+Shift+H"], self.show_history)
-        A("clear_history", "Rensa historik", [], self.clear_history)
-        A("exit", "Avsluta", ["Ctrl+Q"], self.close)
+        A("history", tr("Visningshistorik…"), ["Ctrl+Shift+H"], self.show_history)
+        A("clear_history", tr("Rensa historik"), [], self.clear_history)
+        A("exit", tr("Avsluta"), ["Ctrl+Q"], self.close)
         # Navigera
-        A("next", "Nästa (ruta/del/sida)", ["Space", "Down"], lambda: self.nav(1))
-        A("prev", "Föregående", ["Backspace", "Up"], lambda: self.nav(-1))
-        A("right", "Höger (följer läsriktningen)", ["Right"], lambda: self.nav(v.next_dir(True), arrow=True))
-        A("left", "Vänster (följer läsriktningen)", ["Left"], lambda: self.nav(v.next_dir(False), arrow=True))
-        A("enter", "Helskärm (Enter)", ["Return", "Enter"], self.enter)
-        A("next_page", "Nästa sida", ["PgDown"], lambda: v.page_step(1))
-        A("prev_page", "Föregående sida", ["PgUp"], lambda: v.page_step(-1))
-        A("first", "Första sidan", ["Home"], v.first)
-        A("last", "Sista sidan", ["End"], v.last)
-        A("goto", "Gå till sida…", ["J", "Ctrl+G"], self.goto_dialog)
-        A("thumbbar", "Miniatyrlist", ["Ctrl+T"], v.toggle_thumbbar, check=lambda: v.thumbbar.isVisible())
-        A("slider", "Sidreglage", ["Ctrl+I"], v.toggle_slider, check=lambda: v.slider.isVisible())
-        A("thumbs", "Miniatyröversikt…", ["T"], self.thumbnails)
-        A("slideshow", "Automatiskt bildspel (ruta för ruta i guidat läge)", ["Ctrl+H", "S"], v.toggle_slideshow,
+        A("next", tr("Nästa (ruta/del/sida)"), ["Space", "Down"], lambda: self.nav(1))
+        A("prev", tr("Föregående"), ["Backspace", "Up"], lambda: self.nav(-1))
+        A("right", tr("Höger (följer läsriktningen)"), ["Right"], lambda: self.nav(v.next_dir(True), arrow=True))
+        A("left", tr("Vänster (följer läsriktningen)"), ["Left"], lambda: self.nav(v.next_dir(False), arrow=True))
+        A("enter", tr("Helskärm (Enter)"), ["Return", "Enter"], self.enter)
+        A("next_page", tr("Nästa sida"), ["PgDown"], lambda: v.page_step(1))
+        A("prev_page", tr("Föregående sida"), ["PgUp"], lambda: v.page_step(-1))
+        A("first", tr("Första sidan"), ["Home"], v.first)
+        A("last", tr("Sista sidan"), ["End"], v.last)
+        A("goto", tr("Gå till sida…"), ["J", "Ctrl+G"], self.goto_dialog)
+        A("thumbbar", tr("Miniatyrlist"), ["Ctrl+T"], v.toggle_thumbbar, check=lambda: v.thumbbar.isVisible())
+        A("slider", tr("Sidreglage"), ["Ctrl+I"], v.toggle_slider, check=lambda: v.slider.isVisible())
+        A("thumbs", tr("Miniatyröversikt…"), ["T"], self.thumbnails)
+        A("slideshow", tr("Automatiskt bildspel (ruta för ruta i guidat läge)"), ["Ctrl+H", "S"], v.toggle_slideshow,
           check=lambda: v.slideshow.isActive())
-        A("slide_longer", "Bildspel: längre tid per steg", ["Alt+Up", "Ctrl+Num++"], lambda: self.slide_ms_step(1))
-        A("slide_shorter", "Bildspel: kortare tid per steg", ["Alt+Down", "Ctrl+Num+-"], lambda: self.slide_ms_step(-1))
+        A("slide_longer", tr("Bildspel: längre tid per steg"), ["Alt+Up", "Ctrl+Num++"], lambda: self.slide_ms_step(1))
+        A("slide_shorter", tr("Bildspel: kortare tid per steg"), ["Alt+Down", "Ctrl+Num+-"], lambda: self.slide_ms_step(-1))
         # Animation (GIF/WebP/APNG)
-        A("anim_play", "Spela animationer", ["P", "Ctrl+Space"], v.toggle_anim, check=lambda: v.opt("anim_play"))
-        A("anim_next", "Nästa bildruta", ["."], lambda: v.anim_step(1))
-        A("anim_prev", "Föregående bildruta", [","], lambda: v.anim_step(-1))
-        A("anim_faster", "Snabbare", ["Ctrl+Up"], lambda: v.anim_speed_step(1))
-        A("anim_slower", "Långsammare", ["Ctrl+Down"], lambda: v.anim_speed_step(-1))
-        A("anim_normal", "Normal hastighet", ["Ctrl+Shift+0"], lambda: v.set_anim_speed(1.0))
-        A("slideshow_wait_anim", "Bildspelet väntar tills animationen gått ett varv", [],
+        A("anim_play", tr("Spela animationer"), ["P", "Ctrl+Space"], v.toggle_anim, check=lambda: v.opt("anim_play"))
+        A("anim_next", tr("Nästa bildruta"), ["."], lambda: v.anim_step(1))
+        A("anim_prev", tr("Föregående bildruta"), [","], lambda: v.anim_step(-1))
+        A("anim_faster", tr("Snabbare"), ["Ctrl+Up"], lambda: v.anim_speed_step(1))
+        A("anim_slower", tr("Långsammare"), ["Ctrl+Down"], lambda: v.anim_speed_step(-1))
+        A("anim_normal", tr("Normal hastighet"), ["Ctrl+Shift+0"], lambda: v.set_anim_speed(1.0))
+        A("slideshow_wait_anim", tr("Bildspelet väntar tills animationen gått ett varv"), [],
           lambda: self._toggle("slideshow_wait_anim"), check=lambda: v.opt("slideshow_wait_anim"))
         # Visa
-        A("fullscreen", "Helskärm", ["F", "F11"], self.toggle_fullscreen, check=self.isFullScreen)
-        A("menubar", "Visa menyrad", ["Ctrl+M"], self.toggle_menubar, check=lambda: self.state.setting("menubar", True))
-        A("guided", "Guidat läge (ruta för ruta)", ["G"], lambda: self._toggle("guided"), check=lambda: v.opt("guided"))
-        A("overview", "Visa hela sidan före rutorna", ["V"], lambda: self._toggle("overview"), check=lambda: v.opt("overview"))
-        A("dim", "Svart runt rutan", ["D"], lambda: self._toggle("dim"), check=lambda: v.opt("dim"))
-        A("rtl", "Japanskt läge (höger→vänster)", ["R"], v.toggle_rtl, check=lambda: v.rtl)
-        A("double", "Dubbelsida", ["Shift+D"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
-        A("cover_single", "Omslaget ensamt", [], lambda: self._toggle("cover_single"), check=lambda: v.opt("cover_single"))
-        A("shadow", "Skugga i bokryggen", [], lambda: self._toggle("shadow"), check=lambda: v.opt("shadow"))
+        A("fullscreen", tr("Helskärm"), ["F", "F11"], self.toggle_fullscreen, check=self.isFullScreen)
+        A("menubar", tr("Visa menyrad"), ["Ctrl+M"], self.toggle_menubar, check=lambda: self.state.setting("menubar", True))
+        A("guided", tr("Guidat läge (ruta för ruta)"), ["G"], lambda: self._toggle("guided"), check=lambda: v.opt("guided"))
+        A("overview", tr("Visa hela sidan före rutorna"), ["V"], lambda: self._toggle("overview"), check=lambda: v.opt("overview"))
+        A("dim", tr("Svart runt rutan"), ["D"], lambda: self._toggle("dim"), check=lambda: v.opt("dim"))
+        A("rtl", tr("Japanskt läge (höger→vänster)"), ["R"], v.toggle_rtl, check=lambda: v.rtl)
+        A("double", tr("Dubbelsida"), ["Shift+D"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
+        A("cover_single", tr("Omslaget ensamt"), [], lambda: self._toggle("cover_single"), check=lambda: v.opt("cover_single"))
+        A("shadow", tr("Skugga i bokryggen"), [], lambda: self._toggle("shadow"), check=lambda: v.opt("shadow"))
         # 1-4 = vänster skärm, Num+1-4 (numpadden) = höger skärm; "fit_*" behåller namnet (egna tangenter finns kvar)
         for side, pre, keys in (("left", "fit_", "{}"), ("right", "fit_right_", "Num+{}")):
             for i, (k, label) in enumerate(FITS):
-                A(pre + k, f"{dict(SIDES)[side]}: {label[0].lower()}{label[1:]}", [keys.format(i + 1)],
+                A(pre + k, tr("{side}: {fit}").format(side=dict(SIDES)[side], fit=label), [keys.format(i + 1)],
                   lambda k=k, side=side: self.set_fit(k, side=side),
                   check=lambda k=k, side=side: self.fit_of(side) == k and (k != "original" or v.opt("zoom") == 1.0))
         for z in ZOOMS:
-            A(f"zoom_{int(z * 100)}", f"Zoom {int(z * 100)} %", [], lambda z=z: self.set_fit("original", z),
+            A(f"zoom_{int(z * 100)}", tr("Zoom {n} %").format(n=int(z * 100)), [], lambda z=z: self.set_fit("original", z),
               check=lambda z=z: self.fit_of(side_of(self)) == "original" and v.opt("zoom") == z)
-        for k, label in (("shrink_w", "Krymp bilder bredare än skärmen"), ("grow_w", "Förstora bilder smalare än skärmen"),
-                         ("shrink_h", "Krymp bilder högre än skärmen"), ("grow_h", "Förstora bilder lägre än skärmen")):
+        for k, label in (("shrink_w", tr("Krymp bilder bredare än skärmen")), ("grow_w", tr("Förstora bilder smalare än skärmen")),
+                         ("shrink_h", tr("Krymp bilder högre än skärmen")), ("grow_h", tr("Förstora bilder lägre än skärmen"))):
             A(k, label, [], lambda k=k: self._toggle(k), check=lambda k=k: v.opt(k))
-        A("zoom_in", "Zooma in", ["+", "=", "Ctrl++"], lambda: v.zoom(1.25))
-        A("zoom_out", "Zooma ut", ["-", "Ctrl+-"], lambda: v.zoom(0.8))
-        A("zoom_reset", "Återställ zoom", ["0"], v.reset_zoom)
-        A("rot_left", "Rotera vänster", ["["], lambda: self.rotate(-90))
-        A("rot_right", "Rotera höger", ["]"], lambda: self.rotate(90))
-        A("magnifier", "Förstoringsglas (eller håll mittenknappen)", ["M"], v.toggle_magnifier, check=lambda: v.mag_on)
+        A("zoom_in", tr("Zooma in"), ["+", "=", "Ctrl++"], lambda: v.zoom(1.25))
+        A("zoom_out", tr("Zooma ut"), ["-", "Ctrl+-"], lambda: v.zoom(0.8))
+        A("zoom_reset", tr("Återställ zoom"), ["0"], v.reset_zoom)
+        A("rot_left", tr("Rotera vänster"), ["["], lambda: self.rotate(-90))
+        A("rot_right", tr("Rotera höger"), ["]"], lambda: self.rotate(90))
+        A("magnifier", tr("Förstoringsglas (eller håll mittenknappen)"), ["M"], v.toggle_magnifier, check=lambda: v.mag_on)
         for k, label in MAG_SHAPES:
             A("mag_" + k, label, [], lambda k=k: v.set_mag_shape(k), check=lambda k=k: v.opt("mag_shape") == k)
-        A("mag_bigger", "Större glas (eller Shift+hjul)", [], lambda: v.mag_resize(1.15))
-        A("mag_smaller", "Mindre glas", [], lambda: v.mag_resize(1 / 1.15))
-        A("mag_more", "Mer förstoring (eller Ctrl+hjul)", [], lambda: v.mag_zoom_step(1.25))
-        A("mag_less", "Mindre förstoring", [], lambda: v.mag_zoom_step(0.8))
-        A("info", "Informationsrad alltid", ["I"], self.toggle_info, check=lambda: v.hud_always)
-        A("pagenum", "Sidnummer", [], lambda: self._toggle("show_pagenum"), check=lambda: v.opt("show_pagenum"))
-        A("progress", "Förloppslist (klickbar)", [], lambda: self._toggle("show_progress"), check=lambda: v.opt("show_progress"))
-        A("distance", "Avståndsläge (stor sidräknare, döljs vid inaktivitet)", ["Shift+F"],
+        A("mag_bigger", tr("Större glas (eller Shift+hjul)"), [], lambda: v.mag_resize(1.15))
+        A("mag_smaller", tr("Mindre glas"), [], lambda: v.mag_resize(1 / 1.15))
+        A("mag_more", tr("Mer förstoring (eller Ctrl+hjul)"), [], lambda: v.mag_zoom_step(1.25))
+        A("mag_less", tr("Mindre förstoring"), [], lambda: v.mag_zoom_step(0.8))
+        A("info", tr("Informationsrad alltid"), ["I"], self.toggle_info, check=lambda: v.hud_always)
+        A("pagenum", tr("Sidnummer"), [], lambda: self._toggle("show_pagenum"), check=lambda: v.opt("show_pagenum"))
+        A("progress", tr("Förloppslist (klickbar)"), [], lambda: self._toggle("show_progress"), check=lambda: v.opt("show_progress"))
+        A("distance", tr("Avståndsläge (stor sidräknare, döljs vid inaktivitet)"), ["Shift+F"],
           lambda: (v.toggle_distance(), self.apply_ui_scale()),
           check=lambda: v.opt("distance_mode"))
         for k, label in SECOND_MODES:
             A("second_" + k, label, [], lambda k=k: self.set_second(k), check=lambda k=k: self.second.mode == k)
-        A("second_cycle", "Andra skärmen: växla läge (av/spegling/fördelning)", ["F9"], self.cycle_second)
+        A("second_cycle", tr("Andra skärmen: växla läge (av/spegling/fördelning)"), ["F9"], self.cycle_second)
         for k, label in SECOND_FITS:
             A("second_fit_" + k, label, [], lambda k=k: self.set_second_fit(k),
               check=lambda k=k: self.second.fit() == k)
-        A("second_fit_cycle", "Andra skärmen: växla anpassning (skärm/bredd/höjd/som huvudfönstret)", ["Shift+F9"],
+        A("second_fit_cycle", tr("Andra skärmen: växla anpassning (skärm/bredd/höjd/som huvudfönstret)"), ["Shift+F9"],
           self.cycle_second_fit)
-        A("ui_bigger", "Större gränssnitt", ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
-        A("ui_smaller", "Mindre gränssnitt", ["Ctrl+Shift+Down"], lambda: self.ui_scale_step(-1))
+        A("ui_bigger", tr("Större gränssnitt"), ["Ctrl+Shift+Up"], lambda: self.ui_scale_step(1))
+        A("ui_smaller", tr("Mindre gränssnitt"), ["Ctrl+Shift+Down"], lambda: self.ui_scale_step(-1))
         # Bild
-        A("auto_color", "Automatisk färgkorrigering", ["A"], lambda: self._toggle("auto_color"), check=lambda: v.opt("auto_color"))
-        A("bg_color", "Bakgrundsfärg…", [], self.pick_bg)
-        A("bg_auto", "Automatisk bakgrundsfärg", [], self.toggle_bg_auto, check=lambda: v.opt("bg") == "auto")
+        A("auto_color", tr("Automatisk färgkorrigering"), ["A"], lambda: self._toggle("auto_color"), check=lambda: v.opt("auto_color"))
+        A("bg_color", tr("Bakgrundsfärg…"), [], self.pick_bg)
+        A("bg_auto", tr("Automatisk bakgrundsfärg"), [], self.toggle_bg_auto, check=lambda: v.opt("bg") == "auto")
         # Bokmärken
-        A("edit", "Redigera rutor (rita/ta bort, sparas)", ["E"], v.toggle_edit, check=lambda: v.edit)
-        A("approve", "Sidan är rätt (spara som träningsdata)", ["K", "Ctrl+Return"], v.approve_page)
-        A("edit_del", "Ta bort rutan under musen", ["Delete"], v.edit_delete_under_mouse)
-        A("edit_clear", "Ta bort alla rutor (uppslaget)", ["Ctrl+Delete"], v.edit_clear_page)
-        A("edit_undo", "Ångra rutändring", ["Ctrl+Z"], v.edit_undo_last)
-        A("edit_redo", "Gör om rutändring", ["Ctrl+Alt+Z"], v.edit_redo_last)
-        A("edit_reset", "Automatiska rutor igen (uppslaget)", ["Ctrl+R"], v.edit_reset_page)
-        A("order_pick", "Ändra läsordning (klicka rutorna i ordning)", ["X"], v.toggle_order,
+        A("edit", tr("Redigera rutor (rita/ta bort, sparas)"), ["E"], v.toggle_edit, check=lambda: v.edit)
+        A("approve", tr("Sidan är rätt (spara som träningsdata)"), ["K", "Ctrl+Return"], v.approve_page)
+        A("edit_del", tr("Ta bort rutan under musen"), ["Delete"], v.edit_delete_under_mouse)
+        A("edit_clear", tr("Ta bort alla rutor (uppslaget)"), ["Ctrl+Delete"], v.edit_clear_page)
+        A("edit_undo", tr("Ångra rutändring"), ["Ctrl+Z"], v.edit_undo_last)
+        A("edit_redo", tr("Gör om rutändring"), ["Ctrl+Alt+Z"], v.edit_redo_last)
+        A("edit_reset", tr("Automatiska rutor igen (uppslaget)"), ["Ctrl+R"], v.edit_reset_page)
+        A("order_pick", tr("Ändra läsordning (klicka rutorna i ordning)"), ["X"], v.toggle_order,
           check=lambda: v.order_pick is not None)
-        A("order_auto", "Automatisk läsordning igen (uppslaget)", ["Shift+X"], v.order_auto)
-        A("order_xy", "Läsordning: kolumn bredvid hög ruta först (4-6-5 i stället för 4-5-6)", [],
+        A("order_auto", tr("Automatisk läsordning igen (uppslaget)"), ["Shift+X"], v.order_auto)
+        A("order_xy", tr("Läsordning: kolumn bredvid hög ruta först (4-6-5 i stället för 4-5-6)"), [],
           lambda: self._toggle("order_xy"), check=lambda: v.opt("order_xy"))
-        A("bm_add", "Lägg till bokmärke…", ["Ctrl+B"], self.add_bookmark)
-        A("bm_manage", "Hantera bokmärken…", ["Ctrl+Shift+B"], self.manage_bookmarks)
+        A("bm_add", tr("Lägg till bokmärke…"), ["Ctrl+B"], self.add_bookmark)
+        A("bm_manage", tr("Hantera bokmärken…"), ["Ctrl+Shift+B"], self.manage_bookmarks)
         # Inställningar / hjälp
-        A("options", "Inställningar…", ["Ctrl+,", "F12"], self.options)
-        A("help", "Kortkommandon", ["H", "F1", "?"], self.toggle_help, check=lambda: v.show_help)
-        A("about", "Om AutoComix", [], self.about)
-        A("escape", "Lämna helskärm / stäng hjälp / avsluta", ["Esc"], self.escape)
+        A("options", tr("Inställningar…"), ["Ctrl+,", "F12"], self.options)
+        A("help", tr("Kortkommandon"), ["H", "F1", "?"], self.toggle_help, check=lambda: v.show_help)
+        A("about", tr("Om AutoComix"), [], self.about)
+        A("escape", tr("Lämna helskärm / stäng hjälp / avsluta"), ["Esc"], self.escape)
         self._apply_keys()
 
     def _apply_keys(self):
@@ -244,29 +245,29 @@ class MainWindow(QMainWindow):
     def _build_menus(self):
         mb = self.menuBar()
         a = self.acts
-        m = mb.addMenu("&Arkiv")
+        m = mb.addMenu(tr("&Arkiv"))
         for k in ("browse", "open_file", "open_folder", "sort_mtime"):
             m.addAction(a[k])
-        self.recent_menu = m.addMenu("Öppna senaste")
+        self.recent_menu = m.addMenu(tr("Öppna senaste"))
         self.recent_menu.aboutToShow.connect(self._fill_recent)
         for k in ("resume", "history", None, "next_file", "prev_file", None, "save_page", "copy_page", "print", None,
                   "close_file", "clear_history", None, "exit"):
             m.addSeparator() if k is None else m.addAction(a[k])
-        m = mb.addMenu("&Navigera")
+        m = mb.addMenu(tr("&Navigera"))
         for k in ("next", "prev", "right", "left", None, "next_page", "prev_page", "first", "last", "goto", None,
                   "thumbbar", "slider", "thumbs"):
             m.addSeparator() if k is None else m.addAction(a[k])
-        sm = m.addMenu("Bildspel")
+        sm = m.addMenu(tr("Bildspel"))
         sm.aboutToShow.connect(lambda sm=sm: (sm.clear(), self.slideshow_menu(sm)))
-        am = m.addMenu("Animation (GIF/WebP/APNG)")
+        am = m.addMenu(tr("Animation (GIF/WebP/APNG)"))
         for k in ("anim_play", None, "anim_next", "anim_prev", None, "anim_faster", "anim_slower", "anim_normal",
                   None, "slideshow_wait_anim"):
             am.addSeparator() if k is None else am.addAction(a[k])
-        m = mb.addMenu("&Visa")
+        m = self.view_menu = mb.addMenu(tr("&Visa"))
         for k in ("fullscreen", "menubar", None, "guided", "overview", "dim", None, "rtl", "double", "cover_single",
                   "shadow"):
             m.addSeparator() if k is None else m.addAction(a[k])
-        fm = m.addMenu("Anpassning")
+        fm = m.addMenu(tr("Anpassning"))
         g = QActionGroup(self)
         for pre in ("fit_", "fit_right_"):
             g = QActionGroup(self)
@@ -283,13 +284,13 @@ class MainWindow(QMainWindow):
             fm.addAction(a[k])
         for k in (None, "zoom_in", "zoom_out", "zoom_reset", None, "rot_left", "rot_right", None):
             m.addSeparator() if k is None else m.addAction(a[k])
-        gm = m.addMenu("Förstoringsglas")
+        gm = m.addMenu(tr("Förstoringsglas"))
         for k in ("magnifier", None, *("mag_" + x for x, _ in MAG_SHAPES), None,
                   "mag_bigger", "mag_smaller", "mag_more", "mag_less"):
             gm.addSeparator() if k is None else gm.addAction(a[k])
         for k in ("info", "pagenum", "progress", None, "distance", "ui_bigger", "ui_smaller", None):
             m.addSeparator() if k is None else m.addAction(a[k])
-        dm = m.addMenu("Andra skärmen")
+        dm = m.addMenu(tr("Andra skärmen"))
         g = QActionGroup(self)
         for k, _ in SECOND_MODES:
             dm.addAction(a["second_" + k])
@@ -301,15 +302,15 @@ class MainWindow(QMainWindow):
             dm.addAction(a["second_fit_" + k])
             g.addAction(a["second_fit_" + k])
         dm.addAction(a["second_fit_cycle"])
-        m = mb.addMenu("&Bild")
+        m = self.image_menu = mb.addMenu(tr("&Bild"))
         for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None,
                   "order_pick", "order_auto", "order_xy", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
-        self.bm_menu = mb.addMenu("B&okmärken")
+        self.bm_menu = mb.addMenu(tr("B&okmärken"))
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
-        m = mb.addMenu("&Inställningar")
+        m = mb.addMenu(tr("&Inställningar"))
         m.addAction(a["options"])
-        m = mb.addMenu("&Hjälp")
+        m = mb.addMenu(tr("&Hjälp"))
         for k in ("help", "about"):
             m.addAction(a[k])
         self.menus = [x.menu() for x in mb.actions()]
@@ -325,7 +326,7 @@ class MainWindow(QMainWindow):
             m.addAction("(tom)").setEnabled(False)
         for h in hist:
             c = self.state.comic(h)
-            pos = f"   s. {c.get('page', 0) + 1}" + (f"/{c['pages']}" if c.get("pages") else "")
+            pos = "   " + (tr("s. {p}/{n}") if c.get("pages") else tr("s. {p}")).format(p=c.get('page', 0) + 1, n=c.get("pages"))
             m.addAction(Path(h).name + pos, lambda h=h: self.v.open(h)).setToolTip(h)
         m.addSeparator()
         m.addAction(self.acts["history"])
@@ -339,7 +340,8 @@ class MainWindow(QMainWindow):
         if bms:
             m.addSeparator()
         for b in bms[-15:][::-1]:
-            m.addAction(f"{b['name']}  —  {Path(b['path']).name} s. {b['page'] + 1}", lambda b=b: self.open_bookmark(b))
+            m.addAction(f"{b['name']}  —  {Path(b['path']).name} " + tr("s. {p}").format(p=b['page'] + 1),
+                        lambda b=b: self.open_bookmark(b))
 
     def _sync(self):
         for a in self.acts.values():
@@ -359,7 +361,7 @@ class MainWindow(QMainWindow):
         m = QMenu(self)
         for k in ("browse", "open_file", "open_folder"):
             m.addAction(a[k])
-        self._recent_into(m.addMenu("Öppna senaste"))
+        self._recent_into(m.addMenu(tr("Öppna senaste")))
         m.addSeparator()
         for k in ("next_file", "prev_file", "goto", "thumbbar", "slider"):
             m.addAction(a[k])
@@ -368,9 +370,8 @@ class MainWindow(QMainWindow):
         m.addSeparator()
         for k in ("fullscreen", "guided", "rtl", "double"):
             m.addAction(a[k])
-        for sub in self.menus:
-            if sub.title().replace("&", "") in ("Visa", "Bild", "Bokmärken"):
-                m.addMenu(sub)
+        for sub in (self.view_menu, self.image_menu, self.bm_menu):
+            m.addMenu(sub)
         m.addSeparator()
         m.addAction(a["options"])
         m.addAction(a["help"])
@@ -381,7 +382,7 @@ class MainWindow(QMainWindow):
     def slideshow_menu(self, m=None):
         """Bildspel: start/stopp, tid i millisekunder, läge, nästa fil och slinga."""
         v = self.v
-        m = m or QMenu("Bildspel", self)
+        m = m or QMenu(tr("Bildspel"), self)
         m.addAction(self.acts["slideshow"])
         m.addSeparator()
         cur = int(v.opt("slideshow_ms"))
@@ -394,39 +395,39 @@ class MainWindow(QMainWindow):
             act.setCheckable(True)
             act.setChecked(ms == cur)
             g.addAction(act)
-        custom = m.addAction(f"Egen tid… ({cur} ms)" if cur not in SLIDE_STEPS
-                             else "Egen tid…", self.ask_slide_ms)
+        custom = m.addAction(tr("Egen tid… ({ms} ms)").format(ms=cur) if cur not in SLIDE_STEPS
+                             else tr("Egen tid…"), self.ask_slide_ms)
         custom.setCheckable(True)
         custom.setChecked(not any(x.isChecked() for x in g.actions()))
         m.addSeparator()
         g2 = QActionGroup(m)
-        for mode, label in (("guided", "Ruta för ruta (i guidat läge)"), ("pages", "Sida för sida")):
+        for mode, label in (("guided", tr("Ruta för ruta (i guidat läge)")), ("pages", tr("Sida för sida"))):
             act = m.addAction(label, lambda mode=mode: v.set_opt("slideshow_mode", mode))
             act.setCheckable(True)
             act.setChecked(v.opt("slideshow_mode") == mode)
             g2.addAction(act)
         m.addSeparator()
-        nf = m.addAction("Fortsätt med nästa fil i mappen", lambda: v.set_opt("slideshow_next_file", not v.opt("slideshow_next_file")))
+        nf = m.addAction(tr("Fortsätt med nästa fil i mappen"), lambda: v.set_opt("slideshow_next_file", not v.opt("slideshow_next_file")))
         nf.setCheckable(True)
         nf.setChecked(bool(v.opt("slideshow_next_file")))
-        lp = m.addAction("Börja om från början vid slutet", lambda: v.set_opt("slideshow_loop", not v.opt("slideshow_loop")))
+        lp = m.addAction(tr("Börja om från början vid slutet"), lambda: v.set_opt("slideshow_loop", not v.opt("slideshow_loop")))
         lp.setCheckable(True)
         lp.setChecked(bool(v.opt("slideshow_loop")))
         return m
 
     def set_slide_ms(self, ms):
         self.v.set_opt("slideshow_ms", int(ms))
-        self.v.flash(f"Bildspel: {int(ms)} ms per steg")
+        self.v.flash(tr("Bildspel: {ms} ms per steg").format(ms=int(ms)))
 
     def slide_ms_step(self, d):
         """100 ms längre (d=1) eller kortare (d=-1), 100 ms–10 min."""
         cur = int(self.v.opt("slideshow_ms"))
         ms = max(100, min(600000, round(cur / 100) * 100 + d * 100))
         self.set_slide_ms(ms)
-        self.v.flash(f"Bildspel: {ms / 1000:g} s per steg")
+        self.v.flash(tr("Bildspel: {s} s per steg").format(s=f"{ms / 1000:g}"))
 
     def ask_slide_ms(self):
-        ms, ok = QInputDialog.getInt(self, "Bildspel", "Tid per steg (millisekunder):",
+        ms, ok = QInputDialog.getInt(self, tr("Bildspel"), tr("Tid per steg (millisekunder):"),
                                      int(self.v.opt("slideshow_ms")), 100, 600000, 100)
         if ok:
             self.set_slide_ms(ms)
@@ -439,12 +440,12 @@ class MainWindow(QMainWindow):
         return str(Path(h[0]).parent) if h else str(Path.home())
 
     def open_file(self):
-        p, _ = QFileDialog.getOpenFileName(self, "Öppna serie", self._start_dir(), FILTER)
+        p, _ = QFileDialog.getOpenFileName(self, tr("Öppna serie"), self._start_dir(), FILTER)
         if p:
             self.v.open(p)
 
     def open_folder(self):
-        p = QFileDialog.getExistingDirectory(self, "Öppna seriemapp", self._start_dir())
+        p = QFileDialog.getExistingDirectory(self, tr("Öppna seriemapp"), self._start_dir())
         if p:
             self.v.open(p)
 
@@ -463,10 +464,10 @@ class MainWindow(QMainWindow):
         if last and Path(last).exists():
             self.v.open(last)
         else:
-            self.v.flash("Ingen tidigare serie")
+            self.v.flash(tr("Ingen tidigare serie"))
 
     def _ask_password(self, path):
-        pw, ok = QInputDialog.getText(self, "Lösenord", f"Lösenord för {Path(path).name}:", QLineEdit.EchoMode.Password)
+        pw, ok = QInputDialog.getText(self, tr("Lösenord"), tr("Lösenord för {name}:").format(name=Path(path).name), QLineEdit.EchoMode.Password)
         if ok and pw:
             self.v.open(path, password=pw)
 
@@ -474,22 +475,22 @@ class MainWindow(QMainWindow):
         if self.v.opt("auto_next_file"):
             self.v.sibling(1)
         else:
-            self.v.flash("Slut på serien")
+            self.v.flash(tr("Slut på serien"))
 
     def save_page(self):
         data, name = self.v.current_image()
         if data is None:
             return
-        p, _ = QFileDialog.getSaveFileName(self, "Spara sida", str(Path(self._start_dir()) / name))
+        p, _ = QFileDialog.getSaveFileName(self, tr("Spara sida"), str(Path(self._start_dir()) / name))
         if p:
             Path(p).write_bytes(data)
-            self.v.flash(f"Sparad: {Path(p).name}")
+            self.v.flash(tr("Sparad: {name}").format(name=Path(p).name))
 
     def copy_page(self):
         sp = self.v._spread(self.v.sp) if self.v.comic else None
         if sp:
             QGuiApplication.clipboard().setImage(sp[0])
-            self.v.flash("Sidan kopierad")
+            self.v.flash(tr("Sidan kopierad"))
 
     def print_page(self):
         from PySide6.QtPrintSupport import QPrintDialog, QPrinter
@@ -509,7 +510,7 @@ class MainWindow(QMainWindow):
 
     def clear_history(self):
         self.state.clear_history()
-        self.v.flash("Historiken rensad")
+        self.v.flash(tr("Historiken rensad"))
 
     # ---------- visa ----------
     UI_SCALES = (0.75, 0.9, 1.0, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0)
@@ -520,8 +521,9 @@ class MainWindow(QMainWindow):
         val = self.UI_SCALES[max(0, min(len(self.UI_SCALES) - 1, i + d))]
         self.v.set_opt("ui_scale", val)
         self.apply_ui_scale()
-        self.v.flash(f"Gränssnittets storlek {int(val * 100)} %"
-                     + (f" (× {self.v.opt('distance_ui_scale'):g} i avståndsläget)" if self.v.opt("distance_mode") else ""))
+        self.v.flash(tr("Gränssnittets storlek {n} %").format(n=int(val * 100))
+                     + (tr(" (× {k} i avståndsläget)").format(k=f"{self.v.opt('distance_ui_scale'):g}")
+                        if self.v.opt("distance_mode") else ""))
 
     def apply_ui_scale(self):
         """Menyer, dialoger och listor följer ui_scale (visningens text skalas i Viewer)."""
@@ -540,7 +542,7 @@ class MainWindow(QMainWindow):
 
     def _toggle(self, k):
         self.v.set_opt(k, not self.v.opt(k))
-        self.v.flash(f"{self._label_for(k)}: {'på' if self.v.opt(k) else 'av'}")
+        self.v.flash(f"{self._label_for(k)}: {tr('på') if self.v.opt(k) else tr('av')}")
 
     def _label_for(self, k):
         a = self.acts.get(k)
@@ -557,17 +559,17 @@ class MainWindow(QMainWindow):
             self.v.state.set_setting("zoom", zoom)
         self.v.set_opt(fit_key(side, self.second.mode), fit)
         self.second.update()
-        label = dict(FITS)[fit] if fit != "original" or zoom == 1.0 else f"Zoom {int(zoom * 100)} %"
-        self.v.flash(f"{dict(SIDES)[side]}: {label[0].lower()}{label[1:]}")
+        label = dict(FITS)[fit] if fit != "original" or zoom == 1.0 else tr("Zoom {n} %").format(n=int(zoom * 100))
+        self.v.flash(tr("{side}: {fit}").format(side=dict(SIDES)[side], fit=label))
 
     def toggle_sort_mtime(self):
         """Ändringsdatum <-> naturlig ordning; serien öppnas om i den nya ordningen."""
         self.v.set_opt("sort", "natural" if self.v.opt("sort") == "mtime" else "mtime")
-        self.v.flash("Sidor sorteras efter " + ("ändringsdatum" if self.v.opt("sort") == "mtime" else "namn"))
+        self.v.flash(tr("Sidor sorteras efter ändringsdatum") if self.v.opt("sort") == "mtime" else tr("Sidor sorteras efter namn"))
 
     def rotate(self, d):
         self.v.set_opt("rotation", (self.v.opt("rotation") + d) % 360)
-        self.v.flash(f"Rotation {self.v.opt('rotation')}°")
+        self.v.flash(tr("Rotation {deg}°").format(deg=self.v.opt('rotation')))
 
     def toggle_fullscreen(self):
         self.top_bar.hide()
@@ -588,7 +590,7 @@ class MainWindow(QMainWindow):
         if save:
             self.state.set_setting("second_screen", self.second.mode)
         label = dict(SECOND_MODES)[self.second.mode]
-        self.v.flash(msg or f"Andra skärmen: {label}")
+        self.v.flash(msg or tr("Andra skärmen: {mode}").format(mode=label))
         self._sync()
 
     def cycle_second(self):
@@ -598,7 +600,7 @@ class MainWindow(QMainWindow):
     def set_second_fit(self, fit):
         self.state.set_setting(fit_key(self.second.side(), self.second.mode), fit)
         self.second.update()
-        self.v.flash(dict(SECOND_FITS).get(fit) or f"Andra skärmen: {dict(FITS)[fit].lower()}")
+        self.v.flash(dict(SECOND_FITS).get(fit) or tr("Andra skärmen: {mode}").format(mode=dict(FITS)[fit]))
         self._sync()
 
     def cycle_second_fit(self):
@@ -653,14 +655,14 @@ class MainWindow(QMainWindow):
         elif self.v.opt("esc_quit") == "direct":
             self.close()
         elif self.v.opt("esc_quit") == "confirm":
-            if QMessageBox.question(self, "Avsluta", "Avsluta AutoComix?") == QMessageBox.StandardButton.Yes:
+            if QMessageBox.question(self, tr("Avsluta"), tr("Avsluta AutoComix?")) == QMessageBox.StandardButton.Yes:
                 self.close()
         else:
-            self.v.flash("Esc avslutar inte – Ctrl+Q avslutar (ändras i Inställningar → Läsning)")
+            self.v.flash(tr("Esc avslutar inte – Ctrl+Q avslutar (ändras i Inställningar → Läsning)"))
 
     def pick_bg(self):
         cur = self.v.opt("bg")
-        c = QColorDialog.getColor(QColor("#0c0c0c" if cur == "auto" else cur), self, "Bakgrundsfärg")
+        c = QColorDialog.getColor(QColor("#0c0c0c" if cur == "auto" else cur), self, tr("Bakgrundsfärg"))
         if c.isValid():
             self.v.set_opt("bg", c.name())
             self.v.sp_cache.clear()
@@ -674,7 +676,7 @@ class MainWindow(QMainWindow):
     def goto_dialog(self):
         if not self.v.comic:
             return
-        n, ok = QInputDialog.getInt(self, "Gå till sida", "Sida:", self.v.page + 1, 1, len(self.v.comic.pages))
+        n, ok = QInputDialog.getInt(self, tr("Gå till sida"), tr("Sida:"), self.v.page + 1, 1, len(self.v.comic.pages))
         if ok:
             self.v.goto_page(n - 1)
 
@@ -688,15 +690,15 @@ class MainWindow(QMainWindow):
     def add_bookmark(self):
         if not self.v.comic:
             return
-        name, ok = QInputDialog.getText(self, "Bokmärke", "Namn:",
-                                        text=f"{self.v.comic.title} s. {self.v.page + 1}")
+        name, ok = QInputDialog.getText(self, tr("Bokmärke"), tr("Namn:"),
+                                        text=f"{self.v.comic.title} " + tr("s. {p}").format(p=self.v.page + 1))
         if ok:
-            self.state.add_bookmark(self.v.comic.path, self.v.page, name or "Bokmärke")
-            self.v.flash("Bokmärke sparat")
+            self.state.add_bookmark(self.v.comic.path, self.v.page, name or tr("Bokmärke"))
+            self.v.flash(tr("Bokmärke sparat"))
 
     def open_bookmark(self, b):
         if not Path(b["path"]).exists():
-            self.v.flash("Filen finns inte längre")
+            self.v.flash(tr("Filen finns inte längre"))
             return
         if not self.v.comic or self.v.comic.path != Path(b["path"]):
             if not self.v.open(b["path"]):
@@ -718,23 +720,27 @@ class MainWindow(QMainWindow):
             ks = [s.toString(QKeySequence.SequenceFormat.NativeText) for s in a.shortcuts()]
             if ks:
                 rows.append(f"{' / '.join(ks):<26}{a.text().replace('&', '')}")
-        rows += ["", "Dubbelklick                zooma till rutan under musen (igen = hela sidan)",
-                 "Klick vänster/höger kant   föregående / nästa",
-                 "Ctrl+hjul / dra            fri zoom / panorera",
-                 "Mittenknapp (håll)         förstoringsglas",
-                 "Högerklick                 meny",
-                 "Musknappar bakåt/framåt    föregående / nästa fil"]
-        return "AutoComix – kortkommandon\n\n" + "\n".join(rows)
+        rows.append("")
+        for keys, what in ((tr("Dubbelklick"), tr("zooma till rutan under musen (igen = hela sidan)")),
+                           (tr("Klick vänster/höger kant"), tr("föregående / nästa")),
+                           (tr("Ctrl+hjul / dra"), tr("fri zoom / panorera")),
+                           (tr("Mittenknapp (håll)"), tr("förstoringsglas")),
+                           (tr("Högerklick"), tr("meny")),
+                           (tr("Musknappar bakåt/framåt"), tr("föregående / nästa fil"))):
+            rows.append(f"{keys:<26} {what}")
+        return tr("AutoComix – kortkommandon") + "\n\n" + "\n".join(rows)
 
     def about(self):
-        QMessageBox.about(self, "Om AutoComix",
-                          f"<b>AutoComix {__version__}</b><br>Serieläsare med automatisk zoom ruta för ruta.<br><br>"
-                          "Copyright © 2026 Stefan Persson. Fri programvara under GNU AGPL-3.0, utan garanti.<br>"
-                          "Källkod: <a href='https://github.com/SorbP/AutoComix'>github.com/SorbP/AutoComix</a><br><br>"
-                          "Rutdetektering: cbxy (MIT) och YOLO-modellen mosesb/best-comic-panel-detection "
-                          "(tränad med Ultralytics/YOLOv12, AGPL-3.0) via ONNX Runtime (MIT).<br>"
-                          "Gränssnitt: Qt / PySide6 (LGPL-3.0). PDF: pdfium (BSD/Apache). Arkiv: py7zr (LGPL-2.1+).<br>"
-                          "Alla licenstexter finns i mappen licenses bredvid programmet.")
+        QMessageBox.about(self, tr("Om AutoComix"),
+                          f"<b>AutoComix {__version__}</b><br>"
+                          + tr("Serieläsare med automatisk zoom ruta för ruta.") + "<br><br>"
+                          + tr("Copyright © 2026 Stefan Persson. Fri programvara under GNU AGPL-3.0, utan garanti.")
+                          + "<br>" + tr("Källkod:")
+                          + " <a href='https://github.com/SorbP/AutoComix'>github.com/SorbP/AutoComix</a><br><br>"
+                          + tr("Rutdetektering: cbxy (MIT) och YOLO-modellen mosesb/best-comic-panel-detection "
+                               "(tränad med Ultralytics/YOLOv12, AGPL-3.0) via ONNX Runtime (MIT).") + "<br>"
+                          + tr("Gränssnitt: Qt / PySide6 (LGPL-3.0). PDF: pdfium (BSD/Apache). Arkiv: py7zr (LGPL-2.1+).")
+                          + "<br>" + tr("Alla licenstexter finns i mappen licenses bredvid programmet."))
 
     # ---------- fönster ----------
     def _restore_geometry(self):
@@ -774,6 +780,20 @@ class MainWindow(QMainWindow):
             self.state.clear_history()
         self.state.save()
         super().closeEvent(e)
+        if getattr(self, "restart_args", None) is not None:
+            from PySide6.QtCore import QProcess
+            QProcess.startDetached(sys.executable, self.restart_args)
+
+    def restart(self):
+        """Starta om programmet (t.ex. efter byte av språk) och öppna samma serie igen."""
+        frozen = getattr(sys, "frozen", False)
+        args = [] if frozen else (["-m", "panelview"] if sys.argv[0].endswith("__main__.py") else [sys.argv[0]])
+        if self.v.comic:
+            args.append(str(self.v.comic.path))
+            if not self.isFullScreen():
+                args.append("--window")
+        self.restart_args = args
+        self.close()
 
 
 class _ThumbSig(QObject):
@@ -803,7 +823,7 @@ class ThumbDialog(QDialog):
 
     def __init__(self, parent, viewer):
         super().__init__(parent)
-        self.setWindowTitle(f"Miniatyrer – {viewer.comic.title}")
+        self.setWindowTitle(tr("Miniatyrer – {title}").format(title=viewer.comic.title))
         self.resize(1100, 760)
         self.choice = None
         self.list = QListWidget(viewMode=QListWidget.ViewMode.IconMode, resizeMode=QListWidget.ResizeMode.Adjust,
@@ -811,7 +831,7 @@ class ThumbDialog(QDialog):
         self.list.setIconSize(QSize(self.SIZE, self.SIZE))
         self.list.setGridSize(QSize(self.SIZE + 16, self.SIZE + 34))
         self.list.itemActivated.connect(self._pick)
-        self.bar = Progress("Miniatyrer")
+        self.bar = Progress(tr("Miniatyrer"))
         self.done_n = 0
         lay = QVBoxLayout(self)
         lay.addWidget(self.list)
@@ -856,10 +876,10 @@ class HistoryDialog(QDialog):
     def __init__(self, win):
         super().__init__(win)
         self.win = win
-        self.setWindowTitle("Visningshistorik")
+        self.setWindowTitle(tr("Visningshistorik"))
         self.resize(900, 520)
         self.t = QTableWidget(0, 4)
-        self.t.setHorizontalHeaderLabels(["Serie", "Position", "Senast öppnad", "Mapp"])
+        self.t.setHorizontalHeaderLabels([tr("Serie"), tr("Position"), tr("Senast öppnad"), tr("Mapp")])
         self.t.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.t.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.t.verticalHeader().hide()
@@ -870,15 +890,15 @@ class HistoryDialog(QDialog):
         self.t.setColumnWidth(3, 280)
         self.t.cellDoubleClicked.connect(lambda *_: self._go())
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel("Dubbelklicka eller tryck Enter för att fortsätta där du var."))
+        lay.addWidget(QLabel(tr("Dubbelklicka eller tryck Enter för att fortsätta där du var.")))
         lay.addWidget(self.t)
         row = QHBoxLayout()
-        for label, fn in (("Öppna", self._go), ("Ta bort", self._rm), ("Rensa allt", self._clear)):
+        for label, fn in ((tr("Öppna"), self._go), (tr("Ta bort"), self._rm), (tr("Rensa allt"), self._clear)):
             b = QPushButton(label)
             b.clicked.connect(fn)
             row.addWidget(b)
         row.addStretch()
-        close = QPushButton("Stäng")
+        close = QPushButton(tr("Stäng"))
         close.clicked.connect(self.reject)
         row.addWidget(close)
         lay.addLayout(row)
@@ -890,9 +910,9 @@ class HistoryDialog(QDialog):
         self.t.setRowCount(len(self.paths))
         for r, p in enumerate(self.paths):
             c = st.comic(p)
-            pos = f"sida {c.get('page', 0) + 1}" + (f" av {c['pages']}" if c.get("pages") else "")
+            pos = (tr("sida {p} av {n}") if c.get("pages") else tr("sida {p}")).format(p=c.get('page', 0) + 1, n=c.get("pages"))
             if c.get("panel"):
-                pos += f", ruta {c['panel'] + 1}"
+                pos += tr(", ruta {k}").format(k=c['panel'] + 1)
             when = time.strftime("%Y-%m-%d %H:%M", time.localtime(c["opened"])) if c.get("opened") else ""
             for col, txt in enumerate((Path(p).name, pos, when, str(Path(p).parent))):
                 it = QTableWidgetItem(txt)
@@ -932,11 +952,11 @@ class BookmarkDialog(QDialog):
     def __init__(self, win):
         super().__init__(win)
         self.win = win
-        self.setWindowTitle("Bokmärken")
+        self.setWindowTitle(tr("Bokmärken"))
         self.resize(640, 420)
         self.list = QListWidget()
         self.list.itemActivated.connect(lambda _: self._go())
-        go, rm, rn = QPushButton("Gå till"), QPushButton("Ta bort"), QPushButton("Byt namn…")
+        go, rm, rn = QPushButton(tr("Gå till")), QPushButton(tr("Ta bort")), QPushButton(tr("Byt namn…"))
         go.clicked.connect(self._go)
         rm.clicked.connect(self._rm)
         rn.clicked.connect(self._rename)
@@ -955,7 +975,7 @@ class BookmarkDialog(QDialog):
     def _fill(self):
         self.list.clear()
         for b in self.win.state.bookmarks():
-            self.list.addItem(f"{b['name']}   —   {Path(b['path']).name}, sida {b['page'] + 1}")
+            self.list.addItem(f"{b['name']}   —   {Path(b['path']).name}, " + tr("sida {p}").format(p=b['page'] + 1))
 
     def _go(self):
         i = self.list.currentRow()
@@ -974,7 +994,7 @@ class BookmarkDialog(QDialog):
         if i < 0:
             return
         b = self.win.state.bookmarks()[i]
-        name, ok = QInputDialog.getText(self, "Byt namn", "Namn:", text=b["name"])
+        name, ok = QInputDialog.getText(self, tr("Byt namn"), tr("Namn:"), text=b["name"])
         if ok and name:
             b["name"] = name
             self.win.state.save()
@@ -985,7 +1005,7 @@ class OptionsDialog(QDialog):
     def __init__(self, win):
         super().__init__(win)
         self.win, self.v = win, win.v
-        self.setWindowTitle("Inställningar")
+        self.setWindowTitle(tr("Inställningar"))
         self.resize(720, 620)
         tabs = QTabWidget()
         self.w = {}
@@ -1013,86 +1033,92 @@ class OptionsDialog(QDialog):
         # Visning
         t = QWidget()
         f = QFormLayout(t)
+        f.addRow(tr("Språk") + " / Language", combo("language", [("auto", tr("Automatiskt (systemets språk)"))]
+                                                    + list(LANGUAGES)))
+        note = QLabel(tr("Översättningarna till andra språk än engelska och svenska har inte granskats av "
+                         "utvecklaren, som inte talar dem, och kan innehålla fel."))
+        note.setWordWrap(True)
+        f.addRow(note)
         self.bg_btn = QPushButton()
         self.bg_val = self.v.opt("bg")
         self._bg_label()
         self.bg_btn.clicked.connect(self._pick_bg)
-        f.addRow("Bakgrundsfärg", self.bg_btn)
-        f.addRow("Skalning", combo("quality", [("fast", "Snabb (närmaste)"), ("smooth", "Jämn (utom under animering)"),
-                                              ("best", "Bästa (alltid jämn)")]))
-        f.addRow(chk("anim", "Animerad zoom mellan rutor"))
-        f.addRow("Animationstid", num("anim_ms", 50, 2000, 10, 0, " ms"))
-        f.addRow(QLabel("<b>Anpassa till skärm</b> (som CDisplayEx)"))
-        f.addRow(chk("shrink_w", "Krymp bilder som är bredare än skärmen"))
-        f.addRow(chk("grow_w", "Förstora bilder som är smalare än skärmen"))
-        f.addRow(chk("shrink_h", "Krymp bilder som är högre än skärmen"))
-        f.addRow(chk("grow_h", "Förstora bilder som är lägre än skärmen"))
-        f.addRow(chk("dim", "Svart runt aktuell ruta"))
-        f.addRow(chk("show_pagenum", "Visa sidnummer"))
-        f.addRow(chk("show_progress", "Visa förloppslist"))
-        f.addRow(chk("hide_cursor", "Dölj muspekaren i helskärm"))
-        f.addRow(QLabel("<b>Storlek och avstånd</b>"))
-        f.addRow("Gränssnittets storlek (text, listor, menyer)", num("ui_scale", 0.5, 4.0, 0.05, 2, " ×"))
-        f.addRow(chk("distance_mode", "Avståndsläge (Shift+F)"))
-        f.addRow("  Sidräknarens storlek i avståndsläget", num("distance_scale", 1.0, 10.0, 0.25, 2, " ×"))
-        f.addRow("  Övrigt gränssnitt i avståndsläget", num("distance_ui_scale", 1.0, 4.0, 0.1, 2, " ×"))
-        f.addRow(chk("counter_autohide", "Dölj sidräknaren vid inaktivitet även utanför avståndsläget"))
-        f.addRow("  Döljs efter", num("counter_hide_ms", 300, 10000, 100, 0, " ms"))
-        tabs.addTab(t, "Visning")
+        f.addRow(tr("Bakgrundsfärg"), self.bg_btn)
+        f.addRow(tr("Skalning"), combo("quality", [("fast", tr("Snabb (närmaste)")), ("smooth", tr("Jämn (utom under animering)")),
+                                              ("best", tr("Bästa (alltid jämn)"))]))
+        f.addRow(chk("anim", tr("Animerad zoom mellan rutor")))
+        f.addRow(tr("Animationstid"), num("anim_ms", 50, 2000, 10, 0, tr(" ms")))
+        f.addRow(QLabel(tr("<b>Anpassa till skärm</b> (som CDisplayEx)")))
+        f.addRow(chk("shrink_w", tr("Krymp bilder som är bredare än skärmen")))
+        f.addRow(chk("grow_w", tr("Förstora bilder som är smalare än skärmen")))
+        f.addRow(chk("shrink_h", tr("Krymp bilder som är högre än skärmen")))
+        f.addRow(chk("grow_h", tr("Förstora bilder som är lägre än skärmen")))
+        f.addRow(chk("dim", tr("Svart runt aktuell ruta")))
+        f.addRow(chk("show_pagenum", tr("Visa sidnummer")))
+        f.addRow(chk("show_progress", tr("Visa förloppslist")))
+        f.addRow(chk("hide_cursor", tr("Dölj muspekaren i helskärm")))
+        f.addRow(QLabel(tr("<b>Storlek och avstånd</b>")))
+        f.addRow(tr("Gränssnittets storlek (text, listor, menyer)"), num("ui_scale", 0.5, 4.0, 0.05, 2, " ×"))
+        f.addRow(chk("distance_mode", tr("Avståndsläge (Shift+F)")))
+        f.addRow(tr("  Sidräknarens storlek i avståndsläget"), num("distance_scale", 1.0, 10.0, 0.25, 2, " ×"))
+        f.addRow(tr("  Övrigt gränssnitt i avståndsläget"), num("distance_ui_scale", 1.0, 4.0, 0.1, 2, " ×"))
+        f.addRow(chk("counter_autohide", tr("Dölj sidräknaren vid inaktivitet även utanför avståndsläget")))
+        f.addRow(tr("  Döljs efter"), num("counter_hide_ms", 300, 10000, 100, 0, tr(" ms")))
+        tabs.addTab(t, tr("Visning"))
         # Läsning
         t = QWidget()
         f = QFormLayout(t)
-        f.addRow(chk("guided", "Guidat läge: zooma ruta för ruta"))
-        f.addRow(chk("overview", "Visa hela sidan innan rutorna"))
-        fits = list(FITS) + [("main", "Samma utsnitt som huvudfönstret (bara andra skärmen)")]
-        mode = "spegling" if win.second.mode == "mirror" else "av/fördelning"
+        f.addRow(chk("guided", tr("Guidat läge: zooma ruta för ruta")))
+        f.addRow(chk("overview", tr("Visa hela sidan innan rutorna")))
+        fits = list(FITS) + [("main", tr("Samma utsnitt som huvudfönstret (bara andra skärmen)"))]
+        mode = tr("spegling") if win.second.mode == "mirror" else tr("av/fördelning")
         for side, label in SIDES:
-            f.addRow(f"Anpassning, {label.lower()} ({mode})", combo(fit_key(side, win.second.mode), fits))
-        f.addRow(chk("double", "Dubbelsida"))
-        f.addRow(chk("cover_single", "Omslaget visas ensamt i dubbelsidesläge"))
-        f.addRow(chk("shadow", "Skugga i bokryggen"))
-        f.addRow(chk("auto_next_file", "Öppna nästa fil i mappen vid slutet"))
-        f.addRow("Bildspel, tid per steg", num("slideshow_ms", 100, 600000, 100, 0, " ms"))
-        f.addRow("Bildspel, läge", combo("slideshow_mode", [("guided", "Ruta för ruta (i guidat läge)"),
-                                                            ("pages", "Sida för sida")]))
-        f.addRow(chk("slideshow_next_file", "Bildspelet fortsätter med nästa fil i mappen"))
-        f.addRow(chk("slideshow_loop", "Bildspelet börjar om från början vid slutet"))
-        f.addRow("Sortering", combo("sort", SORTS))
-        f.addRow("Många oskannade sidor", combo("detect_large", [("ask", "Fråga"), ("all", "Skanna alla direkt"),
-                                                                ("batch", "Skanna en sats i taget")]))
-        f.addRow("Sidor per sats", num("detect_batch", 0, 10000, 10, 0, " (0 = alltid alla)"))
+            f.addRow(tr("Anpassning, {side} ({mode})").format(side=label.lower(), mode=mode), combo(fit_key(side, win.second.mode), fits))
+        f.addRow(chk("double", tr("Dubbelsida")))
+        f.addRow(chk("cover_single", tr("Omslaget visas ensamt i dubbelsidesläge")))
+        f.addRow(chk("shadow", tr("Skugga i bokryggen")))
+        f.addRow(chk("auto_next_file", tr("Öppna nästa fil i mappen vid slutet")))
+        f.addRow(tr("Bildspel, tid per steg"), num("slideshow_ms", 100, 600000, 100, 0, tr(" ms")))
+        f.addRow(tr("Bildspel, läge"), combo("slideshow_mode", [("guided", tr("Ruta för ruta (i guidat läge)")),
+                                                            ("pages", tr("Sida för sida"))]))
+        f.addRow(chk("slideshow_next_file", tr("Bildspelet fortsätter med nästa fil i mappen")))
+        f.addRow(chk("slideshow_loop", tr("Bildspelet börjar om från början vid slutet")))
+        f.addRow(tr("Sortering"), combo("sort", SORTS))
+        f.addRow(tr("Många oskannade sidor"), combo("detect_large", [("ask", tr("Fråga")), ("all", tr("Skanna alla direkt")),
+                                                                ("batch", tr("Skanna en sats i taget"))]))
+        f.addRow(tr("Sidor per sats"), num("detect_batch", 0, 10000, 10, 0, tr(" (0 = alltid alla)")))
         f.addRow(QLabel("<b>Avslutning</b>"))
-        f.addRow("Esc när helskärm och fönster redan är stängda",
-                 combo("esc_quit", [("never", "Avsluta inte (Ctrl+Q avslutar)"), ("confirm", "Fråga först"),
-                                    ("direct", "Avsluta direkt")]))
-        tabs.addTab(t, "Läsning")
+        f.addRow(tr("Esc när helskärm och fönster redan är stängda"),
+                 combo("esc_quit", [("never", tr("Avsluta inte (Ctrl+Q avslutar)")), ("confirm", tr("Fråga först")),
+                                    ("direct", tr("Avsluta direkt"))]))
+        tabs.addTab(t, tr("Läsning"))
         # Bild
         t = QWidget()
         f = QFormLayout(t)
-        f.addRow(chk("auto_color", "Automatisk färgkorrigering (vitbalans + kontrast)"))
-        f.addRow("Gamma", num("gamma", 0.3, 3.0, 0.05, 2))
-        f.addRow("Lyster (vibrance)", num("vibrance", 0.0, 1.5, 0.05, 2))
-        f.addRow("Rotation", combo("rotation", [(0, "0°"), (90, "90°"), (180, "180°"), (270, "270°")]))
-        f.addRow("Förstoringsglas, form", combo("mag_shape", list(MAG_SHAPES)))
-        f.addRow("Förstoringsglas, bredd", num("mag_size", 80, 1600, 20, 0, " px"))
-        f.addRow("Rektangel, höjd/bredd", num("mag_aspect", 0.2, 2.0, 0.05, 2))
-        f.addRow("Förstoringsglas, förstoring", num("mag_zoom", 1.25, 8.0, 0.25, 2, " ×"))
-        f.addRow("Lins, förvrängning", num("mag_warp", 0.0, 1.5, 0.1, 2))
-        tabs.addTab(t, "Bild")
+        f.addRow(chk("auto_color", tr("Automatisk färgkorrigering (vitbalans + kontrast)")))
+        f.addRow(tr("Gamma"), num("gamma", 0.3, 3.0, 0.05, 2))
+        f.addRow(tr("Lyster (vibrance)"), num("vibrance", 0.0, 1.5, 0.05, 2))
+        f.addRow(tr("Rotation"), combo("rotation", [(0, "0°"), (90, "90°"), (180, "180°"), (270, "270°")]))
+        f.addRow(tr("Förstoringsglas, form"), combo("mag_shape", list(MAG_SHAPES)))
+        f.addRow(tr("Förstoringsglas, bredd"), num("mag_size", 80, 1600, 20, 0, tr(" px")))
+        f.addRow(tr("Rektangel, höjd/bredd"), num("mag_aspect", 0.2, 2.0, 0.05, 2))
+        f.addRow(tr("Förstoringsglas, förstoring"), num("mag_zoom", 1.25, 8.0, 0.25, 2, " ×"))
+        f.addRow(tr("Lins, förvrängning"), num("mag_warp", 0.0, 1.5, 0.1, 2))
+        tabs.addTab(t, tr("Bild"))
         # Historik
         t = QWidget()
         f = QFormLayout(t)
-        f.addRow(chk("history", "Spara historik"))
-        f.addRow(chk("clear_history_on_exit", "Rensa historiken när programmet stängs"))
-        b = QPushButton("Rensa historik nu")
+        f.addRow(chk("history", tr("Spara historik")))
+        f.addRow(chk("clear_history_on_exit", tr("Rensa historiken när programmet stängs")))
+        b = QPushButton(tr("Rensa historik nu"))
         b.clicked.connect(win.clear_history)
         f.addRow(b)
-        tabs.addTab(t, "Historik")
+        tabs.addTab(t, tr("Historik"))
         # Tangenter
         t = QWidget()
         lay = QVBoxLayout(t)
         self.keys = QTableWidget(len(win.acts), 3)
-        self.keys.setHorizontalHeaderLabels(["Funktion", "Genväg", "Sekundär genväg"])
+        self.keys.setHorizontalHeaderLabels([tr("Funktion"), tr("Genväg"), tr("Sekundär genväg")])
         self.keys.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         self.key_edits = {}
         for r, (k, a) in enumerate(win.acts.items()):
@@ -1104,10 +1130,10 @@ class OptionsDialog(QDialog):
             self.keys.setCellWidget(r, 2, e2)
             self.key_edits[k] = (e1, e2, sc[2:])
         lay.addWidget(self.keys)
-        rb = QPushButton("Återställ standardgenvägar")
+        rb = QPushButton(tr("Återställ standardgenvägar"))
         rb.clicked.connect(self._reset_keys)
         lay.addWidget(rb)
-        tabs.addTab(t, "Tangenter")
+        tabs.addTab(t, tr("Tangenter"))
 
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         bb.accepted.connect(self._save)
@@ -1117,12 +1143,12 @@ class OptionsDialog(QDialog):
         lay.addWidget(bb)
 
     def _bg_label(self):
-        self.bg_btn.setText("Automatisk (kantfärg)" if self.bg_val == "auto" else self.bg_val)
+        self.bg_btn.setText(tr("Automatisk (kantfärg)") if self.bg_val == "auto" else self.bg_val)
 
     def _pick_bg(self):
         m = QMenu(self)
-        m.addAction("Automatisk (sidans kantfärg)", lambda: setattr(self, "bg_val", "auto"))
-        m.addAction("Välj färg…", self._color)
+        m.addAction(tr("Automatisk (sidans kantfärg)"), lambda: setattr(self, "bg_val", "auto"))
+        m.addAction(tr("Välj färg…"), self._color)
         m.exec(self.bg_btn.mapToGlobal(self.bg_btn.rect().bottomLeft()))
         self._bg_label()
 
@@ -1172,3 +1198,6 @@ class OptionsDialog(QDialog):
         self.win.state.save()
         self.v.goto_page(self.v.page, animate=False)
         self.accept()
+        if "language" in changed and QMessageBox.question(
+                self.win, "AutoComix", tr("Språket byts när programmet startas om. Starta om nu?"))                 == QMessageBox.StandardButton.Yes:
+            QTimer.singleShot(0, self.win.restart)

@@ -7,6 +7,8 @@ import threading
 import zipfile
 from pathlib import Path
 
+from .i18n import tr
+
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")  # prioritet vid dubbletter
 ARCHIVE_EXT = {".cbz", ".zip", ".cbr", ".rar", ".cb7", ".7z", ".pdf"}
 PDF_SCALE = 2.0  # 144 dpi, skarpt nog för helskärm och rutzoom
@@ -24,7 +26,7 @@ def alpha_key(s):
     return s.lower()
 
 
-SORTS = (("natural", "Naturlig (2 före 10)"), ("alpha", "Alfabetisk"), ("mtime", "Ändringsdatum (äldst först)"))
+SORTS = (("natural", tr("Naturlig (2 före 10)")), ("alpha", tr("Alfabetisk")), ("mtime", tr("Ändringsdatum (äldst först)")))
 
 
 def sort_key(sort, mtime=None):
@@ -111,7 +113,7 @@ def _extract(archive, dest, password=None, progress=None):
         tools.append(["unrar", "x", "-o+", str(archive), str(dest) + "\\"])
     if shutil.which("tar"):
         tools.append(["tar", "-xf", str(archive), "-C", str(dest)])
-    err = "inget verktyg (7z/unrar/tar) hittades"
+    err = tr("inget verktyg (7z/unrar/tar) hittades")
     for cmd in tools:
         code, out = _run(cmd, progress)
         if code == 0:
@@ -119,7 +121,7 @@ def _extract(archive, dest, password=None, progress=None):
         err = out.strip()[-300:]
         if "password" in err.lower() or "encrypted" in err.lower():
             raise PasswordNeeded()
-    raise RuntimeError(f"Kunde inte packa upp {Path(archive).name}: {err}")
+    raise RuntimeError(tr("Kunde inte packa upp {name}: {err}").format(name=Path(archive).name, err=err))
 
 
 class Comic:
@@ -159,7 +161,7 @@ class Comic:
                 raise
             root = Path(self._tmp.name)
         else:
-            raise ValueError(f"Okänt format: {self.path.name}")
+            raise ValueError(tr("Okänt format: {name}").format(name=self.path.name))
         self.root = root
         self.pages = pick_images((p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()),
                                  sort_key(sort, file_mtime(root)))  # uppackade rar/7z behåller datumen
@@ -190,7 +192,7 @@ class Comic:
 
     def _check(self):
         if not self.pages:
-            raise FileNotFoundError(f"Inga bilder i {self.path}")
+            raise FileNotFoundError(tr("Inga bilder i {path}").format(path=self.path))
 
     @property
     def title(self):

@@ -13,6 +13,7 @@ from PySide6.QtGui import QColor, QCursor, QFont, QImage, QPainter, QPainterPath
 from PySide6.QtWidgets import QApplication, QProgressDialog, QWidget
 
 from . import animation
+from .i18n import tr
 from . import geometry as G
 from . import imaging
 from .comic import IMAGE_EXT, Comic, PasswordNeeded
@@ -32,7 +33,7 @@ DEFAULTS = {
     "double": False, "cover_single": True, "shadow": True,
     "rotation": 0, "auto_color": False, "gamma": 1.0, "vibrance": 0.0,
     "bg": "#0c0c0c", "quality": "smooth", "anim": True, "anim_ms": 320,
-    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "detect_large": "ask", "detect_batch": 100, "auto_next_file": True, "history": True, "clear_history_on_exit": False,
+    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "detect_large": "ask", "detect_batch": 100, "language": "auto", "auto_next_file": True, "history": True, "clear_history_on_exit": False,
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
@@ -44,7 +45,7 @@ DEFAULTS = {
     "counter_autohide": False, "counter_hide_ms": 1000,
 }
 ANIM_SPEEDS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
-MAG_SHAPES = (("rect", "Rektangel"), ("square", "Kvadrat"), ("circle", "Rund"), ("lens", "Lins (rund, förvrängd)"))
+MAG_SHAPES = (("rect", tr("Rektangel")), ("square", tr("Kvadrat")), ("circle", tr("Rund")), ("lens", tr("Lins (rund, förvrängd)")))
 
 
 def lerp_rect(a, b, t):
@@ -224,7 +225,7 @@ class Viewer(QWidget):
             self.passwordNeeded.emit(str(path))
             return False
         except Exception as e:
-            self.flash(f"Kunde inte öppna: {e}")
+            self.flash(tr("Kunde inte öppna: {err}").format(err=e))
             return False
         self.close_comic()
         self.comic = comic
@@ -248,7 +249,7 @@ class Viewer(QWidget):
         self.detector.start()
         self._layout()
         self.goto_page(start, forward=True, animate=False)
-        self.flash(f"{comic.title}  ({len(comic.pages)} sidor)")
+        self.flash(f"{comic.title}  (" + tr("{n} sidor").format(n=len(comic.pages)) + ")")
         self.changed.emit()
         return True
 
@@ -271,7 +272,7 @@ class Viewer(QWidget):
         t0, dlg = time.monotonic(), None
         while th.is_alive():
             if dlg is None and time.monotonic() - t0 > 0.4:  # snabba arkiv: ingen dialog som blinkar förbi
-                dlg = QProgressDialog(f"Packar upp {path.name}…", None, 0, 100, self.window())
+                dlg = QProgressDialog(tr("Packar upp {name}…").format(name=path.name), None, 0, 100, self.window())
                 dlg.setWindowTitle("AutoComix")
                 dlg.setWindowModality(Qt.WindowModality.WindowModal)
                 dlg.setMinimumDuration(0)
@@ -319,7 +320,7 @@ class Viewer(QWidget):
         if 0 <= i + step < len(sib):
             self.open(sib[i + step])
         else:
-            self.flash("Ingen fler serie i mappen")
+            self.flash(tr("Ingen fler serie i mappen"))
 
     def reload_images(self):
         """Bildinställningar ändrade (rotation/färg): ladda om sidorna, behåll position."""
@@ -540,9 +541,9 @@ class Viewer(QWidget):
                 self.finished.emit()
             else:
                 self.at_end = True
-                self.flash("Slut på serien – tryck igen för nästa fil")
+                self.flash(tr("Slut på serien – tryck igen för nästa fil"))
         else:
-            self.flash("Första sidan")
+            self.flash(tr("Första sidan"))
 
     def first(self):
         self.goto_spread(0)
@@ -717,7 +718,7 @@ class Viewer(QWidget):
         self.frame_timer.stop()
         for p in self.anim_pages():
             self.anims[p]["due"] = None
-        self.flash("Animation: spelar" if play else "Animation: pausad")
+        self.flash(tr("Animation: spelar") if play else tr("Animation: pausad"))
         self.update()
         self.changed.emit()
 
@@ -725,7 +726,7 @@ class Viewer(QWidget):
         """En bildruta fram/bak (pausar)."""
         vis = self.anim_pages()
         if not vis:
-            self.flash("Ingen animation på sidan")
+            self.flash(tr("Ingen animation på sidan"))
             return
         if self.opt("anim_play"):
             self.set_opt("anim_play", False)
@@ -735,7 +736,7 @@ class Viewer(QWidget):
             a["k"], a["due"] = (a["k"] + d) % len(a["f"]), None
             self._set_frame(p)
         a = self.anims[vis[0]]
-        self.flash(f"Bildruta {a['k'] + 1}/{len(a['f'])} (pausad)")
+        self.flash(tr("Bildruta {k}/{n} (pausad)").format(k=a['k'] + 1, n=len(a['f'])))
         self.update()
         self.changed.emit()
 
@@ -749,7 +750,7 @@ class Viewer(QWidget):
         for p in self.anim_pages():
             self.anims[p]["due"] = None
         self.frame_timer.stop()
-        self.flash(f"Animationshastighet {v:g}x")
+        self.flash(tr("Animationshastighet {x}x").format(x=f"{v:g}"))
         self.update()
         self.changed.emit()
 
@@ -881,7 +882,7 @@ class Viewer(QWidget):
             if self.edit:
                 self._paint_edit(p)
         elif self.comic:
-            self._text(p, "Laddar…", center=True)
+            self._text(p, tr("Laddar…"), center=True)
         self._overlays(p)
         self._hud(p)
         if self.show_help:
@@ -961,20 +962,20 @@ class Viewer(QWidget):
         self.set_opt("mag_shape", shape)
         if not (self.mag_on or self.mag_hold):
             self.mag_on = True
-        self.flash("Förstoringsglas: " + dict(MAG_SHAPES)[shape])
+        self.flash(tr("Förstoringsglas: {shape}").format(shape=dict(MAG_SHAPES)[shape]))
         self.update()
         self.changed.emit()
 
     def mag_resize(self, f):
         val = max(80, min(1600, round(float(self.opt("mag_size")) * f)))
         self.set_opt("mag_size", val)
-        self.flash(f"Förstoringsglas {val} px")
+        self.flash(tr("Förstoringsglas {px} px").format(px=val))
         self.update()
 
     def mag_zoom_step(self, f):
         val = max(1.25, min(8.0, round(float(self.opt("mag_zoom")) * f * 4) / 4))
         self.set_opt("mag_zoom", val)
-        self.flash(f"Förstoring {val:g}×")
+        self.flash(tr("Förstoring {x}×").format(x=f"{val:g}"))
         self.update()
 
     # ---------- storlek / avståndsläge ----------
@@ -1022,8 +1023,8 @@ class Viewer(QWidget):
         on = not self.opt("distance_mode")
         self.set_opt("distance_mode", on)
         self.poke()
-        self.flash("Avståndsläge: stor sidräknare, döljs efter "
-                   f"{int(self.opt('counter_hide_ms')) / 1000:g} s utan aktivitet" if on else "Avståndsläge av")
+        self.flash(tr("Avståndsläge: stor sidräknare, döljs efter {s} s utan aktivitet").format(
+            s=f"{int(self.opt('counter_hide_ms')) / 1000:g}") if on else tr("Avståndsläge av"))
         self.changed.emit()
 
     def _overlays(self, p):
@@ -1077,29 +1078,29 @@ class Viewer(QWidget):
         pages = self.spreads[self.sp] if self.spreads else (self.page,)
         n = len(self.comic.pages)
         parts = [self.comic.title,
-                 f"sida {pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else "") + f" av {n}"]
+                 tr("sida {p} av {n}").format(p=f"{pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else ""), n=n)]
         t = self.targets()
         if not self.guided():
-            parts.append("sidläge (G = ruta för ruta)")
+            parts.append(tr("sidläge (G = ruta för ruta)"))
         elif not ready:
-            parts.append("söker rutor…")
+            parts.append(tr("söker rutor…"))
         elif ps:
             k = t[min(self.pidx, len(t) - 1)][2] if t else 0
-            parts.append(f"ruta {k + 1}/{len(ps)}" if k >= 0 else f"helsida ({len(ps)} rutor)")
+            parts.append(tr("ruta {k}/{n}").format(k=k + 1, n=len(ps)) if k >= 0 else tr("helsida ({n} rutor)").format(n=len(ps)))
         elif len(t) > 1:
-            parts.append(f"del {self.pidx + 1}/{len(t)}")
-        parts.append("höger→vänster" if self.rtl else "vänster→höger")
+            parts.append(tr("del {k}/{n}").format(k=self.pidx + 1, n=len(t)))
+        parts.append(tr("höger→vänster") if self.rtl else tr("vänster→höger"))
         d, tot = self.progress
         if tot and d < tot:
-            parts.append(f"detektering {d}/{tot}")
+            parts.append(tr("detektering {d}/{n}").format(d=d, n=tot))
         if self.detector and not self.detector.ml_ok:
-            parts.append("ML av (bara CV)")
+            parts.append(tr("ML av (bara CV)"))
         return parts
 
     def _hud(self, p):
         if not self.comic:
-            self._text(p, self.msg or "Dra in en mapp, ett serie-arkiv, en PDF eller en bild hit\n"
-                       "L = bläddra   Ctrl+O = öppna fil   Ctrl+L = senaste   F = helskärm   H = hjälp",
+            self._text(p, self.msg or tr("Dra in en mapp, ett serie-arkiv, en PDF eller en bild hit") + "\n"
+                       + tr("L = bläddra   Ctrl+O = öppna fil   Ctrl+L = senaste   F = helskärm   H = hjälp"),
                        center=True)
             return
         if self.hud_always or self.edit:  # full informationsrad bara på begäran (I) och i redigeringsläget
@@ -1125,17 +1126,17 @@ class Viewer(QWidget):
         """'s. 6/24 · ruta 2/7' (eller 'del 2/3' när sidan visas i flera steg)."""
         pages = self.spreads[self.sp] if self.spreads else (self.page,)
         n = len(self.comic.pages)
-        s = f"s. {pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else "") + f"/{n}"
+        s = tr("s. {p}/{n}").format(p=f"{pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else ""), n=n)
         t = self.targets()
         ps, ready = self.panels()
         if self.custom is None and not self.free and len(t) > 1:
             if self.guided() and ps:
                 k = t[min(self.pidx, len(t) - 1)][2]
-                s += f"  ·  ruta {k + 1}/{len(ps)}" if k >= 0 else f"  ·  helsida ({len(ps)} rutor)"
+                s += "  ·  " + (tr("ruta {k}/{n}").format(k=k + 1, n=len(ps)) if k >= 0 else tr("helsida ({n} rutor)").format(n=len(ps)))
             else:
-                s += f"  ·  del {self.pidx + 1}/{len(t)}"
+                s += "  ·  " + tr("del {k}/{n}").format(k=self.pidx + 1, n=len(t))
         elif self.guided() and not ready:
-            s += "  ·  söker rutor…"
+            s += "  ·  " + tr("söker rutor…")
         vis = self.anim_pages()
         if vis:
             a = self.anims[vis[0]]
@@ -1144,7 +1145,7 @@ class Viewer(QWidget):
                 s += f" {self._anim_speed():g}x"
         d, tot = self.progress
         if tot and d < tot:
-            s += f"  ·  rutor {d}/{tot}"
+            s += "  ·  " + tr("rutor {d}/{n}").format(d=d, n=tot)
         return s
 
     def flash(self, msg=""):
@@ -1187,12 +1188,12 @@ class Viewer(QWidget):
             return True
         from PySide6.QtWidgets import QCheckBox, QMessageBox
         box = QMessageBox(QMessageBox.Icon.Question, "AutoComix",
-                          f"{comic.title} har {left} sidor som inte är skannade efter rutor.\n\n"
-                          f"Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
-                          f"av de skannade)?", parent=self.window())
-        every = box.addButton("Skanna alla nu", QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(f"{n} i taget", QMessageBox.ButtonRole.RejectRole)
-        keep = QCheckBox("Kom ihåg valet (ändras under Inställningar)")
+                          tr("{title} har {left} sidor som inte är skannade efter rutor.").format(title=comic.title, left=left)
+                          + "\n\n" + tr("Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
+                                       "av de skannade)?").format(n=n), parent=self.window())
+        every = box.addButton(tr("Skanna alla nu"), QMessageBox.ButtonRole.AcceptRole)
+        box.addButton(tr("{n} i taget").format(n=n), QMessageBox.ButtonRole.RejectRole)
+        keep = QCheckBox(tr("Kom ihåg valet (ändras under Inställningar)"))
         box.setCheckBox(keep)
         box.exec()
         batch = box.clickedButton() is not every
@@ -1204,11 +1205,11 @@ class Viewer(QWidget):
     def toggle_slideshow(self):
         if self.slideshow.isActive():
             self.slideshow.stop()
-            self.flash("Bildspel av")
+            self.flash(tr("Bildspel av"))
         elif self.comic:
             self.slideshow.start(int(self.opt("slideshow_ms")))
-            how = "ruta för ruta" if self.opt("slideshow_mode") == "guided" and self.guided() else "sida för sida"
-            self.flash(f"Bildspel: {self.opt('slideshow_ms')} ms per steg, {how}")
+            how = tr("ruta för ruta") if self.opt("slideshow_mode") == "guided" and self.guided() else tr("sida för sida")
+            self.flash(tr("Bildspel: {ms} ms per steg, {how}").format(ms=self.opt('slideshow_ms'), how=how))
         self.changed.emit()
 
     def _slide(self):
@@ -1235,10 +1236,10 @@ class Viewer(QWidget):
                 return
         if self.comic and self.opt("slideshow_loop"):
             self.first()  # slingan: börja om från första sidan/rutan i samma fil
-            self.flash("Bildspelet börjar om")
+            self.flash(tr("Bildspelet börjar om"))
             return
         self.slideshow.stop()
-        self.flash("Bildspelet är slut")
+        self.flash(tr("Bildspelet är slut"))
         self.changed.emit()
 
     def toggle_magnifier(self):
@@ -1302,7 +1303,7 @@ class Viewer(QWidget):
         if not self.comic:
             return
         if self.opt("rotation"):
-            self.flash("Rotera tillbaka till 0° för att redigera rutor")
+            self.flash(tr("Rotera tillbaka till 0° för att redigera rutor"))
             return
         self.edit = not self.edit
         self.edit_drag = None
@@ -1319,7 +1320,7 @@ class Viewer(QWidget):
             self.custom = None
             self.unsetCursor()
             self._clamp_retarget()
-            self.flash("Rutorna sparade")
+            self.flash(tr("Rutorna sparade"))
         self.changed.emit()
         self.update()
 
@@ -1355,15 +1356,15 @@ class Viewer(QWidget):
             return
         _ps, ready = self.panels()
         if not ready:
-            self.flash("Vänta tills rutorna är hittade")
+            self.flash(tr("Vänta tills rutorna är hittade"))
             return
         if self.opt("rotation"):
-            self.flash("Rotera tillbaka till 0° först")
+            self.flash(tr("Rotera tillbaka till 0° först"))
             return
         for p in self.spreads[self.sp]:
             self._training(p, self._edit_boxes(p), "godkänd")
         r, g = training_counts()
-        self.flash(f"Sidan godkänd  ·  träningsdata: {r} rättade, {g} godkända")
+        self.flash(tr("Sidan godkänd  ·  träningsdata: {r} rättade, {g} godkända").format(r=r, g=g))
 
     # ---------- läsordning ----------
     def toggle_order(self):
@@ -1373,7 +1374,7 @@ class Viewer(QWidget):
             return
         if self.order_pick is not None:
             self.order_pick = None
-            self.flash("Ordningen avbruten")
+            self.flash(tr("Ordningen avbruten"))
             self.update()
             return
         if not self.edit:
@@ -1381,7 +1382,7 @@ class Viewer(QWidget):
             if not self.edit:
                 return
         self.order_pick = {"p": None, "seq": []}
-        self.flash("Klicka rutorna i läsordning")
+        self.flash(tr("Klicka rutorna i läsordning"))
         self.update()
 
     def _order_hit(self, pt):
@@ -1407,7 +1408,7 @@ class Viewer(QWidget):
             seq = o["seq"] + rest
             self.order_pick = None
             self._edit_store(p, [dict(boxes[i], n=j) for j, i in enumerate(seq)])
-            self.flash("Läsordningen sparad")
+            self.flash(tr("Läsordningen sparad"))
         self.update()
 
     def order_undo(self):
@@ -1424,14 +1425,14 @@ class Viewer(QWidget):
             return
         pages = [p for p in self.spreads[self.sp] if any("n" in b for b in (self.user.get(self.comic.pages[p]) or []))]
         if not pages:
-            self.flash("Ingen egen läsordning på sidan")
+            self.flash(tr("Ingen egen läsordning på sidan"))
             return
         self._edit_push(pages)
         for p in pages:
             self.user.set(self.comic.pages[p], [{k: v for k, v in b.items() if k != "n"}
                                                 for b in self.user.get(self.comic.pages[p])])
         self._clamp_retarget(animate=False)
-        self.flash("Automatisk läsordning igen")
+        self.flash(tr("Automatisk läsordning igen"))
         self.update()
 
     def _paint_order(self, p):
@@ -1455,8 +1456,8 @@ class Viewer(QWidget):
                 p.setPen(QColor(255, 255, 255))
                 p.drawText(tag, Qt.AlignmentFlag.AlignCenter, str(o["seq"].index(k) + 1) if done else "?")
         p.setBrush(Qt.BrushStyle.NoBrush)
-        self._text(p, "LÄSORDNING  ·  klicka rutorna i den ordning de ska läsas (den sista hamnar sist av sig själv)  ·  "
-                      "högerklick = ångra senaste  ·  X/Esc = avbryt  ·  Shift+X = automatisk ordning igen",
+        self._text(p, tr("LÄSORDNING  ·  klicka rutorna i den ordning de ska läsas (den sista hamnar sist av sig själv)  ·  "
+                         "högerklick = ångra senaste  ·  X/Esc = avbryt  ·  Shift+X = automatisk ordning igen"),
                    pos=(12, self.area_h() - 40))
 
     def _edit_page_at(self, pt):
@@ -1582,10 +1583,10 @@ class Viewer(QWidget):
         self.update()
 
     def edit_undo_last(self):
-        self._edit_swap(self.edit_undo, self.edit_redo, "Ångrat")
+        self._edit_swap(self.edit_undo, self.edit_redo, tr("Ångrat"))
 
     def edit_redo_last(self):
-        self._edit_swap(self.edit_redo, self.edit_undo, "Gjort om")
+        self._edit_swap(self.edit_redo, self.edit_undo, tr("Gjort om"))
 
     def edit_clear_page(self):
         """Ta bort alla rutor på uppslaget (för att rita om från början). Ctrl+Z ångrar."""
@@ -1595,7 +1596,7 @@ class Viewer(QWidget):
         self._edit_push(pages)
         for p in pages:
             self.user.set(self.comic.pages[p], [])
-        self.flash("Alla rutor borttagna – Ctrl+Z ångrar")
+        self.flash(tr("Alla rutor borttagna – Ctrl+Z ångrar"))
         self.update()
 
     def edit_reset_page(self):
@@ -1635,11 +1636,12 @@ class Viewer(QWidget):
             a, b = self.edit_drag
             p.setPen(QPen(QColor(90, 200, 255), 2, Qt.PenStyle.DashLine))
             p.drawRect(self._to_screen(QRectF(a, b).normalized()))
-        self._text(p, "REDIGERA RUTOR  ·  dra utanför rutor = ny ruta  ·  dra i ruta = flytta  ·  dra i kant/hörn = ändra storlek  ·  "
-                      "Shift+dra = ny ruta även över en ruta  ·  "
-                      "högerklick/Delete = ta bort  ·  Ctrl+Delete = ta bort alla  ·  Ctrl+Z / Ctrl+Alt+Z = ångra / gör om  ·  "
-                      "Ctrl+R = automatiskt igen  ·  K = sidan är rätt  ·  E = klar\n"
-                      "Träningsdata: {} rättade, {} godkända sidor".format(*training_counts()),
+        r, g = training_counts()
+        self._text(p, tr("REDIGERA RUTOR  ·  dra utanför rutor = ny ruta  ·  dra i ruta = flytta  ·  dra i kant/hörn = ändra storlek  ·  "
+                         "Shift+dra = ny ruta även över en ruta  ·  "
+                         "högerklick/Delete = ta bort  ·  Ctrl+Delete = ta bort alla  ·  Ctrl+Z / Ctrl+Alt+Z = ångra / gör om  ·  "
+                         "Ctrl+R = automatiskt igen  ·  K = sidan är rätt  ·  E = klar") + "\n"
+                      + tr("Träningsdata: {r} rättade, {g} godkända sidor").format(r=r, g=g),
                    pos=(12, self.area_h() - 64))
 
     # ---------- inmatning ----------
@@ -1652,7 +1654,7 @@ class Viewer(QWidget):
         self.rtl = not self.rtl
         self.state.set_rtl(self.comic.path, self.rtl)
         self.sp_cache.clear()
-        self.flash("Läsriktning: " + ("höger→vänster (japansk)" if self.rtl else "vänster→höger"))
+        self.flash(tr("Läsriktning: {dir}").format(dir=tr("höger→vänster (japansk)") if self.rtl else tr("vänster→höger")))
         self.goto_page(self.page, animate=False)
 
     def _hide_cursor(self):

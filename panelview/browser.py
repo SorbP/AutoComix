@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QFileSystemModel, QHBo
                                QListWidget, QListWidgetItem, QPushButton, QSplitter, QStackedWidget, QStyle, QTreeView,
                                QVBoxLayout, QWidget)
 
+from .i18n import tr
 from .overlays import Progress
 from .comic import ARCHIVE_EXT, IMAGE_EXT, file_mtime, pick_images, sort_key, zip_mtime
 
@@ -58,7 +59,7 @@ class PageSource:
         elif ext in (".rar", ".cbr", ".7z", ".cb7"):
             self._exe = _seven_zip()
             if not self._exe:
-                raise RuntimeError("7-Zip behövs för rar/7z")
+                raise RuntimeError(tr("7-Zip behövs för rar/7z"))
             self.kind = "7z"
             self._entries = []  # (namn med /, namn i arkivet, storlek) i arkivets ordning
             cur, mod = {}, {}
@@ -81,7 +82,7 @@ class PageSource:
         name = self.names[i]
         with self._lock:  # zip och pdfium tål inte samtidiga läsningar; stängt arkiv => fel i stället för krasch
             if self.closed:
-                raise RuntimeError("stängd")
+                raise RuntimeError(tr("stängd"))
             if self.kind == "zip":
                 return self._zip.read(name)
             if self.kind == "pdf":
@@ -161,11 +162,11 @@ class _Preview(QRunnable):
                     img = img.scaled(PREVIEW_MAX, PREVIEW_MAX, Qt.AspectRatioMode.KeepAspectRatio,
                                      Qt.TransformationMode.SmoothTransformation)
             if n is not None:
-                info = f"{n} sidor"
+                info = tr("{n} sidor").format(n=n)
             elif data is None:
-                info = "Ingen förhandsvisning (för rar/7z behövs 7-Zip)"
+                info = tr("Ingen förhandsvisning (för rar/7z behövs 7-Zip)")
         except Exception as e:
-            info = f"Kunde inte läsa: {e}"
+            info = tr("Kunde inte läsa: {err}").format(err=e)
         try:
             self.sig.done.emit(self.path, img, info)
         except RuntimeError:
@@ -264,7 +265,7 @@ class _PageGrid(QListWidget):
         self.gen = 0
         self.src = None
         self.done_n = 0
-        self.bar = Progress("Miniatyrer")  # placeras under gridden av dialogen
+        self.bar = Progress(tr("Miniatyrer"))  # placeras under gridden av dialogen
         self.sig = _PagesSig(self)
         self.sig.done.connect(self._done)
         self.pool = QThreadPool(self)
@@ -338,7 +339,7 @@ class BrowserDialog(QDialog):
         super().__init__(parent)
         self.state = state
         self.choice = None
-        self.setWindowTitle("Öppna serie")
+        self.setWindowTitle(tr("Öppna serie"))
         self.setAcceptDrops(True)
         self.resize(1300, 800)
         st = self.style()
@@ -375,9 +376,9 @@ class BrowserDialog(QDialog):
         self.stack = QStackedWidget()
         self.stack.addWidget(self.preview)
         self.stack.addWidget(self.grid)
-        self.pages_btn = QPushButton("Visa alla sidor (P)", checkable=True)
-        self.pages_btn.setToolTip("Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).\n"
-                                  "Dubbelklicka på en sida för att öppna serien där.")
+        self.pages_btn = QPushButton(tr("Visa alla sidor (P)"), checkable=True)
+        self.pages_btn.setToolTip(tr("Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).")
+                                  + "\n" + tr("Dubbelklicka på en sida för att öppna serien där."))
         self.pages_btn.setShortcut("P")
         self.pages_btn.setChecked(bool(state.setting("browser_pages", False)))
         self.pages_btn.toggled.connect(self._pages_mode)
@@ -402,19 +403,19 @@ class BrowserDialog(QDialog):
         self.addr = QLineEdit()
         self.addr.returnPressed.connect(lambda: self.go(self.addr.text()))
         up = QPushButton(st.standardIcon(QStyle.StandardPixmap.SP_FileDialogToParent), "")
-        up.setToolTip("Upp en nivå")
+        up.setToolTip(tr("Upp en nivå"))
         up.clicked.connect(lambda: self.go(str(Path(self.cur).parent)))
         top = QHBoxLayout()
         top.addWidget(up)
         top.addWidget(self.addr, 1)
 
-        self.open_dir = QPushButton("Öppna mappen som serie")
+        self.open_dir = QPushButton(tr("Öppna mappen som serie"))
         self.open_dir.clicked.connect(lambda: self._done(self.sel or self.cur))
         bb = QDialogButtonBox(QDialogButtonBox.StandardButton.Open | QDialogButtonBox.StandardButton.Cancel)
         bb.accepted.connect(lambda: self._activate(self.sel) if self.sel else None)
         bb.rejected.connect(self.reject)
         bottom = QHBoxLayout()
-        bottom.addWidget(QLabel("Dubbelklicka för att öppna, eller dra in filer hit."))
+        bottom.addWidget(QLabel(tr("Dubbelklicka för att öppna, eller dra in filer hit.")))
         bottom.addStretch()
         bottom.addWidget(self.open_dir)
         bottom.addWidget(bb)
@@ -453,7 +454,7 @@ class BrowserDialog(QDialog):
         if self.pages_btn.isChecked():
             self._load_pages()
             return
-        self.preview.show_image(QImage(), "Laddar förhandsvisning…")
+        self.preview.show_image(QImage(), tr("Laddar förhandsvisning…"))
         self.pool.clear()
         self.pool.start(_Preview(path, self.sig))
 
@@ -470,18 +471,18 @@ class BrowserDialog(QDialog):
         self.grid.stop()
         p = Path(self.sel)
         if p.is_file() and p.suffix.lower() in IMAGE_EXT:
-            self.pages_info.setText("Enskild bild")
+            self.pages_info.setText(tr("Enskild bild"))
             return
         try:
             src = PageSource(p, self.state.setting("sort", "natural"))
         except Exception as e:
-            self.pages_info.setText(f"Kan inte visa sidorna: {e}")
+            self.pages_info.setText(tr("Kan inte visa sidorna: {err}").format(err=e))
             return
         if not src.names:
             src.close()
-            self.pages_info.setText("Inga bilder")
+            self.pages_info.setText(tr("Inga bilder"))
             return
-        self.pages_info.setText(f"{len(src.names)} sidor – dubbelklicka för att öppna där")
+        self.pages_info.setText(tr("{n} sidor – dubbelklicka för att öppna där").format(n=len(src.names)))
         self.grid.load(src)
 
     def _preview_done(self, path, img, info):
