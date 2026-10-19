@@ -1,4 +1,4 @@
-"""Test utan skärm av återgång (Ctrl+L), historik, Esc, menyrad i helskärm, sidrutnät ur arkiv och zoom per ruta. Skapar egna testsidor. Användning: python build_tools/resume_smoke.py"""
+"""Headless test of resume (Ctrl+L), history, Esc, menu bar in full screen, page grid from archives and zoom per panel. Creates its own test pages. Usage: python build_tools/resume_smoke.py"""
 import os
 import subprocess
 import sys
@@ -14,11 +14,11 @@ from PySide6.QtCore import QEvent, QPointF, Qt
 from PySide6.QtGui import QMouseEvent
 from PySide6.QtWidgets import QApplication
 
-import panelview.store as store
+import autocomix.store as store
 tmp = Path(tempfile.mkdtemp())
-store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens data
-from panelview.browser import PageSource, _PageGrid
-from panelview.mainwindow import HistoryDialog, MainWindow
+store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's data
+from autocomix.browser import PageSource, _PageGrid
+from autocomix.mainwindow import HistoryDialog, MainWindow
 
 app = QApplication([])
 fails = []
@@ -37,7 +37,7 @@ def check(name, ok, info=""):
     ok or fails.append(name)
 
 
-# testserie: 6 liggande sidor, vänster helhög ruta + två staplade till höger (som skärmbilden)
+# test comic: 6 landscape pages, a full-height panel on the left + two stacked on the right (like the screenshot)
 d = tmp / "bok"
 d.mkdir()
 for i in range(6):
@@ -74,7 +74,7 @@ def mark(w):
     w.v.goto_page(w.v.page, animate=False)
 
 
-# A: läs en bit in, stäng; start utan fil öppnar inget, Ctrl+L går tillbaka till samma sida och ruta
+# A: read a bit in, close; start without a file opens nothing, Ctrl+L goes back to the same page and panel
 w = start(d)
 check("öppnar serien", wait(lambda: ready(w)))
 mark(w)
@@ -98,7 +98,7 @@ check("historiken visar båda, senaste först", h.paths[:2] == [str(cbz), str(d)
 check("position och antal sidor i historiken", "av 6" in h.t.item(1, 1).text(), h.t.item(1, 1).text())
 h.reject()
 
-# C: varje ruta på en skärm, hel och maximalt stor (liggande och stående fönster)
+# C: every panel on one screen, whole and maximally large (landscape and portrait windows)
 v = w.v
 mark(w)
 wait(lambda: ready(w))
@@ -115,7 +115,7 @@ for size in ((1280, 800), (700, 1200)):
         check(f"{size}: ruta {k + 1} hel och maximal", whole and tight, f"vy {view.width():.0f}x{view.height():.0f}")
 w.resize(1280, 800)
 
-# D: Esc avslutar inte, menyraden dyker upp i helskärm
+# D: Esc does not exit, the menu bar appears in full screen
 w.escape()
 wait(lambda: False, 0.2)
 check("Esc avslutar inte", w.isVisible())
@@ -139,7 +139,7 @@ check("menyraden döljs igen", not w.top_bar.isVisible())
 w.toggle_fullscreen()
 w.close()
 
-# E: sidrutnät direkt ur arkiv (ingen uppackning)
+# E: page grid directly from an archive (no extraction)
 for p in (d, cbz):
     src = PageSource(p)
     check(f"sidkälla {p.suffix or 'mapp'}: 6 sidor", len(src.names) == 6 and src.read(5)[:2] == b"\xff\xd8")
@@ -162,13 +162,13 @@ check("rutnätets förloppslist: 6/6 och dold när klar",
       grid.bar.maximum() == 6 and grid.done_n == 6 and not grid.bar.isVisible())
 grid.shutdown()
 if seven:
-    from panelview.comic import Comic
+    from autocomix.comic import Comic
     pcts = []
     c = Comic(a7, progress=pcts.append)
     check("uppackning av 7z rapporterar förlopp", len(c.pages) == 6 and pcts and pcts[-1] >= 90, str(pcts[-3:]))
     c.close()
 
-# F: redigering – ta bort alla, ångra, gör om
+# F: editing – delete all, undo, redo
 w = start(d)
 wait(lambda: ready(w))
 v = w.v
@@ -188,7 +188,7 @@ v.edit_undo_last()
 check("ångra flera steg", v.user.get(name) == BOXES)
 v.toggle_edit()
 w.close()
-check("inget uppackat i temp", not any(Path(tempfile.gettempdir()).glob("panelview-*")))
+check("inget uppackat i temp", not any(Path(tempfile.gettempdir()).glob("autocomix-*")))
 
 print("KLART" if not fails else f"{len(fails)} FEL: {fails}")
 sys.exit(1 if fails else 0)

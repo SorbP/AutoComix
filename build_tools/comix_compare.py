@@ -1,7 +1,7 @@
-"""Jämför CoMix-rutorna (Faster R-CNN, maskinritade) med AutoComix detektering på samma sidor.
+"""Compares the CoMix panels (Faster R-CNN, machine-drawn) with AutoComix's detection on the same pages.
 
-Sidor där båda är överens (alla rutor matchar med IoU > 0.75) är pålitliga träningsexempel.
-  python build_tools/comix_compare.py <mapp med *.jpg + *.json> [antal att rita]
+Pages where both agree (all panels match with IoU > 0.75) are reliable training examples.
+  python build_tools/comix_compare.py <folder with *.jpg + *.json> [number to draw]
 """
 import json
 import os
@@ -12,8 +12,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G
-from panelview.detector import detect_bytes
+from autocomix import geometry as G
+from autocomix.detector import detect_bytes
 
 
 def comix_boxes(js):

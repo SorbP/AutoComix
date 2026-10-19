@@ -1,4 +1,4 @@
-"""Exporterar YOLO-modellen till ONNX och kvantiserar till int8 (kör med .venv-export som har ultralytics).
+"""Exports the YOLO model to ONNX and quantizes to int8 (run with .venv-export, which has ultralytics).
 
   python build_tools/export_model.py build_tools/best.pt  ->  models/panels_int8.onnx
 """

@@ -1,6 +1,6 @@
-"""Huvudfönster: menyer, kortkommandon (ändringsbara), dialoger för inställningar, bokmärken, miniatyrer och utskrift.
+"""Main window: menus, shortcuts (changeable), dialogs for settings, bookmarks, thumbnails and printing.
 
-Funktionsuppsättningen följer CDisplayEx (se FEATURES.sv.md) plus AutoComix guidade rutzoom.
+The feature set follows CDisplayEx (see FEATURES.md) plus AutoComix's guided panel zoom.
 """
 import sys
 import time
@@ -60,16 +60,16 @@ class MainWindow(QMainWindow):
             self.v.open(path)
 
     def _persist(self):
-        """Spara sida/ruta löpande (inte bara vid stängning) så att Ctrl+L/historiken hittar rätt även efter en krasch."""
+        """Save page/panel continuously (not only on close) so Ctrl+L/the history are right even after a crash."""
         v = self.v
         if v.comic:
             self.state.set_page(v.comic.path, v.page, v.pidx)
         self.state.save()
 
-    # ---------- menyrad i helskärm ----------
+    # ---------- menu bar in full screen ----------
     def _build_top_bar(self):
-        """Helskärm: menyraden visas när musen förs till överkanten. Den ligger ovanpå bilden (flyttar den inte) och
-        delar menyer med den vanliga menyraden."""
+        """Full screen: the menu bar appears when the mouse is moved to the top edge. It lies on top of the image (does not
+        move it) and shares menus with the normal menu bar."""
         self.top_bar = QMenuBar(self)
         for m in self.menus:
             self.top_bar.addMenu(m)
@@ -95,13 +95,13 @@ class MainWindow(QMainWindow):
             self.top_bar.show()
 
     def _maybe_hide_top(self):
-        near = getattr(self, "_mouse_y", 0) <= self.top_bar.height() + 40  # senaste läget över bilden
+        near = getattr(self, "_mouse_y", 0) <= self.top_bar.height() + 40  # last position over the image
         if QApplication.activePopupWidget() or (near and self.isFullScreen()):
-            self.top_hide.start()  # meny öppen eller musen kvar vid kanten: vänta
+            self.top_hide.start()  # menu open or the mouse still at the edge: wait
         else:
             self.top_bar.hide()
 
-    # ---------- åtgärder ----------
+    # ---------- actions ----------
     def _act(self, key, label, keys=(), fn=None, check=None, menu=None):
         a = QAction(label, self)
         a.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
         if fn:
             a.triggered.connect(lambda _=False, f=fn: f())
         self.acts[key] = a
-        self.addAction(a)  # kortkommandon fungerar även med dold menyrad (helskärm)
+        self.addAction(a)  # shortcuts also work with a hidden menu bar (full screen)
         return a
 
     def _build_actions(self):
@@ -170,7 +170,7 @@ class MainWindow(QMainWindow):
         A("double", tr("Dubbelsida"), ["Shift+D"], lambda: self._toggle("double"), check=lambda: v.opt("double"))
         A("cover_single", tr("Omslaget ensamt"), [], lambda: self._toggle("cover_single"), check=lambda: v.opt("cover_single"))
         A("shadow", tr("Skugga i bokryggen"), [], lambda: self._toggle("shadow"), check=lambda: v.opt("shadow"))
-        # 1-4 = vänster skärm, Num+1-4 (numpadden) = höger skärm; "fit_*" behåller namnet (egna tangenter finns kvar)
+        # 1-4 = left screen, Num+1-4 (numpad) = right screen; "fit_*" keeps its name (custom keys stay)
         for side, pre, keys in (("left", "fit_", "{}"), ("right", "fit_right_", "Num+{}")):
             for i, (k, label) in enumerate(FITS):
                 A(pre + k, tr("{side}: {fit}").format(side=dict(SIDES)[side], fit=label), [keys.format(i + 1)],
@@ -214,7 +214,7 @@ class MainWindow(QMainWindow):
         A("auto_color", tr("Automatisk färgkorrigering"), ["A"], lambda: self._toggle("auto_color"), check=lambda: v.opt("auto_color"))
         A("bg_color", tr("Bakgrundsfärg…"), [], self.pick_bg)
         A("bg_auto", tr("Automatisk bakgrundsfärg"), [], self.toggle_bg_auto, check=lambda: v.opt("bg") == "auto")
-        # Bokmärken
+        # Bookmarks
         A("edit", tr("Redigera rutor (rita/ta bort, sparas)"), ["E"], v.toggle_edit, check=lambda: v.edit)
         A("approve", tr("Sidan är rätt (spara som träningsdata)"), ["K", "Ctrl+Return"], v.approve_page)
         A("edit_del", tr("Ta bort rutan under musen"), ["Delete"], v.edit_delete_under_mouse)
@@ -229,7 +229,7 @@ class MainWindow(QMainWindow):
           lambda: self._toggle("order_xy"), check=lambda: v.opt("order_xy"))
         A("bm_add", tr("Lägg till bokmärke…"), ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", tr("Hantera bokmärken…"), ["Ctrl+Shift+B"], self.manage_bookmarks)
-        # Inställningar / hjälp
+        # Settings / help
         A("options", tr("Inställningar…"), ["Ctrl+,", "F12"], self.options)
         A("help", tr("Kortkommandon"), ["H", "F1", "?"], self.toggle_help, check=lambda: v.show_help)
         A("about", tr("Om AutoComix"), [], self.about)
@@ -356,7 +356,7 @@ class MainWindow(QMainWindow):
         self.v.help_text = self.help_text()
 
     def _context(self, pos):
-        """Högerklicksmeny som i ett vanligt Windows-program: vanligaste kommandona först, sedan undermenyer."""
+        """Right-click menu like a normal Windows program: the most common commands first, then submenus."""
         a = self.acts
         m = QMenu(self)
         for k in ("browse", "open_file", "open_folder"):
@@ -380,7 +380,7 @@ class MainWindow(QMainWindow):
         m.exec(pos.toPoint())
 
     def slideshow_menu(self, m=None):
-        """Bildspel: start/stopp, tid i millisekunder, läge, nästa fil och slinga."""
+        """Slideshow: start/stop, time in milliseconds, mode, next file and loop."""
         v = self.v
         m = m or QMenu(tr("Bildspel"), self)
         m.addAction(self.acts["slideshow"])
@@ -420,7 +420,7 @@ class MainWindow(QMainWindow):
         self.v.flash(tr("Bildspel: {ms} ms per steg").format(ms=int(ms)))
 
     def slide_ms_step(self, d):
-        """100 ms längre (d=1) eller kortare (d=-1), 100 ms–10 min."""
+        """100 ms longer (d=1) or shorter (d=-1), 100 ms–10 min."""
         cur = int(self.v.opt("slideshow_ms"))
         ms = max(100, min(600000, round(cur / 100) * 100 + d * 100))
         self.set_slide_ms(ms)
@@ -454,7 +454,7 @@ class MainWindow(QMainWindow):
         d = BrowserDialog(self, self.state, self._start_dir())
         if d.exec() == QDialog.DialogCode.Accepted and d.choice:
             if self.v.open(d.choice) and d.page is not None:
-                self.v.goto_page(d.page, animate=False)  # vald i sidrutnätet
+                self.v.goto_page(d.page, animate=False)  # chosen in the page grid
 
     def show_history(self):
         HistoryDialog(self).exec()
@@ -526,7 +526,7 @@ class MainWindow(QMainWindow):
                         if self.v.opt("distance_mode") else ""))
 
     def apply_ui_scale(self):
-        """Menyer, dialoger och listor följer ui_scale (visningens text skalas i Viewer)."""
+        """Menus, dialogs and lists follow ui_scale (the display text is scaled in Viewer)."""
         app = QApplication.instance()
         if not hasattr(self, "_base_font"):
             self._base_font = QFont(app.font())
@@ -549,11 +549,11 @@ class MainWindow(QMainWindow):
         return a.text().replace("&", "") if a else k
 
     def fit_of(self, side):
-        """Anpassningen för vänster/höger skärm i aktuellt läge (spegling har egna värden)."""
+        """The fit for the left/right screen in the current mode (mirroring has its own values)."""
         return self.state.setting(fit_key(side, self.second.mode), "screen")
 
     def set_fit(self, fit, zoom=1.0, side=None):
-        """side: 'left'/'right' (fysisk skärm); None = huvudfönstrets skärm."""
+        """side: 'left'/'right' (physical screen); None = the main window's screen."""
         side = side or side_of(self)
         if fit == "original":
             self.v.state.set_setting("zoom", zoom)
@@ -563,7 +563,7 @@ class MainWindow(QMainWindow):
         self.v.flash(tr("{side}: {fit}").format(side=dict(SIDES)[side], fit=label))
 
     def toggle_sort_mtime(self):
-        """Ändringsdatum <-> naturlig ordning; serien öppnas om i den nya ordningen."""
+        """Date modified <-> natural order; the comic is reopened in the new order."""
         self.v.set_opt("sort", "natural" if self.v.opt("sort") == "mtime" else "mtime")
         self.v.flash(tr("Sidor sorteras efter ändringsdatum") if self.v.opt("sort") == "mtime" else tr("Sidor sorteras efter namn"))
 
@@ -609,10 +609,10 @@ class MainWindow(QMainWindow):
         self.set_second_fit(keys[(keys.index(cur) + 1) % len(keys)] if cur in keys else keys[0])
 
     def _screen_moved(self, _scr):
-        """Huvudfönstret flyttat till en annan skärm: andra skärmen flyttar till en skärm som inte är huvudfönstrets."""
+        """The main window moved to another screen: the second screen moves to a screen that is not the main window's."""
         if self.second.mode != "off":
             self.second.relocate()
-        self.v.refit()  # ny sida (vänster/höger) -> den sidans anpassning
+        self.v.refit()  # new side (left/right) -> that side's fit
 
     def toggle_menubar(self):
         on = not self.state.setting("menubar", True)
@@ -632,8 +632,8 @@ class MainWindow(QMainWindow):
         self._sync()
 
     def nav(self, d, arrow=False):
-        """Pilar/mellanslag stegar alltid genom rutorna, även med miniatyrlist eller reglage öppna."""
-        self.v.step(d)  # miniatyrlisten/reglaget är öppna samtidigt och följer med
+        """Arrows/space always step through the panels, even with the thumbnail bar or slider open."""
+        self.v.step(d)  # the thumbnail bar/slider are open at the same time and follow along
 
     def enter(self):
         self.toggle_fullscreen()
@@ -651,7 +651,7 @@ class MainWindow(QMainWindow):
             self.toggle_fullscreen()
             self._left_full = time.monotonic()
         elif time.monotonic() - self._left_full < 1.0:
-            pass  # andra Esc direkt efter att helskärmen lämnats: aldrig avsluta av misstag
+            pass  # second Esc right after leaving full screen: never exit by mistake
         elif self.v.opt("esc_quit") == "direct":
             self.close()
         elif self.v.opt("esc_quit") == "confirm":
@@ -686,7 +686,7 @@ class MainWindow(QMainWindow):
             if d.exec() == QDialog.DialogCode.Accepted and d.choice is not None:
                 self.v.goto_page(d.choice)
 
-    # ---------- bokmärken ----------
+    # ---------- bookmarks ----------
     def add_bookmark(self):
         if not self.v.comic:
             return
@@ -708,7 +708,7 @@ class MainWindow(QMainWindow):
     def manage_bookmarks(self):
         BookmarkDialog(self).exec()
 
-    # ---------- inställningar / hjälp ----------
+    # ---------- settings / help ----------
     def options(self):
         if OptionsDialog(self).exec() == QDialog.DialogCode.Accepted:
             self._apply_keys()
@@ -742,7 +742,7 @@ class MainWindow(QMainWindow):
                           + tr("Gränssnitt: Qt / PySide6 (LGPL-3.0). PDF: pdfium (BSD/Apache). Arkiv: py7zr (LGPL-2.1+).")
                           + "<br>" + tr("Alla licenstexter finns i mappen licenses bredvid programmet."))
 
-    # ---------- fönster ----------
+    # ---------- window ----------
     def _restore_geometry(self):
         g = self.state.setting("geometry")
         if g:
@@ -756,7 +756,7 @@ class MainWindow(QMainWindow):
             self.show()
         self.windowHandle().screenChanged.connect(self._screen_moved)
         mode = self.state.setting("second_screen", "off")
-        if mode != "off":  # efter att huvudfönstret hamnat på sin skärm
+        if mode != "off":  # after the main window has landed on its screen
             QTimer.singleShot(0, lambda: self.set_second(mode, save=False))
         self._sync()
 
@@ -785,9 +785,9 @@ class MainWindow(QMainWindow):
             QProcess.startDetached(sys.executable, self.restart_args)
 
     def restart(self):
-        """Starta om programmet (t.ex. efter byte av språk) och öppna samma serie igen."""
+        """Restart the program (e.g. after changing the language) and open the same comic again."""
         frozen = getattr(sys, "frozen", False)
-        args = [] if frozen else (["-m", "panelview"] if sys.argv[0].endswith("__main__.py") else [sys.argv[0]])
+        args = [] if frozen else (["-m", "autocomix"] if sys.argv[0].endswith("__main__.py") else [sys.argv[0]])
         if self.v.comic:
             args.append(str(self.v.comic.path))
             if not self.isFullScreen():
@@ -843,7 +843,7 @@ class ThumbDialog(QDialog):
         ph = QPixmap(self.SIZE, self.SIZE)
         ph.fill(QColor(50, 50, 50))
         n = len(viewer.comic.pages)
-        order = sorted(range(n), key=lambda i: abs(i - viewer.page))  # närmast aktuell sida först
+        order = sorted(range(n), key=lambda i: abs(i - viewer.page))  # nearest the current page first
         for i in range(n):
             it = QListWidgetItem(QIcon(ph), str(i + 1))
             it.setData(Qt.ItemDataRole.UserRole, i)
@@ -871,7 +871,7 @@ class ThumbDialog(QDialog):
 
 
 class HistoryDialog(QDialog):
-    """De senast öppnade serierna (upp till 20) med var man var, när de öppnades och var de ligger."""
+    """The most recently opened comics (up to 20) with where you were, when they were opened and where they are."""
 
     def __init__(self, win):
         super().__init__(win)
@@ -1065,7 +1065,7 @@ class OptionsDialog(QDialog):
         f.addRow(chk("counter_autohide", tr("Dölj sidräknaren vid inaktivitet även utanför avståndsläget")))
         f.addRow(tr("  Döljs efter"), num("counter_hide_ms", 300, 10000, 100, 0, tr(" ms")))
         tabs.addTab(t, tr("Visning"))
-        # Läsning
+        # Reading
         t = QWidget()
         f = QFormLayout(t)
         f.addRow(chk("guided", tr("Guidat läge: zooma ruta för ruta")))

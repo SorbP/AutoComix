@@ -1,16 +1,16 @@
-"""Rutlogik: slå ihop CV/ML, ta bort dubbletter, helsida-regler, läsordning.
+"""Panel logic: merge CV/ML, remove duplicates, whole-page rules, reading order.
 
-Rutor är dicts {x, y, w, h} normaliserade till 0..1 av sidan.
+Panels are dicts {x, y, w, h} normalized to 0..1 of the page.
 """
 
 FULL = {"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}
-CONTAIN = 0.75    # andel av mindre rutan inuti större => "inuti"
-FULL_ANY = 0.80   # en ruta så stor => visa hela sidan
-FULL_SINGLE = 0.50  # ensam ruta så stor => visa hela sidan
-IOU_BAD = 0.30    # kvarvarande överlapp => opålitligt => helsida
-GAP_MAX = 0.30    # ML-ruta räknas som ny om max så mycket ligger i CV-rutor
+CONTAIN = 0.75    # share of the smaller panel inside the larger => "inside"
+FULL_ANY = 0.80   # one panel this large => show the whole page
+FULL_SINGLE = 0.50  # a single panel this large => show the whole page
+IOU_BAD = 0.30    # remaining overlap => unreliable => whole page
+GAP_MAX = 0.30    # an ML panel counts as new if at most this much lies in CV panels
 MIN_AREA = 0.03
-OVERLAP = 0.15    # läsordning: så stor andel av sin höjd/bredd får en ruta överlappa grannen och ändå räknas skild
+OVERLAP = 0.15    # reading order: a panel may overlap its neighbour by this share of its height/width and still count as separate
 
 
 def area(p):
@@ -36,7 +36,7 @@ def clip(p):
 
 
 def dedupe(ps):
-    """Stor ruta med >=2 rutor inuti tas bort; annars tas den inneslutna mindre bort."""
+    """A large panel with >=2 panels inside is removed; otherwise the enclosed smaller one is removed."""
     ps = list(ps)
     changed = True
     while changed:
@@ -60,10 +60,10 @@ def cv_good(c):
 
 
 def merge(cv, ml):
-    """CV om den ser ren ut (+ ML-rutor i luckor), annars ML, annars CV."""
+    """CV if it looks clean (+ ML panels in gaps), otherwise ML, otherwise CV."""
     if cv_good(cv):
         out = []
-        for c in cv:  # CV slår ofta ihop rutor utan tydlig marginal: dela upp där ML ser flera rutor inuti
+        for c in cv:  # CV often merges panels without a clear margin: split where ML sees several panels inside
             inner = [m for m in ml if inter(m, c) / area(m) >= CONTAIN]
             if len(inner) >= 2 and sum(area(m) for m in inner) / area(c) >= 0.35:
                 out += inner
@@ -76,8 +76,8 @@ def merge(cv, ml):
 
 
 def rows(ps):
-    """Grupperar rutor i rader efter överkanten: en ruta hör till raden om dess överkant ligger i övre halvan
-    av radens lägsta ruta (tål sneda/förskjutna rader). En hög ruta hör till raden där den börjar."""
+    """Groups panels into rows by their top edge: a panel belongs to the row if its top edge is in the upper half
+    of the row's lowest panel (tolerates slanted/offset rows). A tall panel belongs to the row where it starts."""
     ps = sorted(ps, key=lambda p: (p["y"], p["x"]))
     out = []
     for p in ps:
@@ -92,8 +92,8 @@ def rows(ps):
 
 
 def _cut(ps, a, size):
-    """Delar rutorna där ingen ruta korsar en linje tvärs över axeln a ('y' = rader, 'x' = kolumner).
-    En ruta får sticka in OVERLAP i grannen (sneda/förskjutna rutor) utan att linjen räknas som bruten."""
+    """Splits the panels where no panel crosses a line across axis a ('y' = rows, 'x' = columns).
+    A panel may reach OVERLAP into its neighbour (slanted/offset panels) without the line counting as broken."""
     spans = sorted(((p[a] + OVERLAP * p[size], p[a] + (1 - OVERLAP) * p[size], p) for p in ps), key=lambda t: t[0])
     out, end = [], 0.0
     for s, e, p in spans:
@@ -107,10 +107,10 @@ def _cut(ps, a, size):
 
 
 def order(ps, rtl, xy=False):
-    """Läsordning. Egen ordning (n, från ordningsläget) går först. Standard: rad för rad, uppifrån och ned, inom
-    raden vänster→höger (höger→vänster i japanskt läge).
-    xy: XY-snitt – dela i rader där ett mellanrum går tvärs över, annars i kolumner, och upprepa inuti varje del.
-    Då läses en staplad kolumn bredvid en hög ruta (4 över 6, 5 hög till höger) som 4-6-5 i stället för 4-5-6."""
+    """Reading order. A custom order (n, from order mode) comes first. Default: row by row, top to bottom, within
+    the row left→right (right→left in manga mode).
+    xy: XY cut – split into rows where a gutter runs all the way across, otherwise into columns, and repeat inside each part.
+    Then a stacked column beside a tall panel (4 above 6, 5 tall on the right) is read as 4-6-5 instead of 4-5-6."""
     if ps and all("n" in p for p in ps):
         return sorted(ps, key=lambda p: p["n"])
     if xy and len(ps) > 1:
@@ -128,7 +128,7 @@ def order(ps, rtl, xy=False):
 
 
 def finalize(ps, rtl=False, xy=False):
-    """Rensade rutor i läsordning, eller [] om hela sidan ska visas."""
+    """Cleaned panels in reading order, or [] if the whole page should be shown."""
     ps = dedupe([clip(p) for p in ps if p["w"] > 0 and p["h"] > 0])
     if not ps or any(area(p) >= FULL_ANY for p in ps):
         return []
@@ -140,11 +140,11 @@ def finalize(ps, rtl=False, xy=False):
 
 
 def panel_at(gray, x, y):
-    """Ruta under punkten (x, y i pixlar) direkt ur bilden, för dubbelklick när detekteringen missat.
+    """The panel under the point (x, y in pixels) straight from the image, for double-clicks where detection missed.
 
-    1) Ramlinjer: långa raka mörka linjer (morfologisk öppning) blir väggar, fyll från punkten.
-    2) Mellanrum: färgen tas från sidkanten, sammanhängande yta som inte är mellanrum runt punkten.
-    Returnerar normaliserad ruta (0.02-0.8 av sidan) eller None.
+    1) Frame lines: long straight dark lines (morphological opening) become walls, fill from the point.
+    2) Gutters: the color is taken from the page edge, the connected non-gutter area around the point.
+    Returns a normalized panel (0.02-0.8 of the page) or None.
     """
     import cv2
     import numpy as np
@@ -153,7 +153,7 @@ def panel_at(gray, x, y):
 
     def comp(free, conn):
         n, lab, st, _ = cv2.connectedComponentsWithStats(free.astype(np.uint8), conn)
-        ys, xs = np.nonzero(lab[max(0, y - 6):y + 7, max(0, x - 6):x + 7])  # klick på en linje: närmaste yta
+        ys, xs = np.nonzero(lab[max(0, y - 6):y + 7, max(0, x - 6):x + 7])  # click on a line: nearest area
         if lab[y, x]:
             return st[lab[y, x]]
         if len(xs):

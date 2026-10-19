@@ -1,4 +1,4 @@
-"""Överlägg på visningsytan som i CDisplayEx: miniatyrlist (Ctrl+T) och sidreglage (Ctrl+I)."""
+"""Overlays on the display area like in CDisplayEx: thumbnail bar (Ctrl+T) and page slider (Ctrl+I)."""
 from PySide6.QtCore import QObject, QRunnable, QSize, Qt, QThreadPool, Signal
 from PySide6.QtGui import QColor, QIcon, QImage, QPixmap
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QProgressBar, QSlider, QWidget
@@ -9,7 +9,7 @@ THUMB = 150
 
 
 class Progress(QProgressBar):
-    """Liten förloppslist med text ("Miniatyrer 34/120") som döljer sig själv när arbetet är klart."""
+    """Small progress bar with text ("Thumbnails 34/120") that hides itself when the work is done."""
 
     def __init__(self, text, parent=None):
         super().__init__(parent)
@@ -60,8 +60,8 @@ def _scale_slider(self, u):
 
 
 class ThumbBar(QListWidget):
-    """Horisontell miniatyrlist längst ner. Pilar flyttar markeringen, Enter/klick hoppar till sidan."""
-    picked = Signal(int, bool)  # sida, stäng listan
+    """Horizontal thumbnail bar at the bottom. Arrows move the selection, Enter/click jumps to the page."""
+    picked = Signal(int, bool)  # page, close the bar
 
     def __init__(self, parent):
         super().__init__(parent)
@@ -87,7 +87,7 @@ class ThumbBar(QListWidget):
         self.pool.setMaxThreadCount(3)
         self.itemClicked.connect(lambda it: self.picked.emit(it.data(Qt.ItemDataRole.UserRole), False))
         self.itemActivated.connect(lambda it: self.picked.emit(it.data(Qt.ItemDataRole.UserRole), True))
-        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # tangenterna fortsätter styra läsningen medan listan är öppen
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)  # the keys keep controlling the reading while the bar is open
         self.hide()
 
     def set_comic(self, comic, rtl):
@@ -111,7 +111,7 @@ class ThumbBar(QListWidget):
     def show_at(self, page):
         if self.comic is None:
             return
-        if not self._queued:  # ladda miniatyrer närmast aktuell sida först
+        if not self._queued:  # load thumbnails nearest the current page first
             self._queued = True
             self.bar.tick(0, len(self.comic.pages))
             for i in sorted(range(len(self.comic.pages)), key=lambda i: abs(i - page)):
@@ -138,7 +138,7 @@ class ThumbBar(QListWidget):
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
-        self.bar.setGeometry(0, 0, self.width(), 16)  # överst i listan, ovanför miniatyrerna
+        self.bar.setGeometry(0, 0, self.width(), 16)  # at the top of the bar, above the thumbnails
 
     def shutdown(self):
         self.pool.clear()
@@ -146,7 +146,7 @@ class ThumbBar(QListWidget):
 
 
 class PageSlider(QWidget):
-    """Sidreglage längst ner; drag visar sidnummer, släpp hoppar."""
+    """Page slider at the bottom; dragging shows the page number, releasing jumps."""
     picked = Signal(int)
 
     def __init__(self, parent):
@@ -170,7 +170,7 @@ class PageSlider(QWidget):
         self.hide()
 
     def _clicked(self, action):
-        if not self.slider.isSliderDown():  # klick i spåret / tangent: hoppa direkt
+        if not self.slider.isSliderDown():  # click in the track / key: jump directly
             self.picked.emit(self.slider.sliderPosition() - 1)
 
     def sync(self, page, n, rtl):

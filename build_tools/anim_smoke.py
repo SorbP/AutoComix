@@ -1,7 +1,7 @@
-"""Röktest för animerade sidor (GIF/WebP/APNG) utan skärm: avkodning, uppspelning, paus, steg, hastighet, bildspel.
+"""Smoke test for animated pages (GIF/WebP/APNG) without a screen: decoding, playback, pause, step, speed, slideshow.
 
-Skapar syntetiska animationer (färgade rutor med siffror) i en temporär mapp och öppnar den som serie.
-Kör:  python build_tools/anim_smoke.py
+Creates synthetic animations (colored frames with digits) in a temporary folder and opens it as a comic.
+Run:  python build_tools/anim_smoke.py
 """
 import os
 import sys
@@ -16,10 +16,10 @@ from PIL import Image, ImageDraw  # noqa: E402
 from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from panelview import animation  # noqa: E402
-from panelview import store  # noqa: E402
-from panelview.store import State  # noqa: E402
-from panelview.viewer import Viewer  # noqa: E402
+from autocomix import animation  # noqa: E402
+from autocomix import store  # noqa: E402
+from autocomix.store import State  # noqa: E402
+from autocomix.viewer import Viewer  # noqa: E402
 
 COLORS = [(220, 40, 40), (40, 180, 60), (40, 80, 220), (230, 200, 40)]
 
@@ -56,7 +56,7 @@ def check(name, ok, info=""):
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
     tmp = Path(tempfile.mkdtemp(prefix="pv_anim_"))
-    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens data
+    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's data
     make(tmp)
     res = []
     # 1. avkodning direkt
@@ -110,7 +110,7 @@ def main():
         res.append(check("4x hastighet", len(seen) >= 8, f"{len(seen)} rutbyten på 0,5 s"))
         v.set_anim_speed(1.0)
 
-    # 3. bläddra: animationen börjar om, andra format spelas
+    # 3. page: the animation restarts, other formats play
     for target, label in ((2, "WebP"), (3, "APNG")):
         v.goto_page(target, animate=False)
         for _ in range(40):
@@ -134,7 +134,7 @@ def main():
     wait(30)
     res.append(check("tillbaka till GIF: börjar om", v.anim_pages() and v.anims[v.anim_pages()[0]]["loops"] == 0))
 
-    # 4. bildspelet väntar ett varv (sista sidan: 4 x 100 ms = 400 ms per varv, sedan tar bildspelet slut)
+    # 4. the slideshow waits one loop (last page: 4 x 100 ms = 400 ms per loop, then the slideshow ends)
     v.state.set_setting("slideshow_ms", 100)
     v.state.set_setting("slideshow_mode", "pages")
     v.goto_page(4, animate=False)
@@ -148,7 +148,7 @@ def main():
     wait(700)
     res.append(check("bildspel väntar på varv, går sedan vidare", waiting and not v.slideshow.isActive(),
                      f"väntade={waiting} aktivt nu={v.slideshow.isActive()}"))
-    # 5. slinga: vid slutet börjar bildspelet om från första sidan och fortsätter
+    # 5. loop: at the end the slideshow starts over from the first page and continues
     v.state.set_setting("slideshow_loop", True)
     v.goto_page(4, animate=False)
     wait(50)

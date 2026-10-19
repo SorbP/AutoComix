@@ -1,6 +1,6 @@
-"""Packar upp CoMix-shards (WebDataset .tar) till YOLO-format: <ut>/{train,val}/{images,labels}.
+"""Unpacks CoMix shards (WebDataset .tar) into YOLO format: <out>/{train,val}/{images,labels}.
 
-Bara berättarsidor (page_class == story). Rutorna är CoMix Faster R-CNN-detektioner, städade med AutoComix dedupe.
+Story pages only (page_class == story). The panels are CoMix Faster R-CNN detections, cleaned with AutoComix dedupe.
   python build_tools/comix_to_yolo.py datasets/comix datasets/comix_yolo
 """
 import io
@@ -10,7 +10,7 @@ import tarfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G
+from autocomix import geometry as G
 
 src, out = Path(sys.argv[1]), Path(sys.argv[2])
 n = {"train": 0, "val": 0}

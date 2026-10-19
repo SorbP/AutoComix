@@ -5,6 +5,15 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.19.2
+- Befintliga installationer behåller svenska. Före 2.19 fanns programmet bara på svenska, så *Automatiskt* hade bytt
+  till engelska för alla med engelskt Windows. Nya installationer följer fortfarande systemets språk.
+- Python-paketets mapp heter nu `autocomix` i stället för `panelview` (miljövariabeln för att testa en modell heter
+  nu `AUTOCOMIX_MODEL`).
+- Alla kommentarer och docstrings i koden är på engelska, så att fler kan läsa koden.
+- Fjärrkontrollen för Unified Remote har engelska knappar om Windows inte är svenskt (`-Lang sv/en` väljer själv).
+- Repots beskrivning på GitHub är på engelska och svenska.
+
 ## 2.19.1
 - Ny inbyggd rutmodell, finjusterad på CoMix-datasetet och 287 sidor som utvecklaren rättat eller godkänt.
   Mätt på rättade sidor som modellerna inte tränats på (59 sidor), jämfört med modellen i 2.19.0:

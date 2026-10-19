@@ -1,17 +1,17 @@
-"""Tränar om rutmodellen och installerar den i AutoComix om hela läsaren blir bättre.
+"""Retrains the panel model and installs it in AutoComix if the whole reader gets better.
 
 Data:
-  - Dina rättade/godkända sidor (redigeringsläget, E/K) i <datamapp>/training. Var femte sida hålls utanför
-    träningen och används bara för att mäta.
-  - Externa dataset i YOLO-format med train/ och val/ (t.ex. CoMix, se build_tools/comix_to_yolo.py).
+  - Your corrected/approved pages (edit mode, E/K) in <data folder>/training. Every fifth page is kept out of
+    training and only used for measuring.
+  - External datasets in YOLO format with train/ and val/ (e.g. CoMix, see build_tools/comix_to_yolo.py).
 
-Flöde: finjustera YOLO på grafikkortet -> exportera till ONNX int8 -> mät hela AutoComix-kedjan (eval_pages.py)
-med gammal och ny modell på dina provsidor och de externa valideringssidorna -> installera bara om andelen
-helt rätt sidor ökar. Resultaten loggas i <datamapp>/training/historik.jsonl.
+Flow: fine-tune YOLO on the graphics card -> export to ONNX int8 -> measure the whole AutoComix chain (eval_pages.py)
+with the old and new model on your test pages and the external validation pages -> install only if the share of
+fully correct pages increases. The results are logged in <data folder>/training/historik.jsonl.
 
-Kör (med .venv-export som har ultralytics + torch med CUDA):
+Run (with .venv-export, which has ultralytics + torch with CUDA, i.e. an NVIDIA card):
   .venv-export/Scripts/python build_tools/train_model.py [--extra datasets/comix_yolo] [--epochs 40] [--force]
-Datamapp: Windows %LOCALAPPDATA%\\AutoComix, Linux ~/.local/share/AutoComix.
+Data folder: Windows %LOCALAPPDATA%\\AutoComix, Linux ~/.local/share/AutoComix.
 """
 import argparse
 import json
@@ -23,13 +23,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from panelview.store import BASE  # noqa: E402
+from autocomix.store import BASE  # noqa: E402
 
-PANELVIEW_PY = ROOT / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+AUTOCOMIX_PY = ROOT / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
 
 
 def user_split(work):
-    """Dina sidor -> work/user/{train,val}. Returnerar (antal train, antal val)."""
+    """Your pages -> work/user/{train,val}. Returns (number train, number val)."""
     data = BASE / "training"
     pairs = [(i, data / "labels" / f"{i.stem}.txt") for i in sorted((data / "images").glob("*.jpg"))
              if (data / "labels" / f"{i.stem}.txt").exists()]
@@ -45,7 +45,7 @@ def user_split(work):
 
 
 def evaluate(model, data_dir, log):
-    r = subprocess.run([str(PANELVIEW_PY), str(ROOT / "build_tools" / "eval_pages.py"), str(data_dir),
+    r = subprocess.run([str(AUTOCOMIX_PY), str(ROOT / "build_tools" / "eval_pages.py"), str(data_dir),
                         "--model", str(model), "--max", "300", "--log", str(log)],
                        capture_output=True, text=True, encoding="utf-8")
     line = (r.stdout.strip().splitlines() or ["{}"])[-1]
@@ -60,7 +60,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--epochs", type=int, default=40)
     ap.add_argument("--batch", type=int, default=8)
-    prev = BASE / "models" / "panels_ft.pt"  # bygg vidare på förra omträningen om den finns
+    prev = BASE / "models" / "panels_ft.pt"  # build on the previous retraining if there is one
     ap.add_argument("--base", default=str(prev if prev.exists() else ROOT / "build_tools" / "best.pt"))
     default_extra = ROOT / "datasets" / "comix_yolo"
     ap.add_argument("--extra", nargs="*", default=[str(default_extra)] if default_extra.exists() else [])

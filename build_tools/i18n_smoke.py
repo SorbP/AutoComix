@@ -1,5 +1,5 @@
-"""Röktest: gränssnittet byggs på varje språk i panelview/lang (menyer, inställningar, hjälp, statusrader).
-Kör:  .venv/Scripts/python build_tools/i18n_smoke.py [kod ...]
+"""Smoke test: the interface is built in every language in autocomix/lang (menus, settings, help, status lines).
+Run:  .venv/Scripts/python build_tools/i18n_smoke.py [code ...]
 """
 import os
 import subprocess
@@ -15,11 +15,11 @@ def one(code):
     import tempfile
     from PySide6.QtWidgets import QApplication
     app = QApplication.instance() or QApplication(sys.argv)
-    from panelview import i18n, store
+    from autocomix import i18n, store
     tmp = Path(tempfile.mkdtemp(prefix="pv_i18n_"))
     store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"
     i18n.setup(app, code)
-    from panelview.mainwindow import MainWindow, OptionsDialog
+    from autocomix.mainwindow import MainWindow, OptionsDialog
     w = MainWindow()
     w.show()
     menus = [m.title() for m in w.menus]
@@ -36,7 +36,7 @@ def one(code):
     w.v.status_parts()
     for fn in (w.v.toggle_edit, w.v.toggle_edit, w.v.toggle_order, w.v.toggle_order, w.cycle_second, w.cycle_second):
         fn()
-        w.v.grab()  # ritar informationsrader och hjälptexter
+        w.v.grab()  # draws information bars and help texts
     w.v.show_help = True
     w.v.grab()
     w.close()
@@ -48,9 +48,9 @@ if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8")
     if len(sys.argv) == 2 and not sys.argv[1].startswith("-") and "," not in sys.argv[1] and sys.argv[1] != "all":
         sys.exit(0 if one(sys.argv[1]) else 1)
-    codes = sys.argv[1:] or ["sv"] + sorted(p.stem for p in (ROOT / "panelview" / "lang").glob("*.json"))
+    codes = sys.argv[1:] or ["sv"] + sorted(p.stem for p in (ROOT / "autocomix" / "lang").glob("*.json"))
     bad = 0
-    for c in codes:  # en process per språk: listor på modulnivå översätts vid import
+    for c in codes:  # one process per language: module-level lists are translated on import
         r = subprocess.run([sys.executable, __file__, c], capture_output=True, text=True, encoding="utf-8",
                            env={**os.environ, "PYTHONIOENCODING": "utf-8"})
         ok = r.returncode == 0

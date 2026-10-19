@@ -1,18 +1,18 @@
-# Bygger AutoComix (äldre versioner: PanelView) för Windows och Linux och kör ett självtest per plattform.
-# Startas bara manuellt (Actions -> Build -> Run workflow). Varje version taggas (v2.x.y) utan att bygga;
-# ange taggen i fältet "release" för att bygga den versionen och lägga filerna under Releases.
-# Licenstexterna (AGPL-3.0 + tredjepart) läggs alltid till från main, så även äldre versioner får dem.
+# Builds AutoComix (older versions: PanelView) for Windows and Linux and runs a self-test per platform.
+# Only started manually (Actions -> Build -> Run workflow). Every version is tagged (v2.x.y) without building;
+# give the tag in the "release" field to build that version and put the files under Releases.
+# The license texts (AGPL-3.0 + third party) are always added from main, so older versions get them too.
 name: Build
 on:
   workflow_dispatch:
     inputs:
       release:
-        description: "Tagg att släppa, t.ex. v2.18.0 (tomt = bara bygga aktuell gren)"
+        description: "Tag to release, e.g. v2.18.0 (empty = only build the current branch)"
         required: false
         default: ""
 
 permissions:
-  contents: write   # för att skapa release med filerna
+  contents: write   # to create a release with the files
 
 jobs:
   build:
@@ -21,16 +21,16 @@ jobs:
       matrix:
         include:
           - {os: windows-latest, name: windows-x64}
-          - {os: ubuntu-22.04, name: linux-x64}       # glibc 2.35 => kör på de flesta distar
+          - {os: ubuntu-22.04, name: linux-x64}       # glibc 2.35 => runs on most distributions
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with: {ref: "${{ inputs.release || github.ref }}"}
-      - uses: actions/checkout@v4   # licensskriptet och licenstexterna från main
+      - uses: actions/checkout@v4   # the license script and license texts from main
         with: {ref: main, path: _ci}
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
-      - name: Linux-bibliotek för Qt
+      - name: Linux libraries for Qt
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libfontconfig1 libdbus-1-3
       - name: Beroenden
@@ -42,11 +42,11 @@ jobs:
         run: |
           spec=$(ls *.spec | head -1); app=$(basename "$spec" .spec)
           pyinstaller --noconfirm "$spec"
-          if [ -d "dist/$app" ]; then exe="dist/$app/$app"; else exe="dist/$app"; fi   # mappläge från 2.17.0
+          if [ -d "dist/$app" ]; then exe="dist/$app/$app"; else exe="dist/$app"; fi   # folder mode from 2.17.0
           [ "$RUNNER_OS" = "Windows" ] && exe="$exe.exe"
           echo "APP=$app" >> "$GITHUB_ENV"; echo "EXE=$exe" >> "$GITHUB_ENV"
           echo "PKG=$app-${{ inputs.release || 'dev' }}-${{ matrix.name }}" >> "$GITHUB_ENV"
-      - name: Självtest
+      - name: Self-test
         shell: bash
         env: {QT_QPA_PLATFORM: offscreen}
         run: |
@@ -54,17 +54,17 @@ jobs:
           "$EXE" test.cbz --window --selftest=res.json || true
           cat res.json
           python -c "import json,sys; r=json.load(open('res.json')); sys.exit(0 if r['ok'] and r['panels']>0 else 1)"
-      - name: Packa (med licenser)
+      - name: Package (with licenses)
         shell: bash
         run: |
           mkdir -p "pkg/$APP"
           if [ -d "dist/$APP" ]; then cp -r "dist/$APP/." "pkg/$APP/"; else cp "$EXE" "pkg/$APP/"; fi
-          cp requirements.txt _ci/requirements.txt   # licenser för de beroenden den här versionen har
+          cp requirements.txt _ci/requirements.txt   # licenses for the dependencies this version has
           python _ci/build_tools/collect_licenses.py "pkg/$APP"
           cd pkg
           if [ "$RUNNER_OS" = "Windows" ]; then 7z a "../$PKG.zip" "$APP"; else tar czf "../$PKG.tar.gz" "$APP"; fi
       - uses: actions/upload-artifact@v4
-        if: ${{ inputs.release == '' }}  # releaser läggs i Releases (räknas inte mot lagringskvoten)
+        if: ${{ inputs.release == '' }}  # releases go in Releases (does not count against the storage quota)
         with:
           name: ${{ env.PKG }}
           path: ${{ env.PKG }}.*

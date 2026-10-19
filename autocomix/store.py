@@ -1,4 +1,4 @@
-"""Lokal lagring: rutcache per serie, läsläge/sida per serie, inställningar."""
+"""Local storage: panel cache per comic, reading mode/page per comic, settings."""
 import hashlib
 import json
 import os
@@ -15,12 +15,12 @@ def _base():
 
 
 def _migrate(base):
-    """Programmet hette PanelView före 2.16: flytta den gamla datamappen (inställningar, cache, modeller) en gång."""
+    """The program was called PanelView before 2.16: move the old data folder (settings, cache, models) once."""
     old = base.with_name("PanelView")
     if old.is_dir() and not base.exists():
         try:
             old.rename(base)
-        except OSError:  # t.ex. öppen fil i en gammal instans: kopiera i stället, den gamla mappen ligger kvar
+        except OSError:  # e.g. a file open in an old instance: copy instead, the old folder stays
             import shutil
             shutil.copytree(old, base)
     return base
@@ -29,7 +29,7 @@ def _migrate(base):
 BASE = _migrate(_base())
 CACHE = BASE / "cache"
 STATE = BASE / "state.json"
-CACHE_VERSION = 2  # höjs när rutdetekteringen ändras
+CACHE_VERSION = 2  # raised when the panel detection changes
 
 
 def _read_json(p, default):
@@ -52,13 +52,13 @@ def comic_key(path):
 
 
 def sidecar_path(path):
-    """Samma placering som cbxy: mapp/<mappnamn>.cbxy eller bok.cbxy bredvid arkivet."""
+    """Same location as cbxy: folder/<folder name>.cbxy or book.cbxy next to the archive."""
     path = Path(path)
     return path / f"{path.name}.cbxy" if path.is_dir() else path.with_suffix(".cbxy")
 
 
 def load_sidecar(path):
-    """{sidnamn: [rutor]} från en .cbxy, eller {} (t.ex. rättad i cbxy-editor)."""
+    """{page name: [panels]} from a .cbxy, or {} (e.g. corrected in cbxy-editor)."""
     sc = sidecar_path(path)
     if not sc.exists():
         return {}
@@ -78,7 +78,7 @@ def load_sidecar(path):
 
 
 class PanelCache:
-    """Rå CV- och ML-rutor per sida, sparas som en JSON-fil per serie."""
+    """Raw CV and ML panels per page, saved as one JSON file per comic."""
 
     def __init__(self, path):
         h = hashlib.sha1(comic_key(path).encode()).hexdigest()[:16]
@@ -86,7 +86,7 @@ class PanelCache:
         from .ml_onnx import model_id
         mid = model_id()
         self.data = _read_json(self.file, {"v": CACHE_VERSION, "model": mid, "pages": {}})
-        if self.data.get("v") != CACHE_VERSION or self.data.get("model") != mid:  # ny metod/modell: gör om sidorna
+        if self.data.get("v") != CACHE_VERSION or self.data.get("model") != mid:  # new method/model: redo the pages
             self.data = {"v": CACHE_VERSION, "model": mid, "pages": {}}
         self.dirty = 0
 
@@ -106,8 +106,8 @@ class PanelCache:
 
 
 class UserPanels:
-    """Rutor som användaren ritat/rättat i redigeringsläget, per serie. Går före den automatiska detekteringen
-    och nollställs aldrig när detekteringen ändras."""
+    """Panels the user drew/corrected in edit mode, per comic. Take precedence over the automatic detection
+    and are never reset when the detection changes."""
 
     def __init__(self, path):
         h = hashlib.sha1(comic_key(path).encode()).hexdigest()[:16]
@@ -126,13 +126,13 @@ class UserPanels:
 
 
 def training_counts():
-    """(rättade, godkända) sidor i träningsdatan."""
+    """(corrected, approved) pages in the training data."""
     idx = _read_json(BASE / "training" / "index.json", {})
     return sum(v == "rättad" for v in idx.values()), sum(v == "godkänd" for v in idx.values())
 
 
 def save_training_example(jpg_bytes, boxes, key, kind="rättad"):
-    """Sida + rutor i YOLO-format under BASE/training (images/ + labels/), för att träna om modellen."""
+    """Page + panels in YOLO format under BASE/training (images/ + labels/), for retraining the model."""
     d = BASE / "training"
     (d / "images").mkdir(parents=True, exist_ok=True)
     (d / "labels").mkdir(parents=True, exist_ok=True)
@@ -162,7 +162,7 @@ class State:
         return self.d["comics"].get(comic_key(path), {})
 
     def rtl(self, path, hint=None):
-        """Sparat val för serien, annars mappens, annars metadata (ComicInfo.xml), annars vänster→höger."""
+        """Saved choice for the comic, otherwise the folder's, otherwise metadata (ComicInfo.xml), otherwise left→right."""
         c = self.comic(path)
         if "rtl" in c:
             return c["rtl"]
@@ -172,7 +172,7 @@ class State:
         return bool(hint)
 
     def set_rtl(self, path, rtl):
-        # Sparas även på föräldramappen så att andra delar i samma serie ärver valet.
+        # Also saved on the parent folder so other parts of the same series inherit the choice.
         self.d["comics"].setdefault(comic_key(path), {})["rtl"] = rtl
         self.d["dirs"].setdefault(comic_key(Path(path).parent), {})["rtl"] = rtl
         self.save()
@@ -181,7 +181,7 @@ class State:
         c = self.d["comics"].setdefault(comic_key(path), {})
         c["page"] = page
         if panel is None:
-            c.pop("panel", None)  # ny sida utan känd ruta: börja från första
+            c.pop("panel", None)  # new page without a known panel: start from the first
         else:
             c["panel"] = panel
         self.d["last"] = str(path)
@@ -204,7 +204,7 @@ class State:
         self.d["history"] = []
         self.save()
 
-    # ---------- bokmärken ----------
+    # ---------- bookmarks ----------
     def bookmarks(self):
         return self.d.setdefault("bookmarks", [])
 

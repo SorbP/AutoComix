@@ -2,8 +2,8 @@ import zipfile
 
 import pytest
 
-from panelview import geometry as G
-from panelview.comic import Comic, pick_images
+from autocomix import geometry as G
+from autocomix.comic import Comic, pick_images
 
 
 def P(x, y, w, h):
@@ -25,17 +25,17 @@ def test_order_tall_panel_beside_stack():
 
 
 def test_order_strict_rows_stack_left_tall_right():
-    # vänster: två staplade, höger: en hög. Rad för rad: övre vänster, höga högra, sedan nedre vänster.
+    # left: two stacked, right: one tall. Row by row: upper left, the tall right one, then lower left.
     tl, bl, tall = P(0, 0, .45, .28), P(0, .32, .45, .28), P(.5, 0, .45, .6)
     assert G.finalize([bl, tall, tl]) == [tl, tall, bl]
 
 
 def test_order_xy_stack_left_tall_right():
-    # samma layout med XY-ordning: den staplade vänsterkolumnen först (4-6-5)
+    # the same layout with XY order: the stacked left column first (4-6-5)
     tl, bl, tall = P(0, 0, .45, .28), P(0, .32, .45, .28), P(.5, 0, .45, .6)
     assert G.finalize([bl, tall, tl], xy=True) == [tl, bl, tall]
     assert G.finalize([bl, tall, tl], rtl=True, xy=True) == [tall, tl, bl]
-    assert G.finalize(GRID, xy=True) == GRID  # vanligt rutnät: samma som rad för rad
+    assert G.finalize(GRID, xy=True) == GRID  # ordinary grid: the same as row by row
 
 
 def test_order_manual_n_wins():
@@ -68,9 +68,9 @@ def test_small_box_inside_single_big_is_dropped():
 
 @pytest.mark.parametrize("ps", [
     [],                                   # inget hittat
-    [P(0, 0, .95, .9)],                   # en nästan helsida
-    [P(0, 0, .8, .7)],                    # ensam ruta > 50 %
-    [P(0, 0, .5, .5), P(.1, .1, .5, .5)],  # kraftigt överlapp
+    [P(0, 0, .95, .9)],                   # an almost whole page
+    [P(0, 0, .8, .7)],                    # a single panel > 50 %
+    [P(0, 0, .5, .5), P(.1, .1, .5, .5)],  # heavy overlap
 ])
 def test_full_page_fallbacks(ps):
     assert G.finalize(ps) == []
@@ -78,7 +78,7 @@ def test_full_page_fallbacks(ps):
 
 def test_merge_prefers_clean_cv_and_fills_gaps_with_ml():
     cv = GRID[:2]
-    ml = [P(0, 0, .45, .3), P(0, .7, .9, .25)]  # dubblett + ny ruta i lucka
+    ml = [P(0, 0, .45, .3), P(0, .7, .9, .25)]  # duplicate + new panel in a gap
     assert G.merge(cv, ml) == cv + [ml[1]]
 
 
@@ -124,7 +124,7 @@ def test_comic_dir_and_cbz(tmp_path):
 def test_sort_by_mtime_dir_and_zip(tmp_path):
     import os
     from PIL import Image
-    from panelview.browser import PageSource
+    from autocomix.browser import PageSource
     d = tmp_path / "slump"
     d.mkdir()
     for i, n in enumerate(["zz.png", "aa.png", "mm.png"]):  # tillagda i ordningen zz, aa, mm
@@ -153,7 +153,7 @@ def test_comicinfo_manga_hint(tmp_path):
 
 
 def test_order_random_row_layouts():
-    """500 slumpade sidor med 1–4 rader, 1–4 rutor per rad, ojämna överkanter: alltid rad för rad."""
+    """500 random pages with 1–4 rows, 1–4 panels per row, uneven top edges: always row by row."""
     import random
     rnd = random.Random(7)
     for _ in range(500):
@@ -176,23 +176,23 @@ def test_order_random_row_layouts():
 
 
 def test_set_page_keeps_panel(tmp_path, monkeypatch):
-    from panelview import store
+    from autocomix import store
     monkeypatch.setattr(store, "STATE", tmp_path / "state.json")
     st = store.State()
     st.set_page(tmp_path / "bok", 7, 3)
     assert st.comic(tmp_path / "bok") == {"page": 7, "panel": 3}
-    st.set_page(tmp_path / "bok", 8)  # ny sida utan ruta: rutan från förra sidan gäller inte
+    st.set_page(tmp_path / "bok", 8)  # new page without a panel: the panel from the previous page does not apply
     assert st.comic(tmp_path / "bok") == {"page": 8}
     assert st.d["last"] == str(tmp_path / "bok")
 
 
 def test_history_keeps_20_newest_with_position(tmp_path, monkeypatch):
-    from panelview import store
+    from autocomix import store
     monkeypatch.setattr(store, "STATE", tmp_path / "state.json")
     st = store.State()
     for i in range(25):
         st.add_history(tmp_path / f"b{i}.cbz", pages=30)
-    st.add_history(tmp_path / "b3.cbz", pages=30)  # öppnad igen: flyttas först, ingen dubblett
+    st.add_history(tmp_path / "b3.cbz", pages=30)  # opened again: moved first, no duplicate
     h = st.d["history"]
     assert len(h) == 20 and h[0] == str(tmp_path / "b3.cbz") and h.count(str(tmp_path / "b3.cbz")) == 1
     assert st.comic(tmp_path / "b3.cbz")["pages"] == 30 and st.comic(tmp_path / "b3.cbz")["opened"] > 0

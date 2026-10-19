@@ -1,4 +1,4 @@
-"""Från cbxy 0.1.2 (MIT, se LICENSE_cbxy). Endast import-sökvägen ändrad."""
+"""From cbxy 0.1.2 (MIT, see LICENSE_cbxy). Only the import path changed."""
 from dataclasses import asdict, dataclass
 
 import cv2

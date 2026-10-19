@@ -1,7 +1,7 @@
-"""Röktest för andra skärmen: spegling och automatisk fördelning (liggande/stående).
+"""Smoke test for the second screen: mirroring and automatic distribution (landscape/portrait).
 
-Offscreen finns bara en skärm, så skärmvalet byts ut: andra skärmen är 1080x1920 (stående), huvudfönstret liggande.
-Kör:  python build_tools/second_smoke.py
+Offscreen there is only one screen, so the screen choice is replaced: the second screen is 1080x1920 (portrait), the main window landscape.
+Run:  python build_tools/second_smoke.py
 """
 import os
 import sys
@@ -16,7 +16,7 @@ from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
 from PySide6.QtGui import QImage  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from panelview import second as S, store  # noqa: E402
+from autocomix import second as S, store  # noqa: E402
 
 
 def wait(ms):
@@ -53,12 +53,12 @@ def grab(wid):
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
     tmp = Path(tempfile.mkdtemp(prefix="pv_second_"))
-    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens data
+    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's data
     S.SecondScreen.relocate = fake_relocate
-    S.SecondScreen.here_wide = lambda self: False   # andra skärmen stående
-    S.SecondScreen.main_wide = lambda self: True    # huvudfönstret liggande
-    from panelview.mainwindow import MainWindow
-    # sida 1: en liggande ruta överst + två stående; sida 2: stående helsida utan ramar (hel sida = stående)
+    S.SecondScreen.here_wide = lambda self: False   # the second screen portrait
+    S.SecondScreen.main_wide = lambda self: True    # the main window landscape
+    from autocomix.mainwindow import MainWindow
+    # page 1: a landscape panel at the top + two portrait ones; page 2: portrait whole page without frames (whole page = portrait)
     im = Image.new("RGB", (800, 1200), (240, 240, 240))
     d = ImageDraw.Draw(im)
     for b, c in [((30, 30, 770, 400), (200, 30, 30)), ((30, 440, 390, 1170), (30, 160, 30)),
@@ -87,7 +87,7 @@ def main():
                      px.name()))
     res.append(check("spegling: menyval markerat", w.acts["second_mirror"].isChecked()))
 
-    # 2. fördelning: ruta 1 liggande -> huvudskärmen; ruta 2 stående -> andra skärmen
+    # 2. distribution: panel 1 landscape -> the main screen; panel 2 portrait -> the second screen
     w.set_second("auto")
     v.goto_page(0, animate=False)
     settle(v)
@@ -117,14 +117,14 @@ def main():
     res.append(check("fördelning: andra skärmen behåller sin senaste (gröna) ruta", px.green() > 120 and px.red() < 90,
                      px.name()))
 
-    # 3. samma orientering -> beter sig som spegling
+    # 3. same orientation -> behaves like mirroring
     S.SecondScreen.here_wide = lambda self: True
     v.step(1)
     settle(v)
     res.append(check("samma orientering: ingen frysning", v.frozen is None and sc.live))
     S.SecondScreen.here_wide = lambda self: False
 
-    # 4. egen anpassning av hela sidor (liggande sida 1600x900 på stående skärm 9:16)
+    # 4. own fit of whole pages (landscape page 1600x900 on a portrait 9:16 screen)
     from PySide6.QtCore import QRectF
     full, mv, ar = QRectF(0, 0, 1600, 900), QRectF(800, 0, 800, 900), 9 / 16
     w.set_second_fit("screen")
@@ -135,7 +135,7 @@ def main():
     res.append(check("anpassning höjd: fyller höjden och följer huvudfönstrets utsnitt (höger halva)",
                      abs(r.height() - 900) < 1 and r.center().x() > 800, str(r)))
     w.set_second_fit("width")
-    r = sc.page_view(full, QRectF(0, 0, 400, 300), 16 / 9)  # stående skärm -> liggande: sida 1600 bred
+    r = sc.page_view(full, QRectF(0, 0, 400, 300), 16 / 9)  # portrait screen -> landscape: page 1600 wide
     res.append(check("anpassning bredd: fyller bredden", abs(r.width() - 1600) < 1, str(r)))
     w.cycle_second_fit()
     res.append(check("Shift+F9: bredd -> höjd", w.state.setting("fit_right") == "height"))
@@ -144,10 +144,10 @@ def main():
     res.append(check("anpassning original: 100 % i andra skärmens pixlar", abs(r.width() - sc.width()) < 1, str(r)))
     w.set_second_fit("screen")
 
-    # 4b. vänster (1-4) / höger (numpadden), separata värden för spegling och av/fördelning
+    # 4b. left (1-4) / right (numpad), separate values for mirroring and off/distribution
     from PySide6.QtCore import Qt
     from PySide6.QtTest import QTest
-    from panelview import mainwindow as MW
+    from autocomix import mainwindow as MW
     w.activateWindow()
     wait(100)
 
@@ -186,7 +186,7 @@ def main():
     res.append(check("spegling: huvudfönstret skärm, andra skärmen original", v.fit() == "screen" and sc.fit() == "original"))
     w.set_second("auto")
     res.append(check("tillbaka till fördelning: dess värden gäller igen", v.fit() == "height" and sc.fit() == "width"))
-    # huvudfönstret på höger skärm: siffrorna 1-4 styr då andra skärmen
+    # the main window on the right screen: the digits 1-4 then control the second screen
     old_s, old_m = S.side_of, MW.side_of
     S.side_of = MW.side_of = lambda wd: "right"
     res.append(check("huvudfönstret höger: andra skärmen = vänster", sc.side() == "left" and sc.fit() == "height"
@@ -204,7 +204,7 @@ def main():
 
         def set_setting(self, k, val):
             self.d[k] = val
-    # bildspelets tid: Ctrl+Num+/- (och Alt+Upp/Ned) i steg om 100 ms; Ctrl+vanligt +/- zoomar som förut
+    # slideshow time: Ctrl+Num+/- (and Alt+Up/Down) in steps of 100 ms; Ctrl+normal +/- zooms as before
     w.set_slide_ms(1000)
     QTest.keyClick(w, Qt.Key.Key_Plus, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.KeypadModifier)
     wait(50)
@@ -224,7 +224,7 @@ def main():
     res.append(check("migrering från fit/second_fit", fk.d["fit_left"] == fk.d["fit_left_mirror"] == "width"
                      and fk.d["fit_right"] == fk.d["fit_right_mirror"] == "main"))
 
-    # 5. av
+    # 5. off
     w.set_second("off")
     wait(100)
     res.append(check("av: fönstret dolt och huvudfönstret live", not sc.isVisible() and v.frozen is None))
@@ -244,4 +244,4 @@ if __name__ == "__main__":
         traceback.print_exc()
         rc = 1
     sys.stdout.flush()
-    os._exit(rc)  # bakgrundstrådar får inte hålla kvar processen (hängde vid fel)
+    os._exit(rc)  # background threads must not keep the process alive (it hung on failure)

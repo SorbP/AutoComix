@@ -1,7 +1,7 @@
-"""Konstgjorda seriesidor för att testa rutdetektering och läsordning utan riktiga serier.
+"""Artificial comic pages for testing panel detection and reading order without real comics.
 
-Varianter: vita mellanrum med ram, svarta linjer som enda avgränsning, vit sidmarginal + svarta mellanrum.
-  python build_tools/synthetic_pages.py   ->  träffar per variant
+Variants: white gutters with a frame, black lines as the only separation, white page margin + black gutters.
+  python build_tools/synthetic_pages.py   ->  hits per variant
 """
 import sys
 from pathlib import Path
@@ -10,8 +10,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G
-from panelview.detector import detect_bytes
+from autocomix import geometry as G
+from autocomix.detector import detect_bytes
 
 H, W = 1165, 901
 LAYOUTS = [  # (x, y, w, h) i pixlar, i facit-ordning
@@ -33,7 +33,7 @@ def page(boxes, style, seed):
             x, y, w, h = x + 8, y + 8, w - 16, h - 16
         sub = np.empty((h, w, 3), np.uint8)
         sub[:] = rng.integers(90, 230, 3)
-        for _ in range(30):  # "teckning" inne i rutan, även mörka partier
+        for _ in range(30):  # "drawing" inside the panel, including dark areas
             cv2.circle(sub, (int(rng.integers(0, w)), int(rng.integers(0, h))), int(rng.integers(8, 50)),
                        tuple(int(c) for c in rng.integers(0, 255, 3)), -1)
         cv2.ellipse(sub, (w // 2, h // 3), (w // 4, h // 7), 0, 0, 360, (255, 255, 255), -1)

@@ -1,33 +1,33 @@
-"""Språkstöd: gränssnittets texter skrivs på svenska i koden och slås upp i panelview/lang/<kod>.json.
+"""Language support: the interface texts are written in Swedish in the code and looked up in autocomix/lang/<code>.json.
 
-tr("Öppna fil…") ger översättningen (eller den svenska texten om den saknas). Texter med värden skrivs som
-mallar: tr("{n} sidor").format(n=5). Språket väljs i Inställningar ("auto" = systemets språk, annars engelska)
-och läses in av setup() innan resten av gränssnittet importeras, så att listor på modulnivå också översätts.
+tr("Öppna fil…") returns the translation (or the Swedish text if it is missing). Texts with values are written as
+templates: tr("{n} sidor").format(n=5). The language is chosen in Settings ("auto" = the system language, otherwise
+English) and is loaded by setup() before the rest of the interface is imported, so module-level lists are translated too.
 """
 import json
 import sys
 from pathlib import Path
 
-# (kod, namn på språket självt); sv är källspråket och har ingen fil
+# (code, the language's own name); sv is the source language and has no file
 LANGUAGES = (("en", "English"), ("sv", "Svenska"), ("de", "Deutsch"), ("fr", "Français"), ("es", "Español"),
              ("it", "Italiano"), ("pt_BR", "Português (Brasil)"), ("pl", "Polski"), ("ru", "Русский"),
              ("ja", "日本語"), ("zh_CN", "简体中文"), ("ko", "한국어"))
 
 _T = {}
 current = "sv"
-qt_loaded = False  # Qt:s egna översättning hittades (självtestet rapporterar det)
+qt_loaded = False  # Qt's own translation was found (the self-test reports it)
 
 
 def lang_dir():
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent.parent))
-    for p in (base / "panelview" / "lang", Path(__file__).resolve().parent / "lang"):
+    for p in (base / "autocomix" / "lang", Path(__file__).resolve().parent / "lang"):
         if p.is_dir():
             return p
     return Path(__file__).resolve().parent / "lang"
 
 
 def resolve(setting):
-    """'auto' -> systemets språk om det finns, annars engelska."""
+    """'auto' -> the system language if available, otherwise English."""
     codes = [c for c, _ in LANGUAGES]
     if setting in codes:
         return setting
@@ -51,7 +51,7 @@ def load(code):
 
 
 def setup(app, setting):
-    """Läs in språket och Qt:s egna texter (OK/Avbryt, färgväljaren m.m.)."""
+    """Load the language and Qt's own texts (OK/Cancel, the color picker etc.)."""
     load(resolve(setting))
     from PySide6.QtCore import QLibraryInfo, QTranslator
     qt = QTranslator(app)

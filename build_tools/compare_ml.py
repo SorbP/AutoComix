@@ -1,4 +1,4 @@
-"""Jämför ONNX int8 mot ultralytics (originalet) på sidor ur en serie. Kör med .venv-export."""
+"""Compares ONNX int8 with ultralytics (the original) on pages from a comic. Run with .venv-export."""
 import sys
 from pathlib import Path
 
@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G
-from panelview import ml_onnx
+from autocomix import geometry as G
+from autocomix import ml_onnx
 from ultralytics import YOLO
 
 root = Path(sys.argv[1])

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication
 
 
 def _crash_log():
-    """Skriv Python-stack vid hård krasch (segfault, minnesbrist i Qt) till <datamapp>/crash.log."""
+    """Write the Python stack on a hard crash (segfault, out of memory in Qt) to <data folder>/crash.log."""
     import faulthandler
     from . import store
     try:
@@ -23,7 +23,7 @@ def _crash_log():
 
 
 def main():
-    _log = _crash_log()  # noqa: F841 – filen måste hållas öppen
+    _log = _crash_log()  # noqa: F841 – the file must stay open
     app = QApplication(sys.argv)
     app.setApplicationName("AutoComix")
     app.setOrganizationName("AutoComix")
@@ -32,13 +32,19 @@ def main():
         app.setWindowIcon(QIcon(str(base / "assets" / "icon.png")))
     from . import i18n, store
     import os
-    i18n.setup(app, os.environ.get("AUTOCOMIX_LANG")  # för test: språk utan att ändra inställningen
-               or store._read_json(store.STATE, {}).get("settings", {}).get("language", "auto"))
-    from .mainwindow import MainWindow  # efter språket: listor på modulnivå översätts vid import
+    settings = store._read_json(store.STATE, {}).get("settings")
+    # Installs from before 2.19 were Swedish-only: keep Swedish there; new installs follow the system language.
+    lang = settings.get("language", "sv") if settings else "auto"
+    if settings and "language" not in settings:  # save it so Settings shows Svenska, not Automatic
+        data = store._read_json(store.STATE, {})
+        data["settings"]["language"] = "sv"
+        store._write_json(store.STATE, data)
+    i18n.setup(app, os.environ.get("AUTOCOMIX_LANG") or lang)  # AUTOCOMIX_LANG: test a language without the setting
+    from .mainwindow import MainWindow  # after the language: module-level lists are translated on import
     paths = [a for a in sys.argv[1:] if not a.startswith("--")]
     selftest = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--selftest=")), None)
     w = MainWindow(paths[0] if paths else None)
-    # Öppnad med en serie (högerklick/dra på ikonen): direkt helskärm, annars senaste fönsterläge.
+    # Opened with a comic (right-click/drop on the icon): straight to full screen, otherwise the last window mode.
     w.show_initial(force_full=bool(paths) and "--window" not in sys.argv)
     if selftest:
         _selftest(app, w, selftest)
@@ -46,7 +52,7 @@ def main():
 
 
 def _selftest(app, w, out):
-    """För byggkontroll (CI): vänta på första sidans rutor, skriv resultatet som JSON och avsluta."""
+    """For build checks (CI): wait for the first page's panels, write the result as JSON and exit."""
     import json
     import time
 

@@ -1,11 +1,11 @@
-﻿# Lägger till "Öppna i AutoComix" ("Open in AutoComix" i icke-svenska Windows) i högerklicksmenyn (mappar + seriearkiv) och en Startmeny-genväg.
-# Kräver inte admin (HKCU). Ta bort med: .\install.ps1 -Uninstall
+﻿# Adds "Open in AutoComix" ("Öppna i AutoComix" in Swedish Windows) to the right-click menu (folders + comic archives) and a Start menu shortcut.
+# Does not need admin (HKCU). Remove with: .\install.ps1 -Uninstall
 param([switch]$Uninstall)
 $exe = Join-Path $PSScriptRoot 'dist\windows\AutoComix\AutoComix.exe'
-if (Test-Path $exe) {            # färdigbyggd .exe (pyinstaller AutoComix.spec)
+if (Test-Path $exe) {            # prebuilt .exe (pyinstaller AutoComix.spec)
     $pyw = $exe; $app = $null
     $cmd = "`"$exe`" `"%1`""
-} else {                         # annars direkt från källkoden
+} else {                         # otherwise straight from the source code
     $pyw = (Get-Command pythonw.exe -ErrorAction Stop).Source
     $app = Join-Path $PSScriptRoot 'AutoComix.pyw'
     $cmd = "`"$pyw`" `"$app`" `"%1`""
@@ -13,9 +13,9 @@ if (Test-Path $exe) {            # färdigbyggd .exe (pyinstaller AutoComix.spec
 $keys = @('HKCU:\Software\Classes\Directory\shell\AutoComix') +
         ('.cbz', '.cbr', '.cb7', '.zip', '.rar', '.7z', '.pdf' | % { "HKCU:\Software\Classes\SystemFileAssociations\$_\shell\AutoComix" })
 $lnks = @((Join-Path ([Environment]::GetFolderPath('Programs')) 'AutoComix.lnk'),
-          (Join-Path ([Environment]::GetFolderPath('Desktop')) 'AutoComix.lnk'))  # dra serier/bilder på skrivbordsikonen
+          (Join-Path ([Environment]::GetFolderPath('Desktop')) 'AutoComix.lnk'))  # drop comics/images on the desktop icon
 
-# Programmet hette PanelView före 2.16: gamla högerklicksposter och genvägar tas alltid bort.
+# The program was called PanelView before 2.16: old right-click entries and shortcuts are always removed.
 $old = @('HKCU:\Software\Classes\Directory\shell\PanelView') +
        ('.cbz', '.cbr', '.cb7', '.zip', '.rar', '.7z', '.pdf' | % { "HKCU:\Software\Classes\SystemFileAssociations\$_\shell\PanelView" })
 $old | % { if (Test-Path $_) { Remove-Item $_ -Recurse -Force } }
@@ -27,7 +27,7 @@ if ($Uninstall) {
     if ((Get-UICulture).TwoLetterISOLanguageName -eq 'sv') { 'AutoComix avinstallerad.' } else { 'AutoComix uninstalled.' }
     return
 }
-$sv = (Get-UICulture).TwoLetterISOLanguageName -eq 'sv'  # menytexten på svenska bara i svenska Windows
+$sv = (Get-UICulture).TwoLetterISOLanguageName -eq 'sv'  # the menu text in Swedish only in Swedish Windows
 $label = if ($sv) { 'Öppna i AutoComix' } else { 'Open in AutoComix' }
 foreach ($k in $keys) {
     New-Item -Path "$k\command" -Force | Out-Null

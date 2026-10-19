@@ -1,8 +1,8 @@
-"""Filbläddrare med förhandsvisning (L): mappträd | fillista | förhandsvisning, med dragbara avdelare.
+"""File browser with preview (L): folder tree | file list | preview, with draggable splitters.
 
-Fillistan använder systemets ikoner och kolumner (namn, storlek, typ, ändrad) som Utforskaren. Förhandsvisningen visar
-första sidan ur mappar, zip/cbz, pdf och (med 7-Zip) rar/7z, samt antal sidor. "Visa alla sidor" (P) visar i stället
-alla sidor som miniatyrer, lästa direkt ur arkivet utan uppackning på disk.
+The file list uses the system icons and columns (name, size, type, modified) like Explorer. The preview shows
+the first page of folders, zip/cbz, pdf and (with 7-Zip) rar/7z, plus the page count. "Show all pages" (P) instead
+shows all pages as thumbnails, read directly from the archive without extracting to disk.
 """
 import shutil
 import subprocess
@@ -32,8 +32,8 @@ def _seven_zip():
 
 
 class PageSource:
-    """Sidorna i en serie utan att packa upp något på disk: mapp, zip/cbz och pdf läses sida för sida,
-    rar/7z strömmas genom 7-Zip (stream()) eftersom solida arkiv annars packas upp från början för varje sida."""
+    """The pages of a comic without extracting anything to disk: folder, zip/cbz and pdf are read page by page,
+    rar/7z are streamed through 7-Zip (stream()) since solid archives would otherwise be unpacked from the start for every page."""
 
     def __init__(self, path, sort="natural"):
         p = self.path = Path(path)
@@ -61,7 +61,7 @@ class PageSource:
             if not self._exe:
                 raise RuntimeError(tr("7-Zip behövs för rar/7z"))
             self.kind = "7z"
-            self._entries = []  # (namn med /, namn i arkivet, storlek) i arkivets ordning
+            self._entries = []  # (name with /, name in the archive, size) in archive order
             cur, mod = {}, {}
             r = subprocess.run([self._exe, "l", "-ba", "-slt", str(p)], capture_output=True, text=True,
                                stdin=subprocess.DEVNULL, creationflags=FLAGS, timeout=30)
@@ -80,7 +80,7 @@ class PageSource:
 
     def read(self, i, pdf_scale=1.0):
         name = self.names[i]
-        with self._lock:  # zip och pdfium tål inte samtidiga läsningar; stängt arkiv => fel i stället för krasch
+        with self._lock:  # zip and pdfium do not handle concurrent reads; closed archive => error instead of a crash
             if self.closed:
                 raise RuntimeError(tr("stängd"))
             if self.kind == "zip":
@@ -97,7 +97,7 @@ class PageSource:
         return r.stdout
 
     def stream(self):
-        """(sidindex, bytes) för rar/7z med en enda uppackning till minnet, i arkivets ordning."""
+        """(page index, bytes) for rar/7z with a single extraction to memory, in archive order."""
         idx = {n: i for i, n in enumerate(self.names)}
         proc = subprocess.Popen([self._exe, "e", "-so", str(self.path)], stdout=subprocess.PIPE,
                                 stderr=subprocess.DEVNULL, stdin=subprocess.DEVNULL, creationflags=FLAGS)
@@ -126,7 +126,7 @@ class PageSource:
 
 
 def first_page(path):
-    """(bildbytes eller None, antal sidor eller None) för en mapp, ett arkiv, en pdf eller en bild."""
+    """(image bytes or None, page count or None) for a folder, an archive, a pdf or an image."""
     p = Path(path)
     if p.is_file() and p.suffix.lower() in IMAGE_EXT:
         return p.read_bytes(), None
@@ -208,7 +208,7 @@ class _PagesSig(QObject):
 
 
 def _thumb(data, size):
-    """Avkoda direkt i miniatyrstorlek (jpeg skalas redan i avkodaren, mycket snabbare än full storlek)."""
+    """Decode directly at thumbnail size (jpeg is scaled in the decoder, much faster than full size)."""
     buf = QBuffer()
     buf.setData(QByteArray(data))
     buf.open(QIODevice.OpenModeFlag.ReadOnly)
@@ -220,7 +220,7 @@ def _thumb(data, size):
 
 
 class _PageThumbs(QRunnable):
-    """Miniatyrer för sidorna i ordning; avbryts när en annan serie väljs (ny generation)."""
+    """Thumbnails for the pages in order; cancelled when another comic is selected (new generation)."""
 
     def __init__(self, grid, src, gen, pages):
         super().__init__()
@@ -254,7 +254,7 @@ class _PageThumbs(QRunnable):
 
 
 class _PageGrid(QListWidget):
-    """Alla sidor i den valda serien som miniatyrer, lästa ur arkivet i minnet. Ctrl+hjul ändrar storleken."""
+    """All pages of the selected comic as thumbnails, read from the archive in memory. Ctrl+wheel changes the size."""
 
     def __init__(self, state):
         super().__init__(viewMode=QListWidget.ViewMode.IconMode, resizeMode=QListWidget.ResizeMode.Adjust,
@@ -265,7 +265,7 @@ class _PageGrid(QListWidget):
         self.gen = 0
         self.src = None
         self.done_n = 0
-        self.bar = Progress(tr("Miniatyrer"))  # placeras under gridden av dialogen
+        self.bar = Progress(tr("Miniatyrer"))  # placed under the grid by the dialog
         self.sig = _PagesSig(self)
         self.sig.done.connect(self._done)
         self.pool = QThreadPool(self)
@@ -282,7 +282,7 @@ class _PageGrid(QListWidget):
             self.state.set_setting("browser_thumb", self.size)
             self._apply_size()
             if self.src:
-                self.load(self.src)  # läs om i den nya storleken så att miniatyrerna blir skarpa
+                self.load(self.src)  # reload at the new size so the thumbnails are sharp
             return
         super().wheelEvent(e)
 
@@ -296,7 +296,7 @@ class _PageGrid(QListWidget):
         self.bar.hide()
 
     def load(self, src):
-        """Visa src:s sidor. Gridden äger src och stänger det när något annat väljs."""
+        """Show src's pages. The grid owns src and closes it when something else is selected."""
         if src is not self.src:
             self.stop()
         self.gen += 1
@@ -314,7 +314,7 @@ class _PageGrid(QListWidget):
         self.done_n = 0
         self.bar.tick(0, n)
         if src.kind in ("7z", "pdf"):
-            self.pool.start(_PageThumbs(self, src, self.gen, range(n)))  # en ström / ett pdfium-dokument åt gången
+            self.pool.start(_PageThumbs(self, src, self.gen, range(n)))  # one stream / one pdfium document at a time
         else:
             for k in range(3):
                 self.pool.start(_PageThumbs(self, src, self.gen, range(k, n, 3)))
@@ -333,7 +333,7 @@ class _PageGrid(QListWidget):
 
 
 class BrowserDialog(QDialog):
-    """Välj en serie (mapp, arkiv, pdf eller bild). Resultatet ligger i .choice."""
+    """Pick a comic (folder, archive, pdf or image). The result is in .choice."""
 
     def __init__(self, parent, state, start_dir):
         super().__init__(parent)
@@ -494,7 +494,7 @@ class BrowserDialog(QDialog):
             return
         p = Path(path)
         if p.is_dir() and not any(q.suffix.lower() in IMAGE_EXT for q in p.iterdir() if q.is_file()):
-            self.go(path)  # mapp utan bilder: gå in i den som i Utforskaren
+            self.go(path)  # folder without images: enter it like Explorer does
         else:
             self._done(path)
 

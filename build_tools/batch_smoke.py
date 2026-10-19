@@ -1,5 +1,5 @@
-"""Röktest: 150 sidor öppnas med detect_large=batch -> bara 100 skannas, nästa sats när läsaren är nära kanten.
-Kör:  .venv/Scripts/python build_tools/batch_smoke.py
+"""Smoke test: 150 pages opened with detect_large=batch -> only 100 are scanned, the next batch when the reader is near the edge.
+Run:  .venv/Scripts/python build_tools/batch_smoke.py
 """
 import os
 import sys
@@ -14,7 +14,7 @@ from PIL import Image  # noqa: E402
 from PySide6.QtCore import QEventLoop, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from panelview import store  # noqa: E402
+from autocomix import store  # noqa: E402
 
 
 def wait(ms):
@@ -43,9 +43,9 @@ def main():
     pages.mkdir()
     for k in range(150):
         Image.new("RGB", (400, 600), (240, 240, 240)).save(pages / f"{k:03d}.png")
-    from panelview import detector
-    detector.detect_bytes = lambda data, ml_ok=True: ([], [], ml_ok)  # snabb låtsasdetektering: testet gäller satserna
-    from panelview.mainwindow import MainWindow
+    from autocomix import detector
+    detector.detect_bytes = lambda data, ml_ok=True: ([], [], ml_ok)  # fast fake detection: the test is about the batches
+    from autocomix.mainwindow import MainWindow
     w = MainWindow()
     v = w.v
     v.set_opt("detect_large", "batch")

@@ -1,7 +1,7 @@
-"""Visningsytan: sidor/uppslag, guidad zoom ruta för ruta, anpassningslägen, förstoringsglas, bildspel.
+"""The display area: pages/spreads, guided panel-by-panel zoom, fit modes, magnifier, slideshow.
 
-Navigeringen går genom en lista "mål" per uppslag: rutor (guidat läge) eller visningsfönster enligt
-anpassningsläget (skärm/bredd/höjd/originalstorlek). Pil/klick/hjul stegar genom målen och sedan till nästa uppslag.
+Navigation goes through a list of "targets" per spread: panels (guided mode) or view windows by
+the fit mode (screen/width/height/original size). Arrow/click/wheel steps through the targets and then to the next spread.
 """
 import time
 from pathlib import Path
@@ -22,14 +22,14 @@ from .overlays import PageSlider, ThumbBar
 from .second import paint_frame
 from .store import PanelCache, State, UserPanels, load_sidecar, save_training_example, training_counts
 
-MARGIN = 0.012     # luft runt rutan, andel av sidan
-SCROLL_OVERLAP = 0.1  # överlapp när en sida visas i flera steg (anpassa bredd/höjd/zoom)
-KEEP_SPREADS = 3   # uppslag före/efter som hålls i minnet
+MARGIN = 0.012     # space around the panel, share of the page
+SCROLL_OVERLAP = 0.1  # overlap when a page is shown in several steps (fit width/height/zoom)
+KEEP_SPREADS = 3   # spreads before/after kept in memory
 
 DEFAULTS = {
-    "guided": True, "overview": False, "dim": True, "order_xy": False,  # order_xy: kolumn bredvid hög ruta först
+    "guided": True, "overview": False, "dim": True, "order_xy": False,  # order_xy: column beside a tall panel first
     "fit": "screen", "zoom": 1.0,
-    "shrink_w": True, "grow_w": True, "shrink_h": True, "grow_h": True,  # CDisplayEx: över/under bredd/höjd
+    "shrink_w": True, "grow_w": True, "shrink_h": True, "grow_h": True,  # CDisplayEx: over/under width/height
     "double": False, "cover_single": True, "shadow": True,
     "rotation": 0, "auto_color": False, "gamma": 1.0, "vibrance": 0.0,
     "bg": "#0c0c0c", "quality": "smooth", "anim": True, "anim_ms": 320,
@@ -37,11 +37,11 @@ DEFAULTS = {
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
-    "mag_shape": "rect", "mag_aspect": 0.6, "mag_warp": 0.5,  # rect/square/circle platta, lens = rund med förvrängning
-    "anim_play": True, "anim_speed": 1.0, "slideshow_wait_anim": True,  # animerade sidor (GIF/WebP/APNG)
-    "ui_scale": 1.0,                                   # storlek på text/listor i visningen (och menyer/dialoger)
-    "distance_mode": False, "distance_scale": 3.0,     # avståndsläge: stor sidräknare som döljs vid inaktivitet
-    "distance_ui_scale": 1.5,                          # ...och hela gränssnittet så här mycket större
+    "mag_shape": "rect", "mag_aspect": 0.6, "mag_warp": 0.5,  # rect/square/circle flat, lens = round with distortion
+    "anim_play": True, "anim_speed": 1.0, "slideshow_wait_anim": True,  # animated pages (GIF/WebP/APNG)
+    "ui_scale": 1.0,                                   # size of text/lists in the display (and menus/dialogs)
+    "distance_mode": False, "distance_scale": 3.0,     # distance mode: large page counter that hides when idle
+    "distance_ui_scale": 1.5,                          # ...and the whole interface this much larger
     "counter_autohide": False, "counter_hide_ms": 1000,
 }
 ANIM_SPEEDS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
@@ -54,7 +54,7 @@ def lerp_rect(a, b, t):
 
 
 def rotate_box(p, rot):
-    """Normaliserad ruta efter att sidan roterats rot grader medurs."""
+    """Normalized panel after the page has been rotated rot degrees clockwise."""
     x, y, w, h = p["x"], p["y"], p["w"], p["h"]
     rot %= 360
     if rot == 90:
@@ -67,7 +67,7 @@ def rotate_box(p, rot):
 
 
 def _steps(total, view):
-    """Startpositioner för ett fönster av storlek view över längden total, med överlapp, sista mot kanten."""
+    """Start positions for a window of size view over the length total, with overlap, the last one against the edge."""
     if view >= total:
         return [(total - view) / 2]
     out, x, step = [], 0.0, view * (1 - SCROLL_OVERLAP)
@@ -80,7 +80,7 @@ def _steps(total, view):
 
 class _Sig(QObject):
     loaded = Signal(int, QImage, int)  # sida, bild, generation
-    frames = Signal(int, object, int)  # sida, (bildrutor, fördröjningar ms), generation – skickas före loaded
+    frames = Signal(int, object, int)  # page, (frames, delays ms), generation – sent before loaded
 
 
 class _Load(QRunnable):
@@ -93,7 +93,7 @@ class _Load(QRunnable):
         try:
             data = self.comic.read(self.i)
             anim = animation.decode(data)
-            if anim:  # färg/rotation på varje bildruta; första rutan är "sidan" (rutdetektering, miniatyrer)
+            if anim:  # color/rotation on every frame; the first frame is "the page" (panel detection, thumbnails)
                 anim = ([imaging.process(f, **self.opts) for f in anim[0]], anim[1])
                 img = anim[0][0]
             else:
@@ -104,16 +104,16 @@ class _Load(QRunnable):
             if anim:
                 self.sig.frames.emit(self.i, anim, self.gen)
             self.sig.loaded.emit(self.i, img, self.gen)
-        except RuntimeError:  # fönstret stängdes medan sidan laddades
+        except RuntimeError:  # the window was closed while the page was loading
             pass
 
 
 class Viewer(QWidget):
-    changed = Signal()                 # titel/sida/läge ändrat (för menyer och fönstertitel)
-    contextMenu = Signal(QPointF)      # högerklick
+    changed = Signal()                 # title/page/mode changed (for menus and window title)
+    contextMenu = Signal(QPointF)      # right-click
     passwordNeeded = Signal(str)       # krypterat arkiv
-    finished = Signal()                # slutet av serien nått (för "nästa fil")
-    painted = Signal()                 # efter varje ritning (andra skärmen följer efter)
+    finished = Signal()                # end of the comic reached (for "next file")
+    painted = Signal()                 # after every paint (the second screen follows)
 
     def __init__(self, state=None):
         super().__init__()
@@ -122,7 +122,7 @@ class Viewer(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMinimumSize(320, 240)
         self.state = state or State()
-        self.fit_key = lambda: "fit"  # andra skärmen byter till vänster/höger-nyckeln (second.fit_key)
+        self.fit_key = lambda: "fit"  # the second screen switches to the left/right key (second.fit_key)
         self.comic = self.detector = self.cache = None
         self.sidecar, self.rtl = {}, False
         self.images, self.sizes, self.loading = {}, {}, set()
@@ -134,15 +134,15 @@ class Viewer(QWidget):
         self.sig = _Sig()
         self.sig.loaded.connect(self._on_loaded)
         self.sig.frames.connect(self._on_frames)
-        self.anims = {}       # sida -> {"f": rutor, "d": fördröjningar, "k": aktuell ruta, "loops": varv, "due": tid}
-        self.anim_key = None  # (uppslag, animerade sidor) som klockan senast startades för
+        self.anims = {}       # page -> {"f": frames, "d": delays, "k": current frame, "loops": loops, "due": time}
+        self.anim_key = None  # (spread, animated pages) the clock was last started for
         self.frame_timer = QTimer(self, singleShot=True, timeout=self._next_frame)
         self.pool = QThreadPool.globalInstance()
         self.view = self.focus = QRectF()
         self.a0 = self.a1 = self.f0 = self.f1 = QRectF()
         self.animating = self.free = self.pending_entry = False
         self.custom = None
-        self.resume_panel = self.resume_wait = None  # ruta att återuppta på (sparad vid förra stängningen)
+        self.resume_panel = self.resume_wait = None  # panel to resume at (saved at the last close)
         self.show_help, self.help_text = False, ""
         self.hud_always = False
         self.msg, self.progress = "", (0, 0)
@@ -150,11 +150,11 @@ class Viewer(QWidget):
         self.wheel_acc = 0
         self.at_end = False
         self.mag_on = self.mag_hold = False
-        self.edit, self.edit_drag, self.edit_undo, self.edit_redo = False, None, [], []  # stegen = listor av (sida, rutor)
-        self.edit_grab = None  # (sida, index, kanter, ursprungsruta, startpunkt) vid storleksändring/flytt
-        self.order_pick = None  # ordningsläget: {"p": sida, "seq": rutindex i klickad ordning}
+        self.edit, self.edit_drag, self.edit_undo, self.edit_redo = False, None, [], []  # the steps = lists of (page, panels)
+        self.edit_grab = None  # (page, index, edges, original panel, start point) during resize/move
+        self.order_pick = None  # order mode: {"p": page, "seq": panel indexes in clicked order}
         self.user = None
-        self.frozen = None  # (bild, visningsfönster, fokus, bakgrund) som visas i stället – andra skärmens fördelning
+        self.frozen = None  # (image, view window, focus, background) shown instead – the second screen's distribution
         self.mouse = QPointF()
         self.anim = QVariantAnimation(self, startValue=0.0, endValue=1.0, duration=self.opt("anim_ms"),
                                       easingCurve=QEasingCurve.Type.OutCubic)
@@ -164,9 +164,9 @@ class Viewer(QWidget):
         self.slideshow = QTimer(self, timeout=self._slide)
         self.cursor_timer = QTimer(self, singleShot=True, interval=2000, timeout=self._hide_cursor)
         self.last_activity = time.monotonic()
-        self.counter_timer = QTimer(self, singleShot=True, timeout=self.update)  # döljer räknaren efter inaktivitet
+        self.counter_timer = QTimer(self, singleShot=True, timeout=self.update)  # hides the counter after inactivity
         app = QApplication.instance()
-        if app:  # tangenter går via menyåtgärder och når inte widgeten: lyssna på hela programmet
+        if app:  # keys go through menu actions and do not reach the widget: listen to the whole program
             app.installEventFilter(self)
         self.thumbbar = ThumbBar(self)
         self.thumbbar.picked.connect(self._thumb_picked)
@@ -174,17 +174,17 @@ class Viewer(QWidget):
         self.slider.picked.connect(lambda i: self.goto_page(i))
         self.changed.connect(self._sync_overlays)
 
-    # ---------- inställningar ----------
+    # ---------- settings ----------
     def opt(self, k):
         return self.state.setting(k, DEFAULTS.get(k))
 
     def fit(self):
-        """Anpassning för skärmen huvudfönstret visas på ('main' gäller bara andra skärmen)."""
+        """Fit for the screen the main window is shown on ('main' only applies to the second screen)."""
         f = self.opt(self.fit_key()) or "screen"
         return "screen" if f == "main" else f
 
     def refit(self):
-        """Anpassningen kan ha bytts (läge/skärm): räkna om målen."""
+        """The fit may have changed (mode/screen): recompute the targets."""
         if self.comic:
             self.free, self.custom = False, None
             self._clamp_retarget(animate=False)
@@ -203,7 +203,7 @@ class Viewer(QWidget):
             self.anim.setDuration(v)
         elif k == "slideshow_ms" and self.slideshow.isActive():
             self.slideshow.start(int(v))
-        elif k == "sort" and self.comic:  # öppna om i ny ordning, stanna på samma bild
+        elif k == "sort" and self.comic:  # reopen in the new order, stay on the same image
             name = self.comic.pages[self.page] if 0 <= self.page < len(self.comic.pages) else None
             if self.open(self.comic.path) is not False and name in self.comic.pages:
                 self.goto_page(self.comic.pages.index(name), animate=False)
@@ -217,7 +217,7 @@ class Viewer(QWidget):
     def open(self, path, password=None):
         path = Path(path)
         first = None
-        if path.is_file() and path.suffix.lower() in IMAGE_EXT:  # enskild bild: öppna mappen och börja på den bilden
+        if path.is_file() and path.suffix.lower() in IMAGE_EXT:  # single image: open the folder and start at that image
             path, first = path.parent, path.name
         try:
             comic = self._make_comic(path, password)
@@ -254,7 +254,7 @@ class Viewer(QWidget):
         return True
 
     def _make_comic(self, path, password):
-        """rar/7z packas upp till en tempmapp, vilket kan ta tid: gör det i en tråd och visa förloppet."""
+        """rar/7z are extracted to a temp folder, which can take time: do it in a thread and show the progress."""
         if path.is_dir() or path.suffix.lower() not in (".rar", ".cbr", ".7z", ".cb7"):
             return Comic(path, password=password, sort=self.opt("sort"))
         import threading
@@ -271,7 +271,7 @@ class Viewer(QWidget):
         th.start()
         t0, dlg = time.monotonic(), None
         while th.is_alive():
-            if dlg is None and time.monotonic() - t0 > 0.4:  # snabba arkiv: ingen dialog som blinkar förbi
+            if dlg is None and time.monotonic() - t0 > 0.4:  # fast archives: no dialog that flashes by
                 dlg = QProgressDialog(tr("Packar upp {name}…").format(name=path.name), None, 0, 100, self.window())
                 dlg.setWindowTitle("AutoComix")
                 dlg.setWindowModality(Qt.WindowModality.WindowModal)
@@ -323,7 +323,7 @@ class Viewer(QWidget):
             self.flash(tr("Ingen fler serie i mappen"))
 
     def reload_images(self):
-        """Bildinställningar ändrade (rotation/färg): ladda om sidorna, behåll position."""
+        """Image settings changed (rotation/color): reload the pages, keep the position."""
         if not self.comic:
             return
         self.gen += 1
@@ -341,7 +341,7 @@ class Viewer(QWidget):
         return bool(s) and s[0] > s[1] * 1.05
 
     def _layout(self, keep_page=False):
-        """Delar upp sidorna i uppslag. Liggande sidor och (valfritt) omslaget visas ensamma."""
+        """Splits the pages into spreads. Landscape pages and (optionally) the cover are shown alone."""
         if not self.comic:
             return
         n = len(self.comic.pages)
@@ -368,7 +368,7 @@ class Viewer(QWidget):
                 self.goto_page(self.page, animate=False)
 
     def _spread(self, s):
-        """(bild, sidrektanglar i visningsordning, sidor i visningsordning) eller None om inte laddat."""
+        """(image, page rectangles in display order, pages in display order) or None if not loaded."""
         if s in self.sp_cache:
             return self.sp_cache[s]
         pages = self.spreads[s]
@@ -381,12 +381,12 @@ class Viewer(QWidget):
         return self.sp_cache[s]
 
     def _page_panels(self, i):
-        """(rutor normaliserade för sidan, klar?)."""
+        """(panels normalized for the page, ready?)."""
         name = self.comic.pages[i]
         sc = self.sidecar.get(Path(name).stem.lower())
         up = self.user.get(name) if self.user else None
         xy = self.opt("order_xy")
-        if up is not None:  # egna rutor: bara läsordningen räknas fram (eller är satt i ordningsläget)
+        if up is not None:  # custom panels: only the reading order is computed (or set in order mode)
             ps = G.order(up, self.rtl, xy) if up else []
         elif sc is not None:
             ps = G.finalize(sc, self.rtl, xy)
@@ -399,21 +399,21 @@ class Viewer(QWidget):
         return [rotate_box(p, rot) for p in ps], True
 
     def panels(self, s=None):
-        """(rutor som QRectF i uppslagets pixlar i läsordning, klar?)."""
+        """(panels as QRectF in the spread's pixels in reading order, ready?)."""
         s = self.sp if s is None else s
         sp = self._spread(s)
         if sp is None:
             return [], False
         _img, rects, order, _bg = sp
         out, ready = [], True
-        for p in self.spreads[s]:  # läsordning = sidordning
+        for p in self.spreads[s]:  # reading order = page order
             ps, ok = self._page_panels(p)
             ready &= ok
             r = rects[order.index(p)]
             out += [QRectF(r.x() + q["x"] * r.width(), r.y() + q["y"] * r.height(), q["w"] * r.width(), q["h"] * r.height())
                     for q in ps]
         if ready and len(self.spreads[s]) > 1 and any(not self._page_panels(p)[0] for p in self.spreads[s]):
-            # en av sidorna saknar rutor (helsida): visa den som en egen "ruta" i läsordning
+            # one of the pages has no panels (whole page): show it as its own "panel" in reading order
             out = []
             for p in self.spreads[s]:
                 ps, _ = self._page_panels(p)
@@ -425,9 +425,9 @@ class Viewer(QWidget):
     def guided(self):
         return self.opt("guided")
 
-    # ---------- mål ----------
+    # ---------- targets ----------
     def _viewports(self, full):
-        """Visningsfönster enligt anpassningsläget, i läsordning."""
+        """View windows by the fit mode, in reading order."""
         W, H = max(self.width(), 1), self.area_h()
         ar = W / H
         fit = self.fit()
@@ -438,7 +438,7 @@ class Viewer(QWidget):
         elif fit == "original":
             z = self.opt("zoom")
             vw, vh = W / z, H / z
-        else:  # anpassa till skärm enligt CDisplayEx: krymp/förstora separat för bredd och höjd
+        else:  # fit to screen like CDisplayEx: shrink/enlarge separately for width and height
             iw, ih = full.width(), full.height()
             c = []
             if (iw > W and self.opt("shrink_w")) or (iw < W and self.opt("grow_w")):
@@ -454,7 +454,7 @@ class Viewer(QWidget):
         return [QRectF(x, y, vw, vh) for y in ys for x in xs]
 
     def targets(self):
-        """[(rektangel, är_ruta)] för aktuellt uppslag."""
+        """[(rectangle, is_panel)] for the current spread."""
         sp = self._spread(self.sp) if self.spreads else None
         if sp is None:
             return []
@@ -465,7 +465,7 @@ class Viewer(QWidget):
             pages_w = sp[1][0].width()
             m = MARGIN * pages_w
             t = []
-            for k, r in enumerate(ps):  # en skärm per ruta: hela rutan syns, så stor som fönstret tillåter
+            for k, r in enumerate(ps):  # one screen per panel: the whole panel is visible, as large as the window allows
                 r = QRectF(r.x() - m, r.y() - m, r.width() + 2 * m, r.height() + 2 * m).intersected(full)
                 t.append((r, True, k, r))
             if self.opt("overview"):
@@ -501,7 +501,7 @@ class Viewer(QWidget):
             if ready and t:
                 self.pidx = max(0, min(int(rp), len(t) - 1))
             else:
-                self.resume_wait = rp  # bild eller rutor inte klara än: hoppa dit när de blir det
+                self.resume_wait = rp  # image or panels not ready yet: jump there when they are
         self.pending_entry = not ready and forward and self.guided()
         sp = self._spread(self.sp)
         if sp is not None:
@@ -518,7 +518,7 @@ class Viewer(QWidget):
         self.pending_entry = False
         self.resume_wait = None
         t = self.targets()
-        if self.custom is not None:  # efter dubbelklick: fortsätt från målet närmast den klickade rutan
+        if self.custom is not None:  # after a double-click: continue from the target nearest the clicked panel
             c = self.custom
             self.custom = None
             if t:
@@ -572,7 +572,7 @@ class Viewer(QWidget):
         return r, full
 
     def _fit_aspect(self, r, full):
-        """Rutan i fönstrets proportioner, centrerad. Med svart runt rutan syns inga halva grannrutor."""
+        """The panel in the window's proportions, centered. With black around the panel no half neighbour panels show."""
         ar = self.width() / self.area_h()
         w, h = r.width(), r.height()
         if w / max(h, 1e-6) < ar:
@@ -634,7 +634,7 @@ class Viewer(QWidget):
         for s in range(self.sp - KEEP_SPREADS, self.sp + KEEP_SPREADS + 1):
             if 0 <= s < len(self.spreads):
                 keep.update(self.spreads[s])
-        for k in [k for k in self.anims if k not in want]:  # alla bildrutor = mycket minne: bara närmaste uppslagen
+        for k in [k for k in self.anims if k not in want]:  # all frames = a lot of memory: only the nearest spreads
             del self.anims[k]
             self.images.pop(k, None)
             for s in [s for s in self.sp_cache if k in self.spreads[s]]:
@@ -648,14 +648,14 @@ class Viewer(QWidget):
         if gen == self.gen and self.comic:
             self.anims[i] = {"f": fd[0], "d": fd[1], "k": 0, "loops": 0, "due": None}
 
-    # ---------- animerade sidor ----------
+    # ---------- animated pages ----------
     def _anim_clear(self):
         self.frame_timer.stop()
         self.anims.clear()
         self.anim_key = None
 
     def anim_pages(self):
-        """Animerade sidor i uppslaget som visas nu."""
+        """Animated pages in the spread shown now."""
         if not self.comic or not self.spreads or self.sp >= len(self.spreads):
             return []
         return [p for p in self.spreads[self.sp] if p in self.anims]
@@ -665,10 +665,10 @@ class Viewer(QWidget):
         f = a["f"][a["k"]]
         if self.images.get(p) is not f:
             self.images[p] = f
-            self.sp_cache.pop(self.sp_of.get(p), None)  # enkelsida: ingen kopia; dubbelsida sätts ihop igen
+            self.sp_cache.pop(self.sp_of.get(p), None)  # single page: no copy; a double page is put together again
 
     def _anim_sync(self):
-        """Vid varje ritning: nytt uppslag -> animationen börjar om från första rutan; klockan går bara för det som syns."""
+        """On every paint: new spread -> the animation restarts from the first frame; the clock only runs for what is visible."""
         vis = self.anim_pages()
         key = (self.sp, tuple(vis))
         if key != self.anim_key:
@@ -687,7 +687,7 @@ class Viewer(QWidget):
         now, sp = time.monotonic(), self._anim_speed()
         for p in vis:
             a = self.anims[p]
-            if a["due"] is None or a["due"] < now - 1.0:  # start, eller klockan har stått (lång ritning/paus)
+            if a["due"] is None or a["due"] < now - 1.0:  # start, or the clock has stood still (long paint/pause)
                 a["due"] = now + a["d"][a["k"]] / 1000 / sp
         nxt = min(self.anims[p]["due"] for p in vis)
         self.frame_timer.start(max(1, int((nxt - now) * 1000)))
@@ -702,7 +702,7 @@ class Viewer(QWidget):
             if a["due"] is None:
                 continue
             n = 0
-            while a["due"] <= now and n < len(a["f"]):  # hoppar över rutor om datorn hann efter
+            while a["due"] <= now and n < len(a["f"]):  # skips frames if the computer fell behind
                 a["k"] = (a["k"] + 1) % len(a["f"])
                 a["loops"] += a["k"] == 0
                 a["due"] += a["d"][a["k"]] / 1000 / sp
@@ -765,7 +765,7 @@ class Viewer(QWidget):
         was_land = self._landscape(i)
         self.sizes[i] = (img.width(), img.height())
         if self.opt("double") and self._landscape(i) != was_land:
-            self._layout(keep_page=True)  # liggande sida upptäckt: visa den ensam
+            self._layout(keep_page=True)  # landscape page detected: show it alone
             return
         if i in self.spreads[self.sp] and self._spread(self.sp) is not None:
             sp = self._spread(self.sp)
@@ -804,14 +804,14 @@ class Viewer(QWidget):
         self.update()
 
     def current_image(self):
-        """Originalbytes + namn för aktuell sida (spara/kopiera)."""
+        """Original bytes + name for the current page (save/copy)."""
         if not self.comic:
             return None, None
         return self.comic.read(self.page), Path(self.comic.pages[self.page]).name
 
     # ---------- rendering ----------
     def area_h(self):
-        """Höjden som sidan visas i: miniatyrlist och reglage tar plats längst ner i stället för att täcka rutan."""
+        """The height the page is shown in: the thumbnail bar and slider take space at the bottom instead of covering the panel."""
         h = self.height()
         if self.thumbbar.isVisible():
             h -= self.thumbbar.height()
@@ -846,7 +846,7 @@ class Viewer(QWidget):
         return QColor(12, 12, 12) if c == "auto" else QColor(c)
 
     def frame(self, final=False):
-        """(bild, visningsfönster, fokus, bakgrund) som visas nu, eller dit animeringen är på väg (final)."""
+        """(image, view window, focus, background) shown now, or where the animation is heading (final)."""
         sp = self._spread(self.sp) if self.comic and self.spreads else None
         if sp is None or self.view.isEmpty():
             return None
@@ -864,7 +864,7 @@ class Viewer(QWidget):
         bg = self.bg_color()
         p.fillRect(self.rect(), bg)
         sp = self._spread(self.sp) if self.comic and self.spreads else None
-        if self.frozen is not None and self.comic:  # aktuell bild visas på andra skärmen: behåll den förra här
+        if self.frozen is not None and self.comic:  # the current image is shown on the second screen: keep the previous one here
             q = self.opt("quality")
             paint_frame(p, self.width(), self.area_h(), self.frozen, self.opt("dim"), q in ("best", "smooth"))
         elif sp is not None and not self.view.isEmpty():
@@ -897,7 +897,7 @@ class Viewer(QWidget):
         p.fillRect(QRectF(f.right(), f.top(), W - f.right(), f.height()), c)
 
     def mag_box(self):
-        """Glasets rektangel på skärmen (centrerad på musen) enligt form och storlek."""
+        """The glass's rectangle on the screen (centered on the mouse) by shape and size."""
         w = float(self.opt("mag_size")) * self.ui_scale()
         h = w * float(self.opt("mag_aspect")) if self.opt("mag_shape") == "rect" else w
         return QRectF(self.mouse.x() - w / 2, self.mouse.y() - h / 2, w, h)
@@ -908,7 +908,7 @@ class Viewer(QWidget):
         s = self._scale() * float(self.opt("mag_zoom"))
         c = self._to_page(self.mouse)
         src = QRectF(c.x() - dst.width() / 2 / s, c.y() - dst.height() / 2 / s, dst.width() / s, dst.height() / s)
-        # rendera det förstorade utsnittet till en egen bild (samma för alla former)
+        # render the magnified region to its own image (the same for all shapes)
         out = QImage(max(1, int(dst.width())), max(1, int(dst.height())), QImage.Format.Format_RGB32)
         out.fill(self.bg_color())
         q = QPainter(out)
@@ -938,10 +938,10 @@ class Viewer(QWidget):
     _warp_maps = {}
 
     def _lens_warp(self, img):
-        """Fisheye: mitten förstoras mer, kanten trycks ihop (som ett riktigt förstoringsglas)."""
+        """Fisheye: the center is magnified more, the edge is compressed (like a real magnifying glass)."""
         import cv2
         w, h = img.width(), img.height()
-        g = min(0.8, max(0.0, float(self.opt("mag_warp"))) * 0.6)  # mitten förstoras 1/(1-g) extra
+        g = min(0.8, max(0.0, float(self.opt("mag_warp"))) * 0.6)  # the center is magnified 1/(1-g) extra
         key = (w, h, round(g, 3))
         maps = Viewer._warp_maps.get(key)
         if maps is None:
@@ -949,7 +949,7 @@ class Viewer(QWidget):
             cx, cy, rad = (w - 1) / 2, (h - 1) / 2, min(w, h) / 2
             dx, dy = (xx - cx) / rad, (yy - cy) / rad
             r = np.sqrt(dx * dx + dy * dy)
-            # källradie = r·(1 − g(1 − r²)): mjuk utbuktning, ingen spets i mitten, kanten möter omgivningen
+            # source radius = r·(1 − g(1 − r²)): soft bulge, no point in the center, the edge meets the surroundings
             f = np.where(r < 1, 1 - g * (1 - r * r), 1.0).astype(np.float32)
             maps = (cx + dx * f * rad, cy + dy * f * rad)
             if len(Viewer._warp_maps) > 8:
@@ -978,7 +978,7 @@ class Viewer(QWidget):
         self.flash(tr("Förstoring {x}×").format(x=f"{val:g}"))
         self.update()
 
-    # ---------- storlek / avståndsläge ----------
+    # ---------- size / distance mode ----------
     ACTIVITY = None
 
     def eventFilter(self, obj, e):
@@ -991,7 +991,7 @@ class Viewer(QWidget):
         return False
 
     def poke(self):
-        """Aktivitet (tangent, mus, hjul): visa räknaren igen och starta nedräkningen till att den döljs."""
+        """Activity (key, mouse, wheel): show the counter again and restart the countdown to hiding it."""
         was = self.counter_visible()
         self.last_activity = time.monotonic()
         if self.counter_autohides():
@@ -1003,7 +1003,7 @@ class Viewer(QWidget):
         return max(0.5, min(4.0, float(self.opt("ui_scale"))))
 
     def ui_scale(self):
-        """Gränssnittets storlek just nu: inställningen, och i avståndsläget ytterligare förstorad."""
+        """The interface size right now: the setting, and in distance mode enlarged further."""
         k = float(self.opt("distance_ui_scale")) if self.opt("distance_mode") else 1.0
         return max(0.5, min(8.0, self.base_ui_scale() * k))
 
@@ -1040,7 +1040,7 @@ class Viewer(QWidget):
             x0 = W * (1 - frac) if self.rtl else 0
             p.fillRect(QRectF(x0, H - bar, W * frac, bar), QColor(90, 160, 255, 200))
         d, tot = self.progress
-        if tot and d < tot:  # rutdetektering för hela serien i bakgrunden: tunn orange list ovanför läsförloppet
+        if tot and d < tot:  # panel detection for the whole comic in the background: thin orange bar above the reading progress
             p.fillRect(QRectF(0, H - bar - max(2, bar // 2), W * d / tot, max(2, bar // 2)), QColor(255, 170, 60, 220))
         if self.opt("show_pagenum") and not self.edit and self.counter_visible():
             s = self.counter_text()
@@ -1103,9 +1103,9 @@ class Viewer(QWidget):
                        + tr("L = bläddra   Ctrl+O = öppna fil   Ctrl+L = senaste   F = helskärm   H = hjälp"),
                        center=True)
             return
-        if self.hud_always or self.edit:  # full informationsrad bara på begäran (I) och i redigeringsläget
+        if self.hud_always or self.edit:  # full information bar only on request (I) and in edit mode
             self._text(p, "  ·  ".join(self.status_parts()))
-        if self.msg:  # kvitto: liten rad överst i mitten, försvinner av sig själv
+        if self.msg:  # receipt: a small line at the top center, disappears by itself
             self._toast(p, self.msg)
 
     def _toast(self, p, s):
@@ -1123,7 +1123,7 @@ class Viewer(QWidget):
         p.drawText(r, Qt.AlignmentFlag.AlignCenter, s)
 
     def counter_text(self):
-        """'s. 6/24 · ruta 2/7' (eller 'del 2/3' när sidan visas i flera steg)."""
+        """'p. 6/24 · panel 2/7' (or 'part 2/3' when the page is shown in several steps)."""
         pages = self.spreads[self.sp] if self.spreads else (self.page,)
         n = len(self.comic.pages)
         s = tr("s. {p}/{n}").format(p=f"{pages[0] + 1}" + (f"–{pages[-1] + 1}" if len(pages) > 1 else ""), n=n)
@@ -1176,7 +1176,7 @@ class Viewer(QWidget):
         self._retarget()
 
     def _scan_in_batches(self, comic):
-        """Fler oskannade sidor än detect_batch: skanna alla nu eller en sats i taget (frågar om detect_large=ask)."""
+        """More unscanned pages than detect_batch: scan all now or one batch at a time (asks if detect_large=ask)."""
         n = int(self.opt("detect_batch"))
         mode = self.opt("detect_large")
         if n <= 0 or mode == "all":
@@ -1201,7 +1201,7 @@ class Viewer(QWidget):
             self.set_opt("detect_large", "batch" if batch else "all")
         return batch
 
-    # ---------- bildspel / förstoringsglas ----------
+    # ---------- slideshow / magnifier ----------
     def toggle_slideshow(self):
         if self.slideshow.isActive():
             self.slideshow.stop()
@@ -1213,10 +1213,10 @@ class Viewer(QWidget):
         self.changed.emit()
 
     def _slide(self):
-        """Ett steg i bildspelet: nästa ruta (guidat läge) eller nästa sida; vid slutet ev. nästa fil eller om från början."""
+        """One slideshow step: next panel (guided mode) or next page; at the end possibly the next file or from the start."""
         if self.comic and self.opt("slideshow_wait_anim") and self.opt("anim_play"):
             if any(self.anims[p]["loops"] < 1 for p in self.anim_pages()):
-                self.slideshow.setInterval(250)  # animationen har inte gått ett varv än: kolla snart igen
+                self.slideshow.setInterval(250)  # the animation has not played once yet: check again soon
                 return
             self.slideshow.setInterval(int(self.opt("slideshow_ms")))
         if not self.comic:
@@ -1235,7 +1235,7 @@ class Viewer(QWidget):
                 self.slideshow.start(int(self.opt("slideshow_ms")))
                 return
         if self.comic and self.opt("slideshow_loop"):
-            self.first()  # slingan: börja om från första sidan/rutan i samma fil
+            self.first()  # the loop: start over from the first page/panel in the same file
             self.flash(tr("Bildspelet börjar om"))
             return
         self.slideshow.stop()
@@ -1296,10 +1296,10 @@ class Viewer(QWidget):
             self.thumbbar.select(self.page)
         self._place_overlays()
 
-    # ---------- redigera rutor ----------
+    # ---------- edit panels ----------
     def toggle_edit(self):
-        """Redigeringsläge: hela uppslaget med numrerade rutor. Dra = ny ruta, högerklick/Delete = ta bort,
-        Ctrl+Z = ångra. Rättelserna sparas per sida och samlas som träningsdata för modellen."""
+        """Edit mode: the whole spread with numbered panels. Drag = new panel, right-click/Delete = delete,
+        Ctrl+Z = undo. The corrections are saved per page and collected as training data for the model."""
         if not self.comic:
             return
         if self.opt("rotation"):
@@ -1310,7 +1310,7 @@ class Viewer(QWidget):
         self.order_pick = None
         if self.edit:
             self.cursor_timer.stop()
-            self.setCursor(Qt.CursorShape.CrossCursor)  # muspekaren syns hela tiden i redigeringsläget
+            self.setCursor(Qt.CursorShape.CrossCursor)  # the mouse pointer is visible all the time in edit mode
             self.slideshow.stop()
             sp = self._spread(self.sp)
             self.custom = QRectF(0, 0, sp[0].width(), sp[0].height()) if sp else None
@@ -1336,7 +1336,7 @@ class Viewer(QWidget):
         self.update()
 
     def _training(self, p, boxes, kind):
-        """Sidan som JPEG + rutorna som träningsexempel (rättad eller godkänd)."""
+        """The page as JPEG + the panels as a training example (corrected or approved)."""
         try:
             import hashlib
             from PySide6.QtCore import QBuffer, QIODevice
@@ -1351,7 +1351,7 @@ class Viewer(QWidget):
             pass
 
     def approve_page(self):
-        """Sidan är rätt: nuvarande rutor sparas som träningsexempel (även korrekta sidor behövs i träningen)."""
+        """The page is correct: the current panels are saved as a training example (correct pages are needed in training too)."""
         if not self.comic or not self.spreads:
             return
         _ps, ready = self.panels()
@@ -1366,10 +1366,10 @@ class Viewer(QWidget):
         r, g = training_counts()
         self.flash(tr("Sidan godkänd  ·  träningsdata: {r} rättade, {g} godkända").format(r=r, g=g))
 
-    # ---------- läsordning ----------
+    # ---------- reading order ----------
     def toggle_order(self):
-        """Ordningsläge: klicka rutorna i den ordning de ska läsas (startar redigeringsläget vid behov).
-        Den sista rutan hamnar sist av sig själv. Högerklick ångrar senaste klicket, X/Esc avbryter."""
+        """Order mode: click the panels in the order they should be read (starts edit mode if needed).
+        The last panel is placed last automatically. Right-click undoes the last click, X/Esc cancels."""
         if not self.comic:
             return
         if self.order_pick is not None:
@@ -1386,7 +1386,7 @@ class Viewer(QWidget):
         self.update()
 
     def _order_hit(self, pt):
-        """(sida, rutindex) för minsta rutan under punkten (uppslagets pixlar), eller (None, None)."""
+        """(page, panel index) for the smallest panel under the point (the spread's pixels), or (None, None)."""
         p, r = self._edit_page_at(pt)
         if p is None:
             return None, None
@@ -1420,7 +1420,7 @@ class Viewer(QWidget):
         self.update()
 
     def order_auto(self):
-        """Släpp egen läsordning på uppslaget: rutorna behålls, ordningen räknas fram automatiskt igen."""
+        """Drop the custom reading order on the spread: the panels are kept, the order is computed automatically again."""
         if not self.comic or not self.spreads:
             return
         pages = [p for p in self.spreads[self.sp] if any("n" in b for b in (self.user.get(self.comic.pages[p]) or []))]
@@ -1484,10 +1484,10 @@ class Viewer(QWidget):
         if self.edit:
             self.edit_delete_at(self._to_page(self.mouse))
 
-    GRAB_PX = 9  # så nära kanten (skärmpixlar) räknas som att ta tag i kanten
+    GRAB_PX = 9  # this close to the edge (screen pixels) counts as grabbing the edge
 
     def _edit_hit(self, pos, move=False):
-        """(sida, index, kanter) för rutan vars kant/hörn är under muspekaren; med move=True även insidan."""
+        """(page, index, edges) for the panel whose edge/corner is under the mouse pointer; with move=True also the inside."""
         sp = self._spread(self.sp)
         if not sp:
             return None
@@ -1515,7 +1515,7 @@ class Viewer(QWidget):
         return best[:3] if best else None
 
     def _edit_cursor(self, pos, grab):
-        """Pekare efter vad ett drag gör här: flytta/ändra storlek (grab) eller rita ny ruta (Shift)."""
+        """Pointer by what a drag does here: move/resize (grab) or draw a new panel (Shift)."""
         hit = self._edit_hit(pos, move=True) if grab else None
         if not hit:
             self.setCursor(Qt.CursorShape.CrossCursor)
@@ -1534,7 +1534,7 @@ class Viewer(QWidget):
         self.setCursor(shape)
 
     def _edit_grab_move(self, pt):
-        """Uppdaterar rutan som dras i (sidans normaliserade koordinater) under storleksändring/flytt."""
+        """Updates the panel being dragged (the page's normalized coordinates) during resize/move."""
         pg, k, edges, orig, start = self.edit_grab
         sp = self._spread(self.sp)
         r = sp[1][sp[2].index(pg)]
@@ -1564,11 +1564,11 @@ class Viewer(QWidget):
         q = {"x": x0, "y": y0, "w": x1 - x0, "h": y1 - y0}
         if q["w"] < 0.03 or q["h"] < 0.03:
             return
-        boxes = [b for b in self._edit_boxes(p) if G.inter(b, q) / G.area(b) < 0.8]  # ersätter rutor den täcker
+        boxes = [b for b in self._edit_boxes(p) if G.inter(b, q) / G.area(b) < 0.8]  # replaces panels it covers
         self._edit_store(p, boxes + [q])
 
     def _edit_push(self, pages):
-        """Spara sidornas rutor före en ändring som ett ångra-steg; en ny ändring tömmer gör om-listan."""
+        """Save the pages' panels before a change as an undo step; a new change empties the redo list."""
         self.edit_undo.append([(p, self.user.get(self.comic.pages[p])) for p in pages])
         self.edit_redo.clear()
 
@@ -1589,7 +1589,7 @@ class Viewer(QWidget):
         self._edit_swap(self.edit_redo, self.edit_undo, tr("Gjort om"))
 
     def edit_clear_page(self):
-        """Ta bort alla rutor på uppslaget (för att rita om från början). Ctrl+Z ångrar."""
+        """Delete all panels on the spread (to redraw from scratch). Ctrl+Z undoes."""
         if not self.edit:
             return
         pages = self.spreads[self.sp]
@@ -1600,7 +1600,7 @@ class Viewer(QWidget):
         self.update()
 
     def edit_reset_page(self):
-        """Tillbaka till automatisk detektering för sidorna i uppslaget."""
+        """Back to automatic detection for the pages in the spread."""
         if not self.edit:
             return
         self._edit_push(self.spreads[self.sp])
@@ -1666,7 +1666,7 @@ class Viewer(QWidget):
             return
         dy = e.angleDelta().y() or e.angleDelta().x()
         mods = e.modifiers()
-        if self.mag_on or self.mag_hold:  # glaset på: Shift+hjul = storlek, Ctrl+hjul = förstoring
+        if self.mag_on or self.mag_hold:  # glass on: Shift+wheel = size, Ctrl+wheel = magnification
             if mods & Qt.KeyboardModifier.ShiftModifier:
                 self.mag_resize(1.1 if dy > 0 else 1 / 1.1)
                 return
@@ -1693,7 +1693,7 @@ class Viewer(QWidget):
             if b == Qt.MouseButton.LeftButton:
                 pt = self._to_page(e.position())
                 shift = bool(e.modifiers() & Qt.KeyboardModifier.ShiftModifier)
-                hit = None if shift else self._edit_hit(e.position(), move=True)  # Shift = alltid ny ruta
+                hit = None if shift else self._edit_hit(e.position(), move=True)  # Shift = always a new panel
                 if hit:
                     pg, k, edges = hit
                     self.edit_grab = (pg, k, edges, self._edit_boxes(pg)[k], pt)
@@ -1739,7 +1739,7 @@ class Viewer(QWidget):
             if b == Qt.MouseButton.LeftButton and self.edit_drag:
                 a, c = self.edit_drag
                 self.edit_drag = None
-                if self.edit_grab:  # storleksändring/flytt av befintlig ruta
+                if self.edit_grab:  # resize/move of an existing panel
                     q = self._edit_grab_move(c)
                     pg, k = self.edit_grab[0], self.edit_grab[1]
                     self.edit_grab = None
@@ -1748,7 +1748,7 @@ class Viewer(QWidget):
                     self._edit_store(pg, boxes)
                 else:
                     self.edit_add(a, c)
-                self._edit_cursor(e.position(), True)  # redo för nästa ruta direkt
+                self._edit_cursor(e.position(), True)  # ready for the next panel right away
             return
         if b == Qt.MouseButton.LeftButton and self.drag and not self.drag[2]:
             pos = e.position()
@@ -1757,7 +1757,7 @@ class Viewer(QWidget):
                 self.goto_page(int((1 - frac if self.rtl else frac) * len(self.comic.pages)))
             else:
                 x = pos.x() / self.width()
-                if x > 0.8:  # smala kantzoner så att dubbelklick på rutor i mitten fungerar
+                if x > 0.8:  # narrow edge zones so double-clicks on panels in the middle work
                     self.step(self.next_dir(True))
                 elif x < 0.2:
                     self.step(self.next_dir(False))
@@ -1771,7 +1771,7 @@ class Viewer(QWidget):
         self.drag = None
 
     def mouseDoubleClickEvent(self, e):
-        """Som Smart Comic Reader: dubbelklick på en ruta zoomar till den. Dubbelklick på inzoomad ruta = helsida."""
+        """Like Smart Comic Reader: double-clicking a panel zooms to it. Double-clicking a zoomed panel = whole page."""
         if e.button() != Qt.MouseButton.LeftButton or self.edit:
             return
         sp = self._spread(self.sp) if self.comic and self.spreads else None
@@ -1783,7 +1783,7 @@ class Viewer(QWidget):
         if not full.contains(pt):
             return
         if not self.free and self.focus != full and self.focus.contains(pt):
-            self.custom = full  # tillbaka till hela uppslaget
+            self.custom = full  # back to the whole spread
             self._retarget()
             return
         ps, _ = self.panels()
@@ -1797,7 +1797,7 @@ class Viewer(QWidget):
             g = img.convertToFormat(QImage.Format.Format_Grayscale8)
             arr = np.frombuffer(g.constBits(), np.uint8, g.bytesPerLine() * H).reshape(H, g.bytesPerLine())[:, :W]
             q = G.panel_at(arr, pt.x(), pt.y())
-            if q is None:  # ingen ruta hittad: zooma till halva sidan runt punkten
+            if q is None:  # no panel found: zoom to half the page around the point
                 r = QRectF(pt.x() - W / 4, pt.y() - H / 4, W / 2, H / 2).intersected(full)
             else:
                 m = MARGIN * W
@@ -1816,7 +1816,7 @@ class Viewer(QWidget):
             e.acceptProposedAction()
 
     def dropEvent(self, e):
-        """Flera filer ur samma mapp: öppna mappen från början (i vald sortering) i stället för vid den första filen."""
+        """Several files from the same folder: open the folder from the start (in the chosen sorting) instead of at the first file."""
         ps = [Path(u.toLocalFile()) for u in e.mimeData().urls() if u.toLocalFile()]
         if len(ps) > 1 and all(p.is_file() and p.suffix.lower() in IMAGE_EXT for p in ps) \
                 and len({p.parent for p in ps}) == 1:

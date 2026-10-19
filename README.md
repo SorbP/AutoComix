@@ -7,7 +7,7 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
 
 - Opens image folders, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` and `.pdf`. Encrypted archives ask for a password.
 - Panels are found in the background with OpenCV (from cbxy) and a YOLO model via ONNX Runtime. The hybrid logic is in
-  `panelview/geometry.py`. The nearest pages are detected first and the result is cached
+  `autocomix/geometry.py`. The nearest pages are detected first and the result is cached
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - More than 100 unscanned pages (adjustable): asks whether to scan all now or 100 at a time; the next 100 are scanned
   when you are 10 pages from the end of the scanned ones (Settings → Many unscanned pages / Pages per batch).
@@ -75,9 +75,9 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
 ## Remote control on your phone (Unified Remote)
 `remote\installera_unified_remote.ps1` copies `remote\unified\AutoComix` to Unified Remote's folder for custom
 remotes and writes in where `AutoComix.exe` is (`-Exe <path>` if it is not in `dist\windows\AutoComix`). Restart the server (tray icon → Restart), and **AutoComix** is listed among the remotes on the phone.
-The *Läs* (Read) tab: next/previous, page, slideshow on/off and faster/slower. The *Mer* (More) tab: first/last page,
+The *Read* tab (*Läs* in Swedish): next/previous, page, slideshow on/off and faster/slower. The *More* tab (*Mer*): first/last page,
 files, last comic, start AutoComix, second screen, zoom, full screen. The buttons send keys and switch to the
-AutoComix window first. The remote's labels are in Swedish.
+AutoComix window first. The buttons are in English unless Windows is Swedish (`-Lang sv/en` chooses).
 
 ## Building
 ```
@@ -126,9 +126,9 @@ scripts are in `build_tools/`, so anyone can retrain on their own corrections.
 Set `PYTHONIOENCODING=utf-8` if the console cannot print Swedish characters.
 
 ## Translations
-The texts are written in Swedish in the code as `tr("…")` and translated in `panelview/lang/<code>.json` (Swedish text
+The texts are written in Swedish in the code as `tr("…")` and translated in `autocomix/lang/<code>.json` (Swedish text
 → translation; `{name}` are placeholders that must be kept). New language: add the code to `LANGUAGES` in
-`panelview/i18n.py` and a JSON file, then run `build_tools/i18n_check.py`. Corrections of the translations are welcome.
+`autocomix/i18n.py` and a JSON file, then run `build_tools/i18n_check.py`. Corrections of the translations are welcome. Code comments are in English.
 
 ## License
 AutoComix is free software: Copyright (C) 2026 Stefan Persson, licensed under the

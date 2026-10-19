@@ -5,6 +5,15 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.19.2
+- Existing installations keep Swedish. Before 2.19 the program was Swedish-only, so *Automatic* would have switched
+  to English for anyone with an English Windows. New installations still follow the system language.
+- The Python package folder is renamed from `panelview` to `autocomix` (the environment variable for testing a model
+  is now `AUTOCOMIX_MODEL`).
+- All comments and docstrings in the code are in English, so more people can read the code.
+- The Unified Remote remote has English buttons unless Windows is Swedish (`-Lang sv/en` chooses explicitly).
+- The GitHub repository description is in English and Swedish.
+
 ## 2.19.1
 - New built-in panel model, fine-tuned on the CoMix dataset and 287 pages corrected or approved by the developer.
   Measured on corrected pages the models had not trained on (59 pages), compared with the model in 2.19.0:

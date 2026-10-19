@@ -1,7 +1,7 @@
-"""Röktest för läsordningen: ordningsläget (X), automatisk ordning igen (Shift+X), XY-ordning som inställning.
+"""Smoke test for the reading order: order mode (X), automatic order again (Shift+X), XY order as a setting.
 
-Sida: vänster två staplade rutor (A över C), höger en hög ruta (B). Rad för rad = A-B-C, XY = A-C-B.
-Kör:  python build_tools/order_smoke.py
+Page: on the left two stacked panels (A above C), on the right a tall panel (B). Row by row = A-B-C, XY = A-C-B.
+Run:  python build_tools/order_smoke.py
 """
 import os
 import sys
@@ -15,9 +15,9 @@ from PIL import Image, ImageDraw  # noqa: E402
 from PySide6.QtCore import QEventLoop, QPointF, QTimer  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from panelview import store  # noqa: E402
+from autocomix import store  # noqa: E402
 
-A, C, B = (30, 30, 380, 560), (30, 600, 380, 1170), (420, 30, 770, 1170)  # pixlar på en 800x1200-sida
+A, C, B = (30, 30, 380, 560), (30, 600, 380, 1170), (420, 30, 770, 1170)  # pixels on an 800x1200 page
 
 
 def wait(ms):
@@ -32,7 +32,7 @@ def check(name, ok, info=""):
 
 
 def names(v):
-    """Rutornas läsordning som bokstäver, utifrån mittpunkten."""
+    """The panels' reading order as letters, by their center."""
     out = []
     for r in v.panels()[0]:
         c = r.center()
@@ -47,8 +47,8 @@ def center(box):
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
     tmp = Path(tempfile.mkdtemp(prefix="pv_order_"))
-    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens data
-    from panelview.mainwindow import MainWindow
+    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's data
+    from autocomix.mainwindow import MainWindow
     im = Image.new("RGB", (800, 1200), (240, 240, 240))
     d = ImageDraw.Draw(im)
     for b in (A, B, C):
@@ -72,11 +72,11 @@ def main():
     w._toggle("order_xy")
     res.append(check("XY-ordning av igen: A-B-C", names(v) == "ABC", names(v)))
 
-    # ordningsläge: klicka C, A -> B blir sist av sig själv
+    # order mode: click C, A -> B becomes last by itself
     v.toggle_order()
     res.append(check("X startar redigering + ordningsläge", v.edit and v.order_pick is not None))
     v.order_click(center(C))
-    v.order_click(center(C))  # dubbelklick på samma ruta räknas inte två gånger
+    v.order_click(center(C))  # double-clicking the same panel does not count twice
     res.append(check("klickad ruta registreras en gång", len(v.order_pick["seq"]) == 1))
     v.order_undo()
     res.append(check("högerklick ångrar senaste", v.order_pick["seq"] == []))
@@ -91,7 +91,7 @@ def main():
     res.append(check("guidat läge följer egen ordning (första målet = C)",
                      v.targets() and v.targets()[0][0].center().x() < 400 and v.targets()[0][0].center().y() > 580))
 
-    # sparas till nästa öppning
+    # saved until the next opening
     path = v.comic.path
     v.open(str(path))
     for _ in range(40):

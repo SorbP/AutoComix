@@ -1,6 +1,6 @@
-"""Röktest för gränssnittets storlek, avståndsläget (räknaren döljs vid inaktivitet) och förstoringsglasets former.
+"""Smoke test for the interface size, distance mode (the counter hides when idle) and the magnifier shapes.
 
-Kör:  python build_tools/ui_smoke.py
+Run:  python build_tools/ui_smoke.py
 """
 import os
 import sys
@@ -15,7 +15,7 @@ from PySide6.QtCore import QEvent, QEventLoop, QPointF, Qt, QTimer  # noqa: E402
 from PySide6.QtGui import QKeyEvent  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from panelview import store  # noqa: E402
+from autocomix import store  # noqa: E402
 
 
 def wait(ms):
@@ -32,9 +32,9 @@ def check(name, ok, info=""):
 def main():
     app = QApplication.instance() or QApplication(sys.argv)
     tmp = Path(tempfile.mkdtemp(prefix="pv_ui_"))
-    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens data
-    from panelview.mainwindow import MainWindow
-    from panelview.viewer import MAG_SHAPES
+    store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's data
+    from autocomix.mainwindow import MainWindow
+    from autocomix.viewer import MAG_SHAPES
     for k in range(3):
         im = Image.new("RGB", (800, 1200), (240, 240, 240))
         d = ImageDraw.Draw(im)
@@ -63,7 +63,7 @@ def main():
     res.append(check("tillbaka till 100 %", abs(v.base_ui_scale() - 1.0) < 1e-6 and
                      abs(app.font().pointSizeF() - base_pt) < 0.01))
 
-    # 2. avståndsläge
+    # 2. distance mode
     v.state.set_setting("counter_hide_ms", 400)
     w.acts["distance"].trigger()
     res.append(check("avståndsläge på", v.opt("distance_mode") and abs(v.ui_scale() - 1.5) < 1e-6,
@@ -81,7 +81,7 @@ def main():
     res.append(check("avståndsläge av: räknaren alltid synlig", not v.opt("distance_mode") and v.counter_visible()
                      and abs(app.font().pointSizeF() - base_pt) < 0.01))
 
-    # 3. förstoringsglas
+    # 3. magnifier
     v.mouse = QPointF(500, 450)
     for k, label in MAG_SHAPES:
         v.set_mag_shape(k)
@@ -100,7 +100,7 @@ def main():
     v.mag_zoom_step(1.25)
     res.append(check("mer förstoring", v.opt("mag_zoom") > z))
     v.toggle_magnifier()
-    # sortering efter ändringsdatum (Ctrl+D): 02 äldst -> först; samma bild visas efter omsorteringen
+    # sorting by date modified (Ctrl+D): 02 oldest -> first; the same image is shown after re-sorting
     import os
     for k in range(3):
         os.utime(tmp / f"{k:02d}.png", (1_600_000_000 - k * 60,) * 2)

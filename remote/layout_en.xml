@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout>
+	<tabs>
+		<tab text="Read">
+			<row>
+				<button text="Previous" color="grey" ontap="prev" />
+				<button text="Next" color="green" ontap="next" weight="2" />
+			</row>
+			<row weight="wrap">
+				<button text="◀ Page" ontap="prev_page" />
+				<button text="Page ▶" ontap="next_page" />
+			</row>
+			<row weight="wrap">
+				<button text="Slideshow on/off" color="orange" ontap="slideshow" />
+			</row>
+			<row weight="wrap">
+				<button text="Faster (− time)" ontap="slide_shorter" />
+				<button text="Slower (+ time)" ontap="slide_longer" />
+			</row>
+			<row weight="wrap">
+				<button text="Guided G" ontap="guided" />
+				<button text="Page first V" ontap="overview" />
+				<button text="Anim. P" ontap="anim" />
+			</row>
+		</tab>
+		<tab text="More">
+			<row weight="wrap">
+				<button text="First page" ontap="first" />
+				<button text="Last page" ontap="last" />
+			</row>
+			<row weight="wrap">
+				<button text="◀ Previous file" ontap="prev_file" />
+				<button text="Next file ▶" ontap="next_file" />
+			</row>
+			<row weight="wrap">
+				<button text="Last comic" ontap="resume" />
+				<button text="Start AutoComix" ontap="launch" />
+			</row>
+			<row weight="wrap">
+				<button text="Second screen F9" color="blue" ontap="second" />
+				<button text="Fit ⇧F9" color="blue" ontap="second_fit" />
+			</row>
+			<row weight="wrap">
+				<button text="Zoom +" ontap="zoom_in" />
+				<button text="Zoom 0" ontap="zoom_reset" />
+				<button text="Zoom −" ontap="zoom_out" />
+			</row>
+			<row weight="wrap">
+				<button text="Full screen F" ontap="fullscreen" />
+				<button text="Distance ⇧F" ontap="distance" />
+				<button text="Esc" color="red" ontap="escape" />
+			</row>
+		</tab>
+	</tabs>
+</layout>

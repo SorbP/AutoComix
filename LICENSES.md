@@ -22,7 +22,7 @@ compatible with it. The built program folder contains the full license texts in 
 |---|---|
 | Qt / PySide6 / shiboken6 | LGPL-3.0 (unmodified, separate files in the folder build) |
 | py7zr, pybcj, pyppmd, inflate64, multivolumefile | LGPL-2.1 or later |
-| cbxy 0.1.2 (the CV part in `panelview/vendor/`) | MIT (`LICENSE_cbxy`) |
+| cbxy 0.1.2 (the CV part in `autocomix/vendor/`) | MIT (`LICENSE_cbxy`) |
 | OpenCV, the ONNX Runtime dependency flatbuffers, pypdfium2 (the Apache-2.0 part) | Apache-2.0 |
 | ONNX Runtime, brotli, texttable | MIT |
 | Pillow | MIT-CMU |

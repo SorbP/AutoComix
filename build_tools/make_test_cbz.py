@@ -1,4 +1,4 @@
-"""Skapar en liten syntetisk serie (3 sidor, 3 inramade rutor per sida) för självtestet i CI."""
+"""Creates a small synthetic comic (3 pages, 3 framed panels per page) for the self-test in CI."""
 import sys
 import zipfile
 

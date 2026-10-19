@@ -1,4 +1,4 @@
-"""Röktest av hela GUI:t utan skärm, steg för steg. Sparar skärmbilder i %TEMP%/pv_smoke och skriver status per steg."""
+"""Smoke test of the whole GUI without a screen, step by step. Saves screenshots in %TEMP%/pv_smoke and prints the status per step."""
 import os
 import sys
 import tempfile
@@ -9,10 +9,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication
 
-import panelview.store as store
+import autocomix.store as store
 tmp = Path(tempfile.mkdtemp())
-store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # rör inte användarens inställningar
-from panelview.mainwindow import BookmarkDialog, MainWindow, OptionsDialog, ThumbDialog
+store.BASE, store.CACHE, store.STATE = tmp, tmp / "cache", tmp / "state.json"  # do not touch the user's settings
+from autocomix.mainwindow import BookmarkDialog, MainWindow, OptionsDialog, ThumbDialog
 
 OUT = Path(os.environ.get("TEMP", "/tmp")) / "pv_smoke"
 OUT.mkdir(exist_ok=True)
@@ -125,7 +125,7 @@ def script():
     v.state.set_setting("slideshow_ms", 1000)
     sp0, pi0 = v.sp, v.pidx
     act("slideshow")
-    yield -2600  # fast väntetid
+    yield -2600  # fixed wait
     shot("19_bildspel", lambda: v.sp == sp0 and v.pidx > pi0)
     act("slideshow")
     w.state.add_bookmark(v.comic.path, v.page, "test")
@@ -150,7 +150,7 @@ gen = script()
 
 
 def tick(limit=0, waited=0):
-    """Kör nästa steg när programmet är klart (eller efter limit ms; negativt = fast väntetid)."""
+    """Run the next step when the program is ready (or after limit ms; negative = fixed wait)."""
     fixed = limit < 0
     if waited < abs(limit) and (fixed or not (waited >= 300 and ready())):
         QTimer.singleShot(100, lambda: tick(limit, waited + 100))

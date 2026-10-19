@@ -1,6 +1,6 @@
-"""Ritar CV- (grön), ML- (blå) och slutliga rutor (röd, med läsordning) för några sidor i en serie.
+"""Draws CV (green), ML (blue) and final panels (red, with reading order) for some pages of a comic.
 
-  python build_tools/inspect_pages.py <seriemapp> <start> <antal> [rtl]  ->  %TEMP%/pv_inspect.jpg
+  python build_tools/inspect_pages.py <comic folder> <start> <count> [rtl]  ->  %TEMP%/pv_inspect.jpg
 """
 import os
 import sys
@@ -10,9 +10,9 @@ import cv2
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G
-from panelview.comic import Comic
-from panelview.detector import detect_bytes
+from autocomix import geometry as G
+from autocomix.comic import Comic
+from autocomix.detector import detect_bytes
 
 c = Comic(sys.argv[1])
 start, n = int(sys.argv[2]), int(sys.argv[3])

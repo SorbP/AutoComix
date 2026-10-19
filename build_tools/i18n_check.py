@@ -1,7 +1,7 @@
-"""Listar alla tr("...")-texter i panelview och kontrollerar översättningarna i panelview/lang/*.json.
+"""Lists all tr("...") texts in autocomix and checks the translations in autocomix/lang/*.json.
 
-  python build_tools/i18n_check.py            # rapport: saknade, överflödiga och felaktiga {platshållare}
-  python build_tools/i18n_check.py --keys     # skriv alla texter (en per rad, JSON) till stdout
+  python build_tools/i18n_check.py            # report: missing, superfluous and broken {placeholders}
+  python build_tools/i18n_check.py --keys     # write all texts (one per line, JSON) to stdout
 """
 import ast
 import io
@@ -16,7 +16,7 @@ PH = re.compile(r"\{[^{}]*\}")
 
 def keys():
     out = {}
-    for f in sorted((ROOT / "panelview").glob("*.py")):
+    for f in sorted((ROOT / "autocomix").glob("*.py")):
         for n in ast.walk(ast.parse(f.read_text(encoding="utf-8"))):
             if isinstance(n, ast.Call) and getattr(n.func, "id", None) == "tr" and n.args \
                     and isinstance(n.args[0], ast.Constant) and isinstance(n.args[0].value, str):
@@ -32,7 +32,7 @@ def main():
             print(json.dumps(k, ensure_ascii=False))
         return 0
     bad = 0
-    for f in sorted((ROOT / "panelview" / "lang").glob("*.json")):
+    for f in sorted((ROOT / "autocomix" / "lang").glob("*.json")):
         t = json.loads(f.read_text(encoding="utf-8"))
         missing = [k for k in ks if not t.get(k)]
         extra = [k for k in t if k not in ks]

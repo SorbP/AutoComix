@@ -1,6 +1,6 @@
-"""Bildbehandling före visning: rotation, färgkorrigering, dubbelsida, kantfärg.
+"""Image processing before display: rotation, color correction, double page, edge color.
 
-Allt arbetar på QImage <-> numpy (RGB) och körs i laddningstråden, så att visningen förblir snabb.
+Everything works on QImage <-> numpy (RGB) and runs in the loading thread, so the display stays fast.
 """
 import numpy as np
 from PySide6.QtCore import QRectF, Qt
@@ -20,11 +20,11 @@ def from_rgb(a):
 
 
 def auto_levels(a, clip=0.005):
-    """Automatisk färgkorrigering: sträck varje kanal mellan 0.5 %- och 99.5 %-percentilen (vitbalans + kontrast)."""
+    """Automatic color correction: stretch each channel between the 0.5 % and 99.5 % percentiles (white balance + contrast)."""
     out = np.empty_like(a)
     for c in range(3):
         lo, hi = np.percentile(a[:, :, c], (clip * 100, 100 - clip * 100))
-        if hi - lo < 16:  # nästan enfärgad kanal: rör inte
+        if hi - lo < 16:  # nearly single-colored channel: leave it alone
             out[:, :, c] = a[:, :, c]
             continue
         out[:, :, c] = np.clip((a[:, :, c].astype(np.float32) - lo) * (255.0 / (hi - lo)), 0, 255)
@@ -39,7 +39,7 @@ def gamma(a, g):
 
 
 def vibrance(a, v):
-    """Mättnad som påverkar omättade färger mest (v 0 = av, 1 = kraftig)."""
+    """Saturation that affects unsaturated colors most (v 0 = off, 1 = strong)."""
     if v <= 0:
         return a
     f = a.astype(np.float32)
@@ -51,7 +51,7 @@ def vibrance(a, v):
 
 
 def process(img, rotation=0, auto=False, g=1.0, vib=0.0):
-    """Rotation (grader, multipel av 90) och färgjusteringar. Gråskalebilder hoppar över färgsteget."""
+    """Rotation (degrees, multiple of 90) and color adjustments. Grayscale images skip the color step."""
     if img.isNull():
         return img
     if auto or abs(g - 1.0) >= 0.01 or vib > 0:
@@ -68,7 +68,7 @@ def process(img, rotation=0, auto=False, g=1.0, vib=0.0):
 
 
 def edge_color(img):
-    """Medelfärgen längs bildkanten, för automatisk bakgrundsfärg."""
+    """The average color along the image edge, for the automatic background color."""
     if img.isNull():
         return QColor(12, 12, 12)
     small = img.scaled(64, 64, Qt.AspectRatioMode.IgnoreAspectRatio).convertToFormat(QImage.Format.Format_RGB888)
@@ -79,7 +79,7 @@ def edge_color(img):
 
 
 def spread(imgs, shadow=True, gap=0):
-    """Sätter ihop sidor sida vid sida (redan i visningsordning), samma höjd. Returnerar (bild, rektanglar per sida)."""
+    """Puts pages side by side (already in display order), same height. Returns (image, rectangles per page)."""
     imgs = [i for i in imgs if i is not None and not i.isNull()]
     if len(imgs) == 1:
         return imgs[0], [QRectF(0, 0, imgs[0].width(), imgs[0].height())]

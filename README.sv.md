@@ -7,7 +7,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](F
 
 - Öppnar bildmappar, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` och `.pdf`. Krypterade arkiv ger en lösenordsfråga.
 - Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime. Hybridlogiken finns i
-  `panelview/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
+  `autocomix/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - Fler än 100 oskannade sidor (ställbart): frågar om alla ska skannas nu eller 100 i taget; nästa 100 skannas
   när du är 10 sidor från slutet av de skannade (Inställningar → Många oskannade sidor / Sidor per sats).
@@ -72,7 +72,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](F
 fjärrkontroller och skriver in var `AutoComix.exe` ligger (`-Exe <sökväg>` om den inte ligger i `dist\windows\AutoComix`). Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **AutoComix** under fjärrkontrollerna
 i mobilen. Fliken *Läs*: nästa/föregående, sida, bildspel på/av och snabbare/långsammare. Fliken *Mer*: första/sista
 sidan, filer, senaste serien, starta AutoComix, andra skärmen, zoom, helskärm. Knapparna skickar tangenter och växlar
-först till AutoComix-fönstret.
+först till AutoComix-fönstret. Knapparna är på svenska i svenska Windows, annars engelska (`-Lang sv/en` väljer).
 
 ## Bygga
 ```
@@ -121,6 +121,6 @@ AutoComix är fri programvara: Copyright (C) 2026 Stefan Persson, licensierad un
 modellernas ursprung: [LICENSES.sv.md](LICENSES.sv.md).
 
 ## Översättningar
-Texterna skrivs på svenska i koden som `tr("…")` och översätts i `panelview/lang/<kod>.json` (svensk text → översättning,
-`{namn}` är platshållare som ska stå kvar). Nytt språk: lägg till koden i `LANGUAGES` i `panelview/i18n.py` och en
-JSON-fil, kör sedan `build_tools/i18n_check.py`. Rättelser av översättningarna tas gärna emot.
+Texterna skrivs på svenska i koden som `tr("…")` och översätts i `autocomix/lang/<kod>.json` (svensk text → översättning,
+`{namn}` är platshållare som ska stå kvar). Nytt språk: lägg till koden i `LANGUAGES` i `autocomix/i18n.py` och en
+JSON-fil, kör sedan `build_tools/i18n_check.py`. Rättelser av översättningarna tas gärna emot. Kommentarerna i koden är på engelska.

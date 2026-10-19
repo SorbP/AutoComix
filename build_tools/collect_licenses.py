@@ -1,11 +1,11 @@
-"""Samlar licenstexterna för allt som byggs in i AutoComix (körs av AutoComix.spec, går också att köra direkt).
+"""Collects the license texts for everything built into AutoComix (run by AutoComix.spec, can also be run directly).
 
-  python build_tools/collect_licenses.py <utmapp>
+  python build_tools/collect_licenses.py <out folder>
 
-Utmappen får: LICENSE (AutoComix, AGPL-3.0), LICENSES.md/LICENSES.sv.md, standardtexterna i licenses/, en mapp per inbyggt
-Python-paket med paketets egna licensfiler (ur dist-info), Pythons licens och SOURCE.txt/KÄLLKOD.txt (var
-källkoden finns och hur LGPL-biblioteken byts ut). Paketen hittas från requirements.txt och deras beroenden, så listan följer med
-när beroendena ändras.
+The out folder gets: LICENSE (AutoComix, AGPL-3.0), LICENSES.md/LICENSES.sv.md, the standard texts in licenses/, one folder per bundled
+Python package with the package's own license files (from dist-info), Python's license and SOURCE.txt/KÄLLKOD.txt (where
+the source code is and how the LGPL libraries are replaced). The packages are found from requirements.txt and their dependencies, so the list follows
+when the dependencies change.
 """
 import importlib.metadata as md
 import re
@@ -17,7 +17,7 @@ from packaging.requirements import Requirement
 
 ROOT = Path(__file__).resolve().parent.parent
 LIC_FILE = re.compile(r"(LICEN[CS]E|COPYING|NOTICE|AUTHORS|ThirdParty)", re.I)
-# Paket utan egna licensfiler i dist-info, eller där filen inte är den licens vi använder.
+# Packages without license files of their own in dist-info, or where the file is not the license we use.
 NOTES = {
     "flatbuffers": "Apache-2.0 (se ../apache-2.0.txt). Källa: https://github.com/google/flatbuffers",
     "pyside6-essentials": ("Används under LGPL-3.0 (se ../lgpl-3.0.txt och ../gpl-3.0.txt). Omodifierad.\n"
@@ -27,7 +27,7 @@ NOTES = {
     "shiboken6": ("Används under LGPL-3.0 (se ../lgpl-3.0.txt och ../gpl-3.0.txt). Omodifierad.\n"
                   "Källkod: https://code.qt.io/cgit/pyside/pyside-setup.git"),
 }
-SKIP_FILES = {"LicenseRef-Qt-Commercial.txt"}  # PySide6 används inte under den kommersiella licensen
+SKIP_FILES = {"LicenseRef-Qt-Commercial.txt"}  # PySide6 is not used under the commercial license
 
 KALLKOD = """AutoComix är fri programvara under GNU Affero General Public License v3.0 (se LICENSE).
 Källkod: https://github.com/SorbP/AutoComix
@@ -58,7 +58,7 @@ Svenska: se KÄLLKOD.txt.
 
 
 def packages():
-    """Alla installerade distributioner som requirements.txt drar in (rekursivt, utan extras)."""
+    """All installed distributions that requirements.txt pulls in (recursively, without extras)."""
     lines = (l.split("#", 1)[0].strip() for l in (ROOT / "requirements.txt").read_text(encoding="utf-8").splitlines())
     roots = list(dict.fromkeys(Requirement(l).name for l in lines if l))
     seen, out, stack = set(), [], roots
@@ -98,7 +98,7 @@ def collect(dst):
              "This older version is a single executable; the libraries are replaced by rebuilding from source.")
     (dst / "KÄLLKOD.txt").write_text(KALLKOD.format(bygge=bygge), encoding="utf-8")
     (dst / "SOURCE.txt").write_text(SOURCE.format(build=build), encoding="utf-8")
-    shutil.copy(ROOT / "panelview" / "vendor" / "LICENSE_cbxy", lic / "cbxy-LICENSE.txt")
+    shutil.copy(ROOT / "autocomix" / "vendor" / "LICENSE_cbxy", lic / "cbxy-LICENSE.txt")
     py = Path(sys.base_prefix) / "LICENSE.txt"
     if py.exists():
         shutil.copy(py, lic / f"python-{sys.version.split()[0]}-LICENSE.txt")

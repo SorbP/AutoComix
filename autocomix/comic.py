@@ -1,4 +1,4 @@
-"""Öppna en serie: bildmapp, .cbz/.zip, .cbr/.rar, .cb7/.7z, .pdf."""
+"""Open a comic: image folder, .cbz/.zip, .cbr/.rar, .cb7/.7z, .pdf."""
 import re
 import shutil
 import subprocess
@@ -9,13 +9,13 @@ from pathlib import Path
 
 from .i18n import tr
 
-IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")  # prioritet vid dubbletter
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".tif", ".tiff")  # priority for duplicates
 ARCHIVE_EXT = {".cbz", ".zip", ".cbr", ".rar", ".cb7", ".7z", ".pdf"}
-PDF_SCALE = 2.0  # 144 dpi, skarpt nog för helskärm och rutzoom
+PDF_SCALE = 2.0  # 144 dpi, sharp enough for full screen and panel zoom
 
 
 class PasswordNeeded(Exception):
-    """Krypterat arkiv: öppna igen med lösenord."""
+    """Encrypted archive: open again with a password."""
 
 
 def natural_key(s):
@@ -30,7 +30,7 @@ SORTS = (("natural", tr("Naturlig (2 före 10)")), ("alpha", tr("Alfabetisk")), 
 
 
 def sort_key(sort, mtime=None):
-    """Sorteringsnyckel för sidnamn. 'mtime': mtime(namn) = ändringsdatum (slumpmässiga namn), sedan naturlig."""
+    """Sort key for page names. 'mtime': mtime(name) = date modified (random names), then natural."""
     if sort == "alpha":
         return alpha_key
     if sort != "mtime" or mtime is None:
@@ -54,7 +54,7 @@ def zip_mtime(zf):
 
 
 def pick_images(names, sort_key=natural_key):
-    """Bildnamn i naturlig ordning; samma namn i flera format (x.png + x.webp) => behåll bästa."""
+    """Image names in natural order; the same name in several formats (x.png + x.webp) => keep the best."""
     best = {}
     for n in names:
         p = Path(n)
@@ -68,7 +68,7 @@ def pick_images(names, sort_key=natural_key):
 
 
 def _run(cmd, progress=None):
-    """Kör ett uppackningsverktyg; 7-Zips procent (-bsp1) skickas till progress. Ger (returkod, utskriftens slut)."""
+    """Run an extraction tool; 7-Zip's percent (-bsp1) is sent to progress. Returns (return code, end of output)."""
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL,
                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     tail = b""
@@ -83,13 +83,13 @@ def _run(cmd, progress=None):
                 progress(int(pct[-1]))
     code = p.wait()
     if progress and code == 0:
-        progress(100)  # små arkiv hinner inte skriva ut något över 0 %
+        progress(100)  # small archives do not get to print anything above 0 %
     return code, tail.decode(errors="replace")
 
 
 def _extract(archive, dest, password=None, progress=None):
     seven = next((e for e in ("7z", r"C:\Program Files\7-Zip\7z.exe") if shutil.which(e) or Path(e).exists()), None)
-    if Path(archive).suffix.lower() in (".7z", ".cb7") and not seven:  # 7-Zip är snabbare och visar förlopp
+    if Path(archive).suffix.lower() in (".7z", ".cb7") and not seven:  # 7-Zip is faster and shows progress
         try:
             import py7zr
             with py7zr.SevenZipFile(archive, password=password) as z:
@@ -153,7 +153,7 @@ class Comic:
                 raise PasswordNeeded()
             return
         elif ext in ARCHIVE_EXT:
-            self._tmp = tempfile.TemporaryDirectory(prefix="panelview-")
+            self._tmp = tempfile.TemporaryDirectory(prefix="autocomix-")
             try:
                 _extract(self.path, self._tmp.name, password, progress)
             except Exception:
@@ -164,14 +164,14 @@ class Comic:
             raise ValueError(tr("Okänt format: {name}").format(name=self.path.name))
         self.root = root
         self.pages = pick_images((p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()),
-                                 sort_key(sort, file_mtime(root)))  # uppackade rar/7z behåller datumen
+                                 sort_key(sort, file_mtime(root)))  # extracted rar/7z keep their dates
         self._check()
 
     def rtl_hint(self):
-        """Läsriktning ur ComicInfo.xml (<Manga>YesAndRightToLeft</Manga>), annars None.
+        """Reading direction from ComicInfo.xml (<Manga>YesAndRightToLeft</Manga>), otherwise None.
 
-        Rutmodellen ser bara rutornas form, inte om serien är manga, så riktningen tas ur metadata
-        eller sparas när man trycker R (gäller sedan hela mappen)."""
+        The panel model only sees the shape of the panels, not whether the comic is manga, so the direction comes
+        from metadata or is saved when R is pressed (then it applies to the whole folder)."""
         try:
             if self._zip:
                 name = next((n for n in self._zip.namelist() if n.lower().endswith("comicinfo.xml")), None)
@@ -202,13 +202,13 @@ class Comic:
         name = self.pages[i]
         if self._pdf is not None:
             import cv2
-            with self._lock:  # pdfium är inte trådsäkert
+            with self._lock:  # pdfium is not thread-safe
                 bmp = self._pdf[i].render(scale=PDF_SCALE)
                 arr = bmp.to_numpy()
             ok, buf = cv2.imencode(".png", arr[:, :, :3] if arr.ndim == 3 else arr)
             return buf.tobytes()
         if self._zip:
-            with self._lock:  # ZipFile tål inte samtidiga läsningar från flera trådar
+            with self._lock:  # ZipFile does not handle concurrent reads from several threads
                 return self._zip.read(name)
         return (self.root / name).read_bytes()
 
@@ -221,7 +221,7 @@ class Comic:
             self._tmp.cleanup()
 
     def siblings(self):
-        """Serier i samma föräldramapp (för nästa/föregående serie)."""
+        """Comics in the same parent folder (for next/previous comic)."""
         par = self.path.parent
         items = [p for p in par.iterdir()
                  if p.is_dir() or p.suffix.lower() in ARCHIVE_EXT]

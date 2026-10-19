@@ -1,7 +1,7 @@
-"""Rutdetektering en sats i taget (detect_batch): fönstret lo..hi och att bakgrundstråden väntar mellan satserna."""
+"""Panel detection one batch at a time (detect_batch): the window lo..hi and that the background thread waits between batches."""
 import time
 
-from panelview import detector as D
+from autocomix import detector as D
 
 
 class FakeComic:
@@ -43,7 +43,7 @@ def test_extends_near_end_of_batch():
     det = make(500)
     det.set_focus(85)
     assert det.hi == 100
-    det.set_focus(90)  # 10 sidor från kanten: nästa sats
+    det.set_focus(90)  # 10 pages from the edge: next batch
     assert (det.lo, det.hi) == (0, 200)
 
 
@@ -51,8 +51,8 @@ def test_jump_outside_window_starts_new_batch():
     det = make(1000)
     det.set_focus(600)
     assert (det.lo, det.hi) == (590, 700)
-    assert det._todo()[0][0] == 600  # aktuell sida först
-    det.set_focus(595)  # bakåt nära början av fönstret: satsen bakåt läggs till
+    assert det._todo()[0][0] == 600  # current page first
+    det.set_focus(595)  # backwards near the start of the window: the batch backwards is added
     assert det.lo == 490
 
 
@@ -70,7 +70,7 @@ def test_thread_waits_between_batches(monkeypatch):
         while len(det.cache.d) < 100 and time.monotonic() - t0 < 10:
             time.sleep(0.01)
         time.sleep(0.2)
-        assert len(det.cache.d) == 100 and det.isRunning()  # första satsen klar, tråden väntar
+        assert len(det.cache.d) == 100 and det.isRunning()  # first batch done, the thread waits
         det.set_focus(95)
         t0 = time.monotonic()
         while len(det.cache.d) < 200 and time.monotonic() - t0 < 10:
@@ -81,6 +81,6 @@ def test_thread_waits_between_batches(monkeypatch):
         t0 = time.monotonic()
         while det.isRunning() and time.monotonic() - t0 < 10:
             time.sleep(0.01)
-        assert len(det.cache.d) == 250 and not det.isRunning()  # allt skannat: tråden avslutas
+        assert len(det.cache.d) == 250 and not det.isRunning()  # everything scanned: the thread exits
     finally:
         det.stop()

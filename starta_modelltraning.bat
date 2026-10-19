@@ -1,7 +1,7 @@
 @echo off
-rem Tränar om AutoComix rutmodell på grafikkortet (CoMix + dina rättade sidor) och installerar den om den blir bättre.
-rem Tar ca 1-1,5 timme på RTX 3090. Stäng spel och LoRA-träning först.
-title AutoComix modellträning
+rem Retrains the AutoComix panel model on the graphics card (CoMix + your corrected pages) and installs it if it gets better.
+rem Takes about 1-1.5 hours on an RTX 3090 (needs an NVIDIA card). Close games and other GPU work first.
+title AutoComix model training
 chcp 65001 >nul
 set PYTHONIOENCODING=utf-8
 cd /d "%~dp0"

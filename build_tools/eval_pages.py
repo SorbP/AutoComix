@@ -1,8 +1,8 @@
-"""Utvärderar hela AutoComix-kedjan (CV + modell + städning + läsordning) mot facit i YOLO-format.
+"""Evaluates the whole AutoComix chain (CV + model + cleanup + reading order) against ground truth in YOLO format.
 
-Mått: hittade rutor (andel facit-rutor som hittas, IoU > 0.5), felaktiga rutor (andel hittade som inte finns),
-helt rätt sidor (alla rutor hittade, inga extra, rätt ordning).
-  python build_tools/eval_pages.py <mapp med images/ + labels/> [--model fil.onnx] [--max 300]
+Metrics: found panels (share of ground-truth panels found, IoU > 0.5), wrong panels (share of found ones that do not exist),
+fully correct pages (all panels found, no extra ones, correct order).
+  python build_tools/eval_pages.py <folder with images/ + labels/> [--model file.onnx] [--max 300]
 """
 import argparse
 import json
@@ -18,10 +18,10 @@ ap.add_argument("--max", type=int, default=300)
 ap.add_argument("--log", help="lägg resultatet som en rad i den här jsonl-filen")
 a = ap.parse_args()
 if a.model:
-    os.environ["PANELVIEW_MODEL"] = a.model
+    os.environ["AUTOCOMIX_MODEL"] = a.model
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from panelview import geometry as G  # noqa: E402
-from panelview.detector import detect_bytes  # noqa: E402
+from autocomix import geometry as G  # noqa: E402
+from autocomix.detector import detect_bytes  # noqa: E402
 
 d = Path(a.data)
 imgs = sorted((d / "images").glob("*.jpg"))[: a.max]
@@ -36,7 +36,7 @@ for img in imgs:
     cvb, ml, _ = detect_bytes(img.read_bytes())
     got = G.finalize(G.merge(cvb, ml)) or [{"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}]
     if len(want) == 1 and G.area(want[0]) > 0.6:
-        want = [{"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}]  # helsida räknas som en ruta
+        want = [{"x": 0.0, "y": 0.0, "w": 1.0, "h": 1.0}]  # a whole page counts as one panel
     match = [max(range(len(got)), key=lambda k: G.iou(w_, got[k])) if got else -1 for w_ in want]
     ok = [m >= 0 and G.iou(w_, got[m]) > 0.5 for w_, m in zip(want, match)]
     tp += sum(ok)

@@ -22,7 +22,7 @@ förenliga med den. Den byggda programmappen innehåller de fullständiga licens
 |---|---|
 | Qt / PySide6 / shiboken6 | LGPL-3.0 (omodifierade, separata filer i mappbygget) |
 | py7zr, pybcj, pyppmd, inflate64, multivolumefile | LGPL-2.1 eller senare |
-| cbxy 0.1.2 (CV-delen i `panelview/vendor/`) | MIT (`LICENSE_cbxy`) |
+| cbxy 0.1.2 (CV-delen i `autocomix/vendor/`) | MIT (`LICENSE_cbxy`) |
 | OpenCV, ONNX Runtime-beroendet flatbuffers, pypdfium2 (Apache-2.0-delen) | Apache-2.0 |
 | ONNX Runtime, brotli, texttable | MIT |
 | Pillow | MIT-CMU |

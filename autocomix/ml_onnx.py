@@ -1,7 +1,7 @@
-"""Rutdetektering med YOLO-modellen (mosesb/best-comic-panel-detection, Apache-2.0) via ONNX Runtime.
+"""Panel detection with the YOLO model (mosesb/best-comic-panel-detection, Apache-2.0) via ONNX Runtime.
 
-Ersätter ultralytics/PyTorch så att programmet kan byggas till en liten .exe för Windows och Linux.
-Modellen exporterades till ONNX och kvantiserades till int8 (build_tools/export_model.py).
+Replaces ultralytics/PyTorch so the program can be built into a small .exe for Windows and Linux.
+The model was exported to ONNX and quantized to int8 (build_tools/export_model.py).
 """
 import sys
 from functools import lru_cache
@@ -14,10 +14,10 @@ SIZE = 640
 
 
 def model_path():
-    """Omtränad modell i användarmappen (build_tools/train_model.py) går före den inbyggda."""
+    """A retrained model in the user folder (build_tools/train_model.py) takes precedence over the built-in one."""
     import os
-    if os.environ.get("PANELVIEW_MODEL"):  # för utvärdering av en viss modell
-        return Path(os.environ["PANELVIEW_MODEL"])
+    if os.environ.get("AUTOCOMIX_MODEL"):  # for evaluating a specific model
+        return Path(os.environ["AUTOCOMIX_MODEL"])
     from .store import BASE
     user = BASE / "models" / "panels_int8.onnx"
     if user.exists():
@@ -30,7 +30,7 @@ def model_path():
 
 
 def model_id():
-    """Identitet för aktuell modell (storlek + ändringstid), så att rutcachen görs om när modellen byts."""
+    """Identity of the current model (size + modification time), so the panel cache is rebuilt when the model changes."""
     p = model_path()
     if p is None:
         return "ingen"
@@ -42,13 +42,13 @@ def model_id():
 def _session(path):
     import onnxruntime as ort
     so = ort.SessionOptions()
-    so.intra_op_num_threads = 2  # lämna kärnor åt läsaren
+    so.intra_op_num_threads = 2  # leave cores for the reader
     so.log_severity_level = 3
     return ort.InferenceSession(path, so, providers=["CPUExecutionProvider"])
 
 
 def detect(img, conf=0.25, iou=0.45, min_area_frac=0.02, max_area_frac=0.98):
-    """Normaliserade rutor [{x, y, w, h}] för en BGR-bild."""
+    """Normalized panels [{x, y, w, h}] for a BGR image."""
     mp = model_path()
     if mp is None:
         raise FileNotFoundError("modellfilen panels_int8.onnx saknas")
