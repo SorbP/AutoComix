@@ -56,7 +56,7 @@ def _selftest(app, w, out):
     import json
     import time
 
-    from . import i18n
+    from . import i18n, ml_onnx
 
     from PySide6.QtCore import QTimer
     t0 = time.time()
@@ -68,7 +68,7 @@ def _selftest(app, w, out):
             res = {"ok": bool(ready), "pages": len(v.comic.pages) if v.comic else 0, "panels": len(ps),
                    "ml": bool(v.detector and v.detector.ml_ok), "seconds": round(time.time() - t0, 1),
                    "lang": i18n.current, "lang_files": len(list(i18n.lang_dir().glob("*.json"))),
-                   "qt_translation": i18n.qt_loaded}
+                   "qt_translation": i18n.qt_loaded, "ml_device": ml_onnx.used}
             Path(out).write_text(json.dumps(res), encoding="utf-8")
             w.close()
             app.quit()

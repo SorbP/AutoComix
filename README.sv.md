@@ -6,7 +6,8 @@ Serieläsare med CDisplayEx:s funktioner plus automatisk zoom ruta för ruta. K�
 Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](FEATURES.sv.md).
 
 - Öppnar bildmappar, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` och `.pdf`. Krypterade arkiv ger en lösenordsfråga.
-- Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime. Hybridlogiken finns i
+- Rutor hittas i bakgrunden med OpenCV (från cbxy) och en YOLO-modell via ONNX Runtime (i Windows på grafikkortet via DirectML, med processorn som reserv).
+  Hybridlogiken finns i
   `autocomix/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - Fler än 100 oskannade sidor (ställbart): frågar om alla ska skannas nu eller 100 i taget; nästa 100 skannas
@@ -52,6 +53,8 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](F
 `H` visar alla genvägar i programmet, och Inställningar → Tangenter ändrar dem.
 - `→`/`←`, mellanslag, hjul, klick i kanterna: nästa/föregående ruta (eller del/sida)
 - Dubbelklick på en ruta: zooma dit, även där detekteringen missat. Igen = hela sidan.
+- Inställningar → Läsning → "Vrid rutor som blir större vridna": en hög ruta på en liggande skärm (eller en bred på en
+  stående) vrids 90° så att den fyller skärmen. Av som standard.
 - `Ctrl+T` miniatyrlist, `Ctrl+I` sidreglage, `Ctrl+H` bildspel (ruta för ruta), `T` miniatyröversikt
 - `G` guidat läge, `V` helsida först, `D` svart runt rutan, `R` japanskt läge, `Shift+D` dubbelsida
 - `1`–`4` anpassning (skärm, bredd, höjd, 100 %), `M` förstoringsglas, `A` färgkorrigering, `[` `]` rotera
@@ -110,6 +113,7 @@ så vem som helst kan träna om på sina egna rättelser.
 - `python build_tools/second_smoke.py` – andra skärmen: spegling, fördelning liggande/stående, F9.
 - `python build_tools/resume_smoke.py` – Ctrl+L, historik, Esc, menyrad i helskärm, zoom per ruta, sidrutnät.
 - `python build_tools/batch_smoke.py` – skanning i satser (fler än 100 sidor).
+- `python build_tools/turn_smoke.py` – vridning av rutor som fyller skärmen bättre vridna.
 - `python build_tools/i18n_smoke.py` – gränssnittet på alla språk; `python build_tools/i18n_check.py` – saknade eller
   felaktiga översättningar.
 - `python build_tools/smoke.py <serie>` – kör igenom hela gränssnittet utan skärm och sparar skärmbilder i `%TEMP%/pv_smoke`.

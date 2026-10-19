@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "case {k}/{n}",
  "helsida ({n} rutor)": "page entière ({n} cases)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Parcourir toutes les pages de l'archive sans l'extraire (Ctrl+molette = taille).",
- "Dubbelklicka på en sida för att öppna serien där.": "Double-cliquez sur une page pour ouvrir la BD à cet endroit."
+ "Dubbelklicka på en sida för att öppna serien där.": "Double-cliquez sur une page pour ouvrir la BD à cet endroit.",
+ "Vrid rutor som blir större vridna": "Tourner les cases plus grandes une fois tournées",
+ "  När rutan blir minst": "  Si la case devient au moins",
+ "Medurs (90°)": "Sens horaire (90°)",
+ "Moturs (90°)": "Sens antihoraire (90°)",
+ "Rutdetektering körs på": "La détection des cases utilise",
+ "Grafikkortet om det går, annars processorn": "La carte graphique si possible, sinon le processeur",
+ "Bara processorn": "Processeur uniquement",
+ "grafikkortet (DirectML)": "la carte graphique (DirectML)",
+ "processorn": "le processeur",
+ "inte startad än": "pas encore démarrée",
+ "DirectML finns inte i den här versionen": "DirectML n'est pas disponible dans cette version",
+ "Används nu: {now}": "Utilisé maintenant : {now}"
 }

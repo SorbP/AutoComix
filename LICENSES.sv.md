@@ -25,6 +25,7 @@ förenliga med den. Den byggda programmappen innehåller de fullständiga licens
 | cbxy 0.1.2 (CV-delen i `autocomix/vendor/`) | MIT (`LICENSE_cbxy`) |
 | OpenCV, ONNX Runtime-beroendet flatbuffers, pypdfium2 (Apache-2.0-delen) | Apache-2.0 |
 | ONNX Runtime, brotli, texttable | MIT |
+| DirectML.dll (Windows, del av onnxruntime-directml) | Microsofts DirectML-licens, får distribueras (`licenses/onnxruntime-directml-*/DirectML.txt`) |
 | Pillow | MIT-CMU |
 | NumPy, PDFium, protobuf, psutil, pycryptodomex | BSD-3 (m.fl., se respektive mapp) |
 | backports.zstd / Zstandard | PSF-2.0 / BSD |

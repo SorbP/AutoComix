@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "컷 {k}/{n}",
  "helsida ({n} rutor)": "페이지 전체 (컷 {n}개)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "압축을 풀지 않고 압축 파일의 모든 페이지 찾아보기 (Ctrl+휠 = 크기).",
- "Dubbelklicka på en sida för att öppna serien där.": "페이지를 두 번 클릭하면 그 위치에서 만화를 엽니다."
+ "Dubbelklicka på en sida för att öppna serien där.": "페이지를 두 번 클릭하면 그 위치에서 만화를 엽니다.",
+ "Vrid rutor som blir större vridna": "회전하면 더 커지는 컷 회전",
+ "  När rutan blir minst": "  컷이 최소",
+ "Medurs (90°)": "시계 방향 (90°)",
+ "Moturs (90°)": "반시계 방향 (90°)",
+ "Rutdetektering körs på": "컷 감지 실행 장치",
+ "Grafikkortet om det går, annars processorn": "가능하면 그래픽 카드, 아니면 프로세서",
+ "Bara processorn": "프로세서만",
+ "grafikkortet (DirectML)": "그래픽 카드 (DirectML)",
+ "processorn": "프로세서",
+ "inte startad än": "아직 시작 안 됨",
+ "DirectML finns inte i den här versionen": "이 버전에는 DirectML이 없습니다",
+ "Används nu: {now}": "현재 사용 중: {now}"
 }

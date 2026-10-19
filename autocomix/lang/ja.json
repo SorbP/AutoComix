@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "コマ {k}/{n}",
  "helsida ({n} rutor)": "ページ全体 ({n} コマ)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "アーカイブを展開せずにすべてのページを参照 (Ctrl+ホイール = サイズ)。",
- "Dubbelklicka på en sida för att öppna serien där.": "ページをダブルクリックすると、その位置からコミックを開きます。"
+ "Dubbelklicka på en sida för att öppna serien där.": "ページをダブルクリックすると、その位置からコミックを開きます。",
+ "Vrid rutor som blir större vridna": "回転すると大きくなるコマを回転",
+ "  När rutan blir minst": "  コマの拡大率が最低",
+ "Medurs (90°)": "時計回り (90°)",
+ "Moturs (90°)": "反時計回り (90°)",
+ "Rutdetektering körs på": "コマ検出の実行先",
+ "Grafikkortet om det går, annars processorn": "可能ならグラフィックカード、無理ならCPU",
+ "Bara processorn": "CPUのみ",
+ "grafikkortet (DirectML)": "グラフィックカード (DirectML)",
+ "processorn": "CPU",
+ "inte startad än": "まだ開始していません",
+ "DirectML finns inte i den här versionen": "このバージョンではDirectMLを利用できません",
+ "Används nu: {now}": "現在の使用: {now}"
 }

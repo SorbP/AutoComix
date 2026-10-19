@@ -10,7 +10,7 @@ import collect_licenses  # noqa: E402
 
 block_cipher = None
 datas = [("models/panels_int8.onnx", "models"), ("assets/icon.png", "assets"), ("autocomix/lang", "autocomix/lang")]
-excl = ["tkinter", "matplotlib", "scipy", "pandas", "torch", "ultralytics", "PIL.ImageQt",
+excl = ["tkinter", "matplotlib", "scipy", "pandas", "torch", "ultralytics", "sympy", "PIL.ImageQt",
         "PySide6.QtWebEngineCore", "PySide6.QtWebEngineWidgets", "PySide6.QtQml", "PySide6.QtQuick",
         "PySide6.Qt3DCore", "PySide6.QtMultimedia", "PySide6.QtCharts", "PySide6.QtDataVisualization",
         "PySide6.QtPdf", "PySide6.QtSql", "PySide6.QtNetwork", "PySide6.QtOpenGL", "PySide6.QtSvg"]

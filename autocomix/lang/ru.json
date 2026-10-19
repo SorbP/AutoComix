@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "кадр {k}/{n}",
  "helsida ({n} rutor)": "вся страница (кадров: {n})",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Просматривать все страницы архива без распаковки (Ctrl+колесо = размер).",
- "Dubbelklicka på en sida för att öppna serien där.": "Дважды щёлкните страницу, чтобы открыть комикс на ней."
+ "Dubbelklicka på en sida för att öppna serien där.": "Дважды щёлкните страницу, чтобы открыть комикс на ней.",
+ "Vrid rutor som blir större vridna": "Поворачивать кадры, которые повёрнутыми крупнее",
+ "  När rutan blir minst": "  Если кадр становится не менее чем",
+ "Medurs (90°)": "По часовой (90°)",
+ "Moturs (90°)": "Против часовой (90°)",
+ "Rutdetektering körs på": "Обнаружение кадров работает на",
+ "Grafikkortet om det går, annars processorn": "Видеокарта, если возможно, иначе процессор",
+ "Bara processorn": "Только процессор",
+ "grafikkortet (DirectML)": "видеокарта (DirectML)",
+ "processorn": "процессор",
+ "inte startad än": "ещё не запущено",
+ "DirectML finns inte i den här versionen": "DirectML недоступен в этой версии",
+ "Används nu: {now}": "Сейчас используется: {now}"
 }

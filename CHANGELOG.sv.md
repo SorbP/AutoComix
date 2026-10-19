@@ -5,6 +5,26 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.20.0
+- Rutdetekteringen körs på grafikkortet i Windows (DirectML: fungerar med NVIDIA-, AMD- och Intel-kort som klarar
+  DirectX 12). Uppmätt på 30 sidor med ett RTX 3090: ca 1 s → 0,09 s per sida för hela kedjan (läsa bilden, OpenCV och
+  modellen), så stora serier skannas ungefär tio gånger snabbare. Rutorna blir desamma som med processorn
+  (i snitt 99,6 % överlapp på 60 testsidor).
+- Automatisk reserv till processorn: finns inget användbart grafikkort, startar det inte, eller ger en testkörning inte
+  samma svar som processorn eller inte är snabbare (t.ex. mjukvarurenderaren på datorer utan riktigt grafikkort),
+  körs detekteringen på processorn som förut.
+  Inställningar → Läsning → "Rutdetektering körs på" väljer *grafikkortet om det går* (standard) eller *bara
+  processorn*, och visar vad som används nu. Linux använder alltid processorn.
+- Automatisk vridning av rutor (inspirerat av Smart Comic Reader): en ruta som fyller skärmen mycket bättre vriden 90°
+  (en hög ruta på en liggande skärm, en bred på en stående) vrids, med animering. Av som standard;
+  Inställningar → Läsning → "Vrid rutor som blir större vridna": medurs eller moturs, och hur mycket större rutan måste
+  bli (standard 1,3 ×). Användbart på en surfplatta eller en skärm som går att vrida. Förstoringsglaset, dra och
+  dubbelklick följer den vridna bilden; redigeringsläget visar alltid sidan ovriden.
+- Dubbelklick på en ruta för att zooma dit (också från Smart Comic Reader) fanns redan och fungerar som förut.
+- Windows-bygget använder `onnxruntime-directml` i stället för `onnxruntime` (DirectML.dll följer med, licens under
+  `licenses/`).
+- Nya tester: `build_tools/turn_smoke.py` (vridning) och `tests/test_ml_device.py` (grafikkort och reserv).
+
 ## 2.19.2
 - Befintliga installationer behåller svenska. Före 2.19 fanns programmet bara på svenska, så *Automatiskt* hade bytt
   till engelska för alla med engelskt Windows. Nya installationer följer fortfarande systemets språk.

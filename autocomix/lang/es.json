@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "viñeta {k}/{n}",
  "helsida ({n} rutor)": "página entera ({n} viñetas)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Explorar todas las páginas del archivo sin extraerlo (Ctrl+rueda = tamaño).",
- "Dubbelklicka på en sida för att öppna serien där.": "Haz doble clic en una página para abrir el cómic ahí."
+ "Dubbelklicka på en sida för att öppna serien där.": "Haz doble clic en una página para abrir el cómic ahí.",
+ "Vrid rutor som blir större vridna": "Girar las viñetas que quedan más grandes giradas",
+ "  När rutan blir minst": "  Si la viñeta queda al menos",
+ "Medurs (90°)": "Sentido horario (90°)",
+ "Moturs (90°)": "Sentido antihorario (90°)",
+ "Rutdetektering körs på": "La detección de viñetas usa",
+ "Grafikkortet om det går, annars processorn": "La tarjeta gráfica si es posible, si no el procesador",
+ "Bara processorn": "Solo el procesador",
+ "grafikkortet (DirectML)": "la tarjeta gráfica (DirectML)",
+ "processorn": "el procesador",
+ "inte startad än": "aún no iniciada",
+ "DirectML finns inte i den här versionen": "DirectML no está disponible en esta versión",
+ "Används nu: {now}": "En uso ahora: {now}"
 }

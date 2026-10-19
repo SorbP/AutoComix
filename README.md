@@ -6,7 +6,8 @@ Comic reader with the features of CDisplayEx plus automatic panel-by-panel zoom.
 The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES.md).
 
 - Opens image folders, `.cbz/.zip`, `.cbr/.rar`, `.cb7/.7z` and `.pdf`. Encrypted archives ask for a password.
-- Panels are found in the background with OpenCV (from cbxy) and a YOLO model via ONNX Runtime. The hybrid logic is in
+- Panels are found in the background with OpenCV (from cbxy) and a YOLO model via ONNX Runtime (on Windows on the graphics card via DirectML, with the processor as fallback).
+  The hybrid logic is in
   `autocomix/geometry.py`. The nearest pages are detected first and the result is cached
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - More than 100 unscanned pages (adjustable): asks whether to scan all now or 100 at a time; the next 100 are scanned
@@ -56,6 +57,8 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
 `H` shows all shortcuts in the program, and Settings → Keys changes them.
 - `→`/`←`, space, wheel, click on the edges: next/previous panel (or part/page)
 - Double-click on a panel: zoom there, even where detection missed it. Again = whole page.
+- Settings → Reading → "Turn panels that get larger turned": a tall panel on a landscape screen (or a wide one on a
+  portrait screen) is turned 90° so it fills the screen. Off by default.
 - `Ctrl+T` thumbnail bar, `Ctrl+I` page slider, `Ctrl+H` slideshow (panel by panel), `T` thumbnail overview
 - `G` guided mode, `V` whole page first, `D` black around the panel, `R` manga mode, `Shift+D` double page
 - `1`–`4` fit (screen, width, height, 100 %), `M` magnifier, `A` color correction, `[` `]` rotate
@@ -118,6 +121,7 @@ scripts are in `build_tools/`, so anyone can retrain on their own corrections.
 - `python build_tools/second_smoke.py` – second screen: mirror, landscape/portrait distribution, F9.
 - `python build_tools/resume_smoke.py` – Ctrl+L, history, Esc, menu bar in full screen, zoom per panel, page grid.
 - `python build_tools/batch_smoke.py` – scanning in batches (more than 100 pages).
+- `python build_tools/turn_smoke.py` – turning panels that fill the screen better turned.
 - `python build_tools/i18n_smoke.py` – the interface in every language; `python build_tools/i18n_check.py` – missing or
   broken translations.
 - `python build_tools/smoke.py <comic>` – runs through the whole interface without a screen and saves screenshots in

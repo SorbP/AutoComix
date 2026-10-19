@@ -1,7 +1,8 @@
 PySide6-Essentials>=6.7
 numpy>=1.26
 opencv-python-headless>=4.9
-onnxruntime>=1.18
+onnxruntime-directml>=1.18; sys_platform == "win32"  # graphics card (DirectML) with the processor as fallback
+onnxruntime>=1.18; sys_platform != "win32"
 py7zr>=0.21
 pypdfium2>=4.30
 pillow>=10

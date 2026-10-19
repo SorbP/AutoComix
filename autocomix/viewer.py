@@ -9,7 +9,7 @@ from pathlib import Path
 import numpy as np
 from PySide6.QtCore import (QEasingCurve, QObject, QPointF, QRectF, QRunnable, Qt, QThreadPool, QTimer,
                             QVariantAnimation, Signal)
-from PySide6.QtGui import QColor, QCursor, QFont, QImage, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QCursor, QFont, QImage, QPainter, QPainterPath, QPen, QTransform
 from PySide6.QtWidgets import QApplication, QProgressDialog, QWidget
 
 from . import animation
@@ -43,8 +43,11 @@ DEFAULTS = {
     "distance_mode": False, "distance_scale": 3.0,     # distance mode: large page counter that hides when idle
     "distance_ui_scale": 1.5,                          # ...and the whole interface this much larger
     "counter_autohide": False, "counter_hide_ms": 1000,
+    "ml_device": "auto",  # panel detection: auto/gpu = graphics card (DirectML) with the processor as fallback, cpu
+    "auto_turn": "off", "auto_turn_gain": 1.3,  # turn a panel 90° (cw/ccw) when it gets this much larger
 }
 ANIM_SPEEDS = (0.25, 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)
+TURNS = (("off", tr("Av")), ("cw", tr("Medurs (90°)")), ("ccw", tr("Moturs (90°)")))
 MAG_SHAPES = (("rect", tr("Rektangel")), ("square", tr("Kvadrat")), ("circle", tr("Rund")), ("lens", tr("Lins (rund, förvrängd)")))
 
 
@@ -122,6 +125,8 @@ class Viewer(QWidget):
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.setMinimumSize(320, 240)
         self.state = state or State()
+        from . import ml_onnx
+        ml_onnx.set_device(self.opt("ml_device"))
         self.fit_key = lambda: "fit"  # the second screen switches to the left/right key (second.fit_key)
         self.comic = self.detector = self.cache = None
         self.sidecar, self.rtl = {}, False
@@ -131,6 +136,7 @@ class Viewer(QWidget):
         self.sp = 0
         self.page = 0
         self.pidx = 0
+        self.turn = self.turn0 = self.turn1 = 0.0  # screen rotation in degrees (auto_turn), animated
         self.sig = _Sig()
         self.sig.loaded.connect(self._on_loaded)
         self.sig.frames.connect(self._on_frames)
@@ -199,6 +205,9 @@ class Viewer(QWidget):
         elif k == "shadow":
             self.sp_cache.clear()
             self.goto_page(self.page, animate=False)
+        elif k == "ml_device":
+            from . import ml_onnx
+            ml_onnx.set_device(v)  # the next page detected uses the new choice
         elif k == "anim_ms":
             self.anim.setDuration(v)
         elif k == "slideshow_ms" and self.slideshow.isActive():
@@ -557,23 +566,44 @@ class Viewer(QWidget):
 
     # ---------- geometri ----------
     def _target(self):
+        self.tgt_turn = 0.0
         sp = self._spread(self.sp) if self.spreads else None
         if sp is None:
             return None, None
         full = QRectF(0, 0, sp[0].width(), sp[0].height())
         if self.custom is not None:
-            return self._fit_aspect(self.custom, full), self.custom
+            self.tgt_turn = self._turn_for(self.custom, full)
+            return self._fit_aspect(self.custom, full, self.tgt_turn), self.custom
         t = self.targets()
         if not t:
             return full, full
         r, is_panel, _k, panel = t[max(0, min(self.pidx, len(t) - 1))]
         if is_panel:
-            return self._fit_aspect(r, full), panel.intersected(r)
+            self.tgt_turn = self._turn_for(r, full)
+            return self._fit_aspect(r, full, self.tgt_turn), panel.intersected(r)
         return r, full
 
-    def _fit_aspect(self, r, full):
+    def _turn_for(self, r, full):
+        """Degrees to turn the picture for the panel r: like Smart Comic Reader, a panel that fills the screen much
+        better turned 90° (a wide panel on a portrait screen, a tall one on a landscape screen) is turned."""
+        mode = self.opt("auto_turn")
+        if mode not in ("cw", "ccw") or self.edit or r == full or r.isEmpty():
+            return 0.0
+        W, H = self.width(), self.area_h()
+        s0 = min(W / r.width(), H / r.height())
+        s1 = min(W / r.height(), H / r.width())
+        return (90.0 if mode == "cw" else -90.0) if s1 > s0 * float(self.opt("auto_turn_gain")) else 0.0
+
+    def _dims(self, turn=None):
+        """The window's size seen from the turned picture (width and height swap at 90°, mixed while turning)."""
+        k = abs(self.turn if turn is None else turn) / 90.0
+        W, H = self.width(), self.area_h()
+        return W + (H - W) * k, H + (W - H) * k
+
+    def _fit_aspect(self, r, full, turn=0.0):
         """The panel in the window's proportions, centered. With black around the panel no half neighbour panels show."""
-        ar = self.width() / self.area_h()
+        W, H = self._dims(turn)
+        ar = W / H
         w, h = r.width(), r.height()
         if w / max(h, 1e-6) < ar:
             w = h * ar
@@ -593,6 +623,8 @@ class Viewer(QWidget):
             return
         self.a0, self.f0 = QRectF(self.view), QRectF(self.focus)
         self.a1, self.f1 = v, f
+        self.turn0 = self.turn
+        self.turn1 = self.tgt_turn
         if animate and self.opt("anim") and not self.a0.isEmpty():
             self.animating = True
             self.anim.stop()
@@ -601,6 +633,7 @@ class Viewer(QWidget):
             self.anim.stop()
             self.animating = False
             self.view, self.focus = v, f
+            self.turn = self.turn1
             self.update()
 
     def _clamp_retarget(self, animate=True):
@@ -611,6 +644,7 @@ class Viewer(QWidget):
     def _tick(self, t):
         self.view = lerp_rect(self.a0, self.a1, t)
         self.focus = lerp_rect(self.f0, self.f1, t)
+        self.turn = self.turn0 + (self.turn1 - self.turn0) * t
         self.update()
 
     def _anim_done(self):
@@ -821,12 +855,21 @@ class Viewer(QWidget):
 
     def _scale(self):
         v = self.view
-        return min(self.width() / max(v.width(), 1e-6), self.area_h() / max(v.height(), 1e-6))
+        W, H = self._dims()
+        return min(W / max(v.width(), 1e-6), H / max(v.height(), 1e-6))
 
     def _offset(self):
+        """Offset in the turned frame (which is the screen when nothing is turned)."""
         s = self._scale()
-        return ((self.width() - self.view.width() * s) / 2 - self.view.x() * s,
-                (self.area_h() - self.view.height() * s) / 2 - self.view.y() * s)
+        W, H = self._dims()
+        return ((W - self.view.width() * s) / 2 - self.view.x() * s,
+                (H - self.view.height() * s) / 2 - self.view.y() * s)
+
+    def _frame_xf(self):
+        """Turned frame -> screen: the frame's center on the screen's center, turned self.turn degrees."""
+        W, H = self._dims()
+        return (QTransform().translate(self.width() / 2, self.area_h() / 2).rotate(self.turn)
+                .translate(-W / 2, -H / 2))
 
     def _to_screen(self, r):
         s = self._scale()
@@ -834,6 +877,8 @@ class Viewer(QWidget):
         return QRectF(ox + r.x() * s, oy + r.y() * s, r.width() * s, r.height() * s)
 
     def _to_page(self, pos):
+        if self.turn:
+            pos = self._frame_xf().inverted()[0].map(QPointF(pos))
         s = self._scale()
         ox, oy = self._offset()
         return QPointF((pos.x() - ox) / s, (pos.y() - oy) / s)
@@ -874,9 +919,13 @@ class Viewer(QWidget):
                             q == "best" or (q == "smooth" and not self.animating))
             full = QRectF(0, 0, img.width(), img.height())
             src = self.view.intersected(full)
+            p.save()
+            if self.turn:
+                p.setTransform(self._frame_xf())
             p.drawImage(self._to_screen(src), img, src)
             if self.opt("dim") and self.focus != full and not self.free:
                 self._dim(p, self._to_screen(self.focus), bg)
+            p.restore()
             if self.mag_on or self.mag_hold:
                 self._magnifier(p, img)
             if self.edit:
@@ -890,11 +939,11 @@ class Viewer(QWidget):
 
     def _dim(self, p, f, bg):
         c = QColor(bg)
-        W, H = self.width(), self.height()
-        p.fillRect(QRectF(0, 0, W, f.top()), c)
-        p.fillRect(QRectF(0, f.bottom(), W, H - f.bottom()), c)
-        p.fillRect(QRectF(0, f.top(), f.left(), f.height()), c)
-        p.fillRect(QRectF(f.right(), f.top(), W - f.right(), f.height()), c)
+        L = self.width() + self.height()  # reaches past the screen also when the frame is turned
+        p.fillRect(QRectF(-L, -L, 3 * L, f.top() + L), c)
+        p.fillRect(QRectF(-L, f.bottom(), 3 * L, 2 * L - f.bottom()), c)
+        p.fillRect(QRectF(-L, f.top(), f.left() + L, f.height()), c)
+        p.fillRect(QRectF(f.right(), f.top(), 2 * L - f.right(), f.height()), c)
 
     def mag_box(self):
         """The glass's rectangle on the screen (centered on the mouse) by shape and size."""
@@ -907,9 +956,11 @@ class Viewer(QWidget):
         dst = self.mag_box()
         s = self._scale() * float(self.opt("mag_zoom"))
         c = self._to_page(self.mouse)
-        src = QRectF(c.x() - dst.width() / 2 / s, c.y() - dst.height() / 2 / s, dst.width() / s, dst.height() / s)
+        quarter = round(self.turn / 90) % 2  # turned picture: render the glass turned back, then turn it
+        dw, dh = (dst.height(), dst.width()) if quarter else (dst.width(), dst.height())
+        src = QRectF(c.x() - dw / 2 / s, c.y() - dh / 2 / s, dw / s, dh / s)
         # render the magnified region to its own image (the same for all shapes)
-        out = QImage(max(1, int(dst.width())), max(1, int(dst.height())), QImage.Format.Format_RGB32)
+        out = QImage(max(1, int(dw)), max(1, int(dh)), QImage.Format.Format_RGB32)
         out.fill(self.bg_color())
         q = QPainter(out)
         q.setRenderHint(QPainter.RenderHint.SmoothPixmapTransform, True)
@@ -920,6 +971,8 @@ class Viewer(QWidget):
             q.drawImage(QRectF((vis.x() - src.x()) * k, (vis.y() - src.y()) * k, vis.width() * k, vis.height() * k),
                         img, vis)
         q.end()
+        if self.turn:
+            out = out.transformed(QTransform().rotate(round(self.turn / 90) * 90))
         if shape == "lens":
             out = self._lens_warp(out)
         path = QPainterPath()
@@ -1727,6 +1780,8 @@ class Viewer(QWidget):
             d = e.position() - start
             if moved or abs(d.x()) + abs(d.y()) > 6:
                 s = self._scale()
+                if self.turn:
+                    d = QTransform().rotate(-self.turn).map(d)
                 self.view = v.translated(-d.x() / s, -d.y() / s)
                 self.free = True
                 self.drag = (start, v, True)

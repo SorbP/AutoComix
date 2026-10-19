@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "kadr {k}/{n}",
  "helsida ({n} rutor)": "cała strona ({n} kadrów)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Przeglądaj wszystkie strony archiwum bez rozpakowywania (Ctrl+kółko = rozmiar).",
- "Dubbelklicka på en sida för att öppna serien där.": "Kliknij dwukrotnie stronę, aby otworzyć komiks w tym miejscu."
+ "Dubbelklicka på en sida för att öppna serien där.": "Kliknij dwukrotnie stronę, aby otworzyć komiks w tym miejscu.",
+ "Vrid rutor som blir större vridna": "Obracaj kadry, które po obróceniu są większe",
+ "  När rutan blir minst": "  Gdy kadr staje się co najmniej",
+ "Medurs (90°)": "Zgodnie z ruchem wskazówek (90°)",
+ "Moturs (90°)": "Przeciwnie do wskazówek (90°)",
+ "Rutdetektering körs på": "Wykrywanie kadrów działa na",
+ "Grafikkortet om det går, annars processorn": "Karta graficzna, jeśli się da, w przeciwnym razie procesor",
+ "Bara processorn": "Tylko procesor",
+ "grafikkortet (DirectML)": "karta graficzna (DirectML)",
+ "processorn": "procesor",
+ "inte startad än": "jeszcze nie uruchomione",
+ "DirectML finns inte i den här versionen": "DirectML nie jest dostępny w tej wersji",
+ "Används nu: {now}": "Używane teraz: {now}"
 }

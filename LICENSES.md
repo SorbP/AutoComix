@@ -25,6 +25,7 @@ compatible with it. The built program folder contains the full license texts in 
 | cbxy 0.1.2 (the CV part in `autocomix/vendor/`) | MIT (`LICENSE_cbxy`) |
 | OpenCV, the ONNX Runtime dependency flatbuffers, pypdfium2 (the Apache-2.0 part) | Apache-2.0 |
 | ONNX Runtime, brotli, texttable | MIT |
+| DirectML.dll (Windows, part of onnxruntime-directml) | Microsoft DirectML license, redistributable (`licenses/onnxruntime-directml-*/DirectML.txt`) |
 | Pillow | MIT-CMU |
 | NumPy, PDFium, protobuf, psutil, pycryptodomex | BSD-3 (and others, see each folder) |
 | backports.zstd / Zstandard | PSF-2.0 / BSD |

@@ -113,9 +113,10 @@ def script():
     act("right")
     yield 3000
     shot("17_ruta_med_lista_oppen", lambda: v.thumbbar.isVisible() and v.thumbbar.currentRow() == v.page)
-    v._thumb_picked(p0 + 2, False)
+    tgt = (p0 + 2) % len(v.comic.pages)  # two pages away, also in a short test comic
+    v._thumb_picked(tgt, False)
     yield 3000
-    shot("17b_klick_i_listan", lambda: v.page == p0 + 2 and v.thumbbar.isVisible() and v.area_h() < v.height())
+    shot("17b_klick_i_listan", lambda: v.page == tgt and v.thumbbar.isVisible() and v.area_h() < v.height())
     act("thumbbar")
     yield 500
     act("slider")

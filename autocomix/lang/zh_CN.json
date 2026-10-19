@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "第 {k}/{n} 格",
  "helsida ({n} rutor)": "整页（{n} 格）",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "无需解压即可浏览压缩包中的所有页面（Ctrl+滚轮 = 大小）。",
- "Dubbelklicka på en sida för att öppna serien där.": "双击页面，从该处打开漫画。"
+ "Dubbelklicka på en sida för att öppna serien där.": "双击页面，从该处打开漫画。",
+ "Vrid rutor som blir större vridna": "旋转后更大的分格自动旋转",
+ "  När rutan blir minst": "  分格至少放大",
+ "Medurs (90°)": "顺时针 (90°)",
+ "Moturs (90°)": "逆时针 (90°)",
+ "Rutdetektering körs på": "分格检测运行于",
+ "Grafikkortet om det går, annars processorn": "尽量使用显卡，否则使用处理器",
+ "Bara processorn": "仅处理器",
+ "grafikkortet (DirectML)": "显卡 (DirectML)",
+ "processorn": "处理器",
+ "inte startad än": "尚未启动",
+ "DirectML finns inte i den här versionen": "此版本不提供 DirectML",
+ "Används nu: {now}": "当前使用：{now}"
 }

@@ -42,6 +42,8 @@ och `release_notes.txt` (1.5–1.10.33). Ingen kod är kopierad; allt är nyskri
 - Andra skärmen (F9: av/spegling/fördelning liggande–stående). Anpassningen gäller per fysisk skärm (vänster = minst x): 1–4 ovanför bokstäverna = vänster skärm, numpaddens 1–4 = höger skärm, med egna värden vid spegling. Shift+F9 växlar andra skärmens anpassning (även "samma utsnitt som huvudfönstret").
 - Guidat läge: rutorna hittas automatiskt (OpenCV + YOLO-modell) och visas en i taget, centrerade med svart runt.
 - Dubbelklick på en ruta zoomar dit även om detekteringen missat den.
+- Automatisk vridning (valbar): rutor som fyller skärmen bättre vridna 90° vrids.
+- Rutdetektering på grafikkortet (DirectML, Windows) med processorn som reserv.
 - Redigeringsläge (E): rita/ta bort rutor, sparas per sida och blir träningsdata för en omtränad modell. K = sidan är rätt (sparas också som träningsdata).
 - Läsordning rad för rad (vänster→höger, uppifrån och ned), läsriktning ur ComicInfo.xml; kan ändras per sida (X).
 - Skanning i satser för stora serier (fler än 100 oskannade sidor).

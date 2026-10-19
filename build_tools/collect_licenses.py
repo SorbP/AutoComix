@@ -27,6 +27,10 @@ NOTES = {
     "shiboken6": ("Används under LGPL-3.0 (se ../lgpl-3.0.txt och ../gpl-3.0.txt). Omodifierad.\n"
                   "Källkod: https://code.qt.io/cgit/pyside/pyside-setup.git"),
 }
+# onnxruntime-directml: the package's own LICENSE/ThirdPartyNotices are copied as usual; this adds DirectML.dll.
+DIRECTML = ("onnxruntime/capi/DirectML.dll is Microsoft DirectML, redistributed unmodified as part of the\n"
+            "onnxruntime-directml package. License terms: https://www.nuget.org/packages/Microsoft.AI.DirectML\n"
+            "(LICENSE.txt in the package). Source/project: https://github.com/microsoft/DirectML")
 SKIP_FILES = {"LicenseRef-Qt-Commercial.txt"}  # PySide6 is not used under the commercial license
 
 KALLKOD = """AutoComix är fri programvara under GNU Affero General Public License v3.0 (se LICENSE).
@@ -115,6 +119,8 @@ def collect(dst):
                 if src.is_file():
                     shutil.copy(src, pd / "_".join(f.parts[1:] if len(f.parts) > 1 else f.parts))
                     n += 1
+        if key == "onnxruntime-directml":
+            (pd / "DirectML.txt").write_text(DIRECTML + "\n", encoding="utf-8")
         if key in NOTES:
             (pd / "LICENS.txt").write_text(NOTES[key] + "\n", encoding="utf-8")
             n += 1

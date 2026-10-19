@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "Panel {k}/{n}",
  "helsida ({n} rutor)": "ganze Seite ({n} Panels)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Alle Seiten im Archiv durchblättern, ohne es zu entpacken (Strg+Rad = Größe).",
- "Dubbelklicka på en sida för att öppna serien där.": "Doppelklicke auf eine Seite, um den Comic dort zu öffnen."
+ "Dubbelklicka på en sida för att öppna serien där.": "Doppelklicke auf eine Seite, um den Comic dort zu öffnen.",
+ "Vrid rutor som blir större vridna": "Panels drehen, die gedreht größer werden",
+ "  När rutan blir minst": "  Wenn das Panel mindestens",
+ "Medurs (90°)": "Im Uhrzeigersinn (90°)",
+ "Moturs (90°)": "Gegen den Uhrzeigersinn (90°)",
+ "Rutdetektering körs på": "Panelerkennung läuft auf",
+ "Grafikkortet om det går, annars processorn": "Grafikkarte wenn möglich, sonst Prozessor",
+ "Bara processorn": "Nur Prozessor",
+ "grafikkortet (DirectML)": "der Grafikkarte (DirectML)",
+ "processorn": "dem Prozessor",
+ "inte startad än": "noch nicht gestartet",
+ "DirectML finns inte i den här versionen": "DirectML ist in dieser Version nicht verfügbar",
+ "Används nu: {now}": "Jetzt verwendet: {now}"
 }

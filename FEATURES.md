@@ -43,6 +43,8 @@ AutoComix's panel zoom.
 - Second screen (F9: off/mirror/landscape–portrait distribution). The fit applies per physical screen (left = smallest x): 1–4 above the letters = left screen, numpad 1–4 = right screen, with separate values when mirroring. Shift+F9 switches the second screen's fit (also "same view as the main window").
 - Guided mode: the panels are found automatically (OpenCV + YOLO model) and shown one at a time, centered with black around them.
 - Double-clicking a panel zooms there even if detection missed it.
+- Automatic turning (optional): panels that fill the screen better turned 90° are turned.
+- Panel detection on the graphics card (DirectML, Windows) with the processor as fallback.
 - Edit mode (E): draw/delete panels, saved per page and used as training data for a retrained model. K = the page is correct (also saved as training data).
 - Reading order row by row (left→right, top to bottom), reading direction from ComicInfo.xml; changeable per page (X).
 - Scanning in batches for large comics (more than 100 unscanned pages).

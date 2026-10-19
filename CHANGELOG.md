@@ -5,6 +5,26 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.20.0
+- Panel detection runs on the graphics card on Windows (DirectML: works with NVIDIA, AMD and Intel cards that support
+  DirectX 12). Measured on 30 pages on an RTX 3090: about 1 s → 0.09 s per page for the whole chain (reading the image,
+  OpenCV and the model), so large comics are scanned roughly ten times faster. The panels are the same as with the
+  processor (mean overlap 99.6 % on 60 test pages).
+- Automatic fallback to the processor: if there is no usable graphics card, if it fails to start, or if a test run
+  does not give the same answer as the processor or is not faster (e.g. the software renderer on computers without a
+  real graphics card), detection runs on the processor as before.
+  Settings → Reading → "Panel detection runs on" chooses *the graphics card if possible* (default) or *processor only*,
+  and shows what is used now. Linux always uses the processor.
+- Automatic turning of panels (inspired by Smart Comic Reader): a panel that fills the screen much better turned 90°
+  (a tall panel on a landscape screen, a wide one on a portrait screen) is turned, with an animation. Off by default;
+  Settings → Reading → "Turn panels that get larger turned": clockwise or counterclockwise, and how much larger the panel
+  must get (default 1.3 ×). Useful on a tablet or a monitor you can turn. The magnifier, dragging and double-click
+  follow the turned picture; edit mode always shows the page unturned.
+- Double-clicking a panel to zoom to it (also from Smart Comic Reader) was already there and works as before.
+- The Windows build uses `onnxruntime-directml` instead of `onnxruntime` (DirectML.dll is included, license under
+  `licenses/`).
+- New tests: `build_tools/turn_smoke.py` (turning) and `tests/test_ml_device.py` (graphics card and fallback).
+
 ## 2.19.2
 - Existing installations keep Swedish. Before 2.19 the program was Swedish-only, so *Automatic* would have switched
   to English for anyone with an English Windows. New installations still follow the system language.

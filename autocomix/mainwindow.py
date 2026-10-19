@@ -21,7 +21,7 @@ from .comic import ARCHIVE_EXT, IMAGE_EXT, SORTS
 from .store import State
 from .overlays import Progress
 from .second import FITS as SECOND_FITS, MODES as SECOND_MODES, SIDES, SecondScreen, fit_key, migrate_fits, side_of
-from .viewer import DEFAULTS, MAG_SHAPES, Viewer
+from .viewer import DEFAULTS, MAG_SHAPES, TURNS, Viewer
 
 FILTER = tr("Serier och bilder ({});;Alla filer (*)").format(
     " ".join(f"*{e}" for e in sorted(ARCHIVE_EXT | set(IMAGE_EXT))))
@@ -1070,6 +1070,8 @@ class OptionsDialog(QDialog):
         f = QFormLayout(t)
         f.addRow(chk("guided", tr("Guidat läge: zooma ruta för ruta")))
         f.addRow(chk("overview", tr("Visa hela sidan innan rutorna")))
+        f.addRow(tr("Vrid rutor som blir större vridna"), combo("auto_turn", list(TURNS)))
+        f.addRow(tr("  När rutan blir minst"), num("auto_turn_gain", 1.05, 3.0, 0.05, 2, " ×"))
         fits = list(FITS) + [("main", tr("Samma utsnitt som huvudfönstret (bara andra skärmen)"))]
         mode = tr("spegling") if win.second.mode == "mirror" else tr("av/fördelning")
         for side, label in SIDES:
@@ -1087,6 +1089,13 @@ class OptionsDialog(QDialog):
         f.addRow(tr("Många oskannade sidor"), combo("detect_large", [("ask", tr("Fråga")), ("all", tr("Skanna alla direkt")),
                                                                 ("batch", tr("Skanna en sats i taget"))]))
         f.addRow(tr("Sidor per sats"), num("detect_batch", 0, 10000, 10, 0, tr(" (0 = alltid alla)")))
+        from . import ml_onnx
+        f.addRow(tr("Rutdetektering körs på"), combo("ml_device", [("auto", tr("Grafikkortet om det går, annars processorn")),
+                                                                 ("cpu", tr("Bara processorn"))]))
+        now = {"gpu": tr("grafikkortet (DirectML)"), "cpu": tr("processorn")}.get(ml_onnx.used, tr("inte startad än"))
+        if ml_onnx.used != "gpu" and not ml_onnx.gpu_available():
+            now += " – " + tr("DirectML finns inte i den här versionen")
+        f.addRow("", QLabel(tr("Används nu: {now}").format(now=now)))
         f.addRow(QLabel("<b>Avslutning</b>"))
         f.addRow(tr("Esc när helskärm och fönster redan är stängda"),
                  combo("esc_quit", [("never", tr("Avsluta inte (Ctrl+Q avslutar)")), ("confirm", tr("Fråga först")),

@@ -352,5 +352,17 @@
  "ruta {k}/{n}": "quadro {k}/{n}",
  "helsida ({n} rutor)": "página inteira ({n} quadros)",
  "Bläddra bland alla sidor i arkivet utan att packa upp det (Ctrl+hjul = storlek).": "Navegar por todas as páginas do arquivo sem extraí-lo (Ctrl+roda = tamanho).",
- "Dubbelklicka på en sida för att öppna serien där.": "Clique duas vezes em uma página para abrir o quadrinho ali."
+ "Dubbelklicka på en sida för att öppna serien där.": "Clique duas vezes em uma página para abrir o quadrinho ali.",
+ "Vrid rutor som blir större vridna": "Girar quadros que ficam maiores girados",
+ "  När rutan blir minst": "  Quando o quadro fica pelo menos",
+ "Medurs (90°)": "Sentido horário (90°)",
+ "Moturs (90°)": "Sentido anti-horário (90°)",
+ "Rutdetektering körs på": "A detecção de quadros usa",
+ "Grafikkortet om det går, annars processorn": "A placa de vídeo se possível, senão o processador",
+ "Bara processorn": "Somente o processador",
+ "grafikkortet (DirectML)": "a placa de vídeo (DirectML)",
+ "processorn": "o processador",
+ "inte startad än": "ainda não iniciada",
+ "DirectML finns inte i den här versionen": "DirectML não está disponível nesta versão",
+ "Används nu: {now}": "Em uso agora: {now}"
 }
