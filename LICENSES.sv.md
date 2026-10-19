@@ -13,6 +13,7 @@ förenliga med den. Den byggda programmappen innehåller de fullständiga licens
 - **models/panels_int8.onnx** – exporterad och kvantiserad från
   [mosesb/best-comic-panel-detection](https://huggingface.co/mosesb/best-comic-panel-detection). Märkt Apache-2.0,
   men tränad från en YOLOv12x-checkpoint med Ultralytics (båda AGPL-3.0); sprids därför under AGPL-3.0.
+  Sedan 2.19.1 finjusterad på CoMix och sidor som utvecklaren rättat (träningsbilderna sprids inte).
 - **weights/yolo26n.pt** – Ultralytics YOLO26n, AGPL-3.0. Bara utgångspunkt för omträning, byggs inte in.
 - Omtränade modeller (`build_tools/train_model.py`, Ultralytics) är AGPL-3.0. Träningsbilder sprids inte.
 

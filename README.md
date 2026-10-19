@@ -74,7 +74,7 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
 
 ## Remote control on your phone (Unified Remote)
 `remote\installera_unified_remote.ps1` copies `remote\unified\AutoComix` to Unified Remote's folder for custom
-remotes. Restart the server (tray icon → Restart), and **AutoComix** is listed among the remotes on the phone.
+remotes and writes in where `AutoComix.exe` is (`-Exe <path>` if it is not in `dist\windows\AutoComix`). Restart the server (tray icon → Restart), and **AutoComix** is listed among the remotes on the phone.
 The *Läs* (Read) tab: next/previous, page, slideshow on/off and faster/slower. The *Mer* (More) tab: first/last page,
 files, last comic, start AutoComix, second screen, zoom, full screen. The buttons send keys and switch to the
 AutoComix window first. The remote's labels are in Swedish.
@@ -91,8 +91,10 @@ PyInstaller only builds for the platform it runs on. The GitHub workflow builds 
 
 Changes per version: [CHANGELOG.md](CHANGELOG.md).
 
-The model `models/panels_int8.onnx` is exported from `mosesb/best-comic-panel-detection`, fine-tuned on corrected
-pages and quantized to int8 (see `build_tools/compare_ml.py` and `build_tools/train_model.py`).
+The model `models/panels_int8.onnx` is exported from `mosesb/best-comic-panel-detection`, fine-tuned with
+`build_tools/train_model.py` on the CoMix dataset and about 290 pages corrected by the developer, and quantized to int8.
+The training pages are not distributed for copyright reasons (they are pages from published comics); the training
+scripts are in `build_tools/`, so anyone can retrain on their own corrections.
 
 ## Retraining the panel model on your corrections
 1. Read as usual. When a page is wrong: press `E`, draw the correct panels (drag), delete wrong ones (right-click),

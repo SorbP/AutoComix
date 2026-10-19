@@ -9,7 +9,7 @@ end
 
 --@help Starta AutoComix
 actions.launch = function ()
-	os.start("D:\\ClaudeBox\\PanelView\\dist\\windows\\AutoComix\\AutoComix.exe");
+	os.start("@@EXE@@");  -- installera_unified_remote.ps1 skriver in sökvägen
 end
 
 -- Läsa

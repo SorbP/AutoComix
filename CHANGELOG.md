@@ -5,6 +5,18 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.19.1
+- New built-in panel model, fine-tuned on the CoMix dataset and 287 pages corrected or approved by the developer.
+  Measured on corrected pages the models had not trained on (59 pages), compared with the model in 2.19.0:
+  - found panels 88 % → 98 %
+  - wrong panels 8 % → 6 %
+  - fully correct pages 49 % → 73 %
+- On the CoMix test pages (165) 86 % of the pages are now fully correct. The original model got 24 %.
+- The panels of all comics are detected again at the first start, since the model has changed.
+- The training pages are not distributed for copyright reasons. The training scripts are in `build_tools/`.
+- The Unified Remote installer writes in where `AutoComix.exe` is (`-Exe <path>` for another location). Before, the
+  "Start AutoComix" button only worked on the developer's computer.
+
 ## 2.19.0
 - Added English language support. Settings → Display → Language is a drop-down list.
 - The program is translated into the most common languages: English, Swedish, German, French, Spanish, Italian,

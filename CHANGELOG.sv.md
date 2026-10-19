@@ -5,6 +5,18 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.19.1
+- Ny inbyggd rutmodell, finjusterad på CoMix-datasetet och 287 sidor som utvecklaren rättat eller godkänt.
+  Mätt på rättade sidor som modellerna inte tränats på (59 sidor), jämfört med modellen i 2.19.0:
+  - hittade rutor 88 % → 98 %
+  - felaktiga rutor 8 % → 6 %
+  - helt rätta sidor 49 % → 73 %
+- På CoMix-testsidorna (165) blir nu 86 % av sidorna helt rätt. Originalmodellen klarade 24 %.
+- Alla seriers rutor detekteras om vid första starten, eftersom modellen har ändrats.
+- Träningssidorna sprids inte av upphovsrättsskäl. Träningsskripten finns i `build_tools/`.
+- Installationsskriptet för Unified Remote skriver in var `AutoComix.exe` ligger (`-Exe <sökväg>` för en annan plats).
+  Förut fungerade knappen "Starta AutoComix" bara på utvecklarens dator.
+
 ## 2.19.0
 - Stöd för engelska. Inställningar → Visning → Språk är en rullgardinslista.
 - Programmet är översatt till de vanligaste språken: engelska, svenska, tyska, franska, spanska, italienska,

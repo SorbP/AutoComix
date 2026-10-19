@@ -69,7 +69,7 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](F
 
 ## Fjärrkontroll i mobilen (Unified Remote)
 `remote\installera_unified_remote.ps1` kopierar `remote\unified\AutoComix` till Unified Remotes mapp för egna
-fjärrkontroller. Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **AutoComix** under fjärrkontrollerna
+fjärrkontroller och skriver in var `AutoComix.exe` ligger (`-Exe <sökväg>` om den inte ligger i `dist\windows\AutoComix`). Ladda om servern (ikonen i aktivitetsfältet → Restart), så finns **AutoComix** under fjärrkontrollerna
 i mobilen. Fliken *Läs*: nästa/föregående, sida, bildspel på/av och snabbare/långsammare. Fliken *Mer*: första/sista
 sidan, filer, senaste serien, starta AutoComix, andra skärmen, zoom, helskärm. Knapparna skickar tangenter och växlar
 först till AutoComix-fönstret.
@@ -86,14 +86,16 @@ PyInstaller bygger bara för den plattform den körs på. GitHub-flödet bygger 
 
 Ändringar per version: [CHANGELOG.sv.md](CHANGELOG.sv.md).
 
-Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel-detection` och kvantiserad till int8
-(se `build_tools/compare_ml.py`: 95 av 100 originalrutor återfunna, fp32 98 av 100).
+Modellen `models/panels_int8.onnx` är exporterad från `mosesb/best-comic-panel-detection`, finjusterad med
+`build_tools/train_model.py` på CoMix-datasetet och ungefär 290 sidor som utvecklaren rättat, och kvantiserad till int8.
+Träningssidorna sprids inte av upphovsrättsskäl (de är sidor ur utgivna serier); träningsskripten finns i `build_tools/`,
+så vem som helst kan träna om på sina egna rättelser.
 
 ## Träna om rutmodellen på dina rättelser
 1. Läs som vanligt. När en sida blir fel: tryck `E`, rita rätt rutor (dra), ta bort fel (högerklick), `E` igen.
    Rättelsen gäller direkt och sparas, och sidan + rutorna läggs som träningsexempel i `<datamapp>/training`.
 2. När minst 30 sidor är rättade: `.venv-export/Scripts/python build_tools/train_model.py`
-   (kräver ultralytics och PyTorch med CUDA för rimlig tid). Skriptet mäter träffsäkerheten före/efter
+   (kräver ultralytics och PyTorch med CUDA, alltså ett NVIDIA-kort, för rimlig tid; ungefär 1–1,5 timme på ett RTX 3090). Skriptet mäter träffsäkerheten före/efter
    på var femte rättad sida och installerar bara en bättre modell, i `<datamapp>/models/panels_int8.onnx`.
 3. AutoComix använder den nya modellen vid nästa start och detekterar om sidorna. Ingen ombyggnad behövs.
 4. För att bygga in modellen i programmet: kopiera den till `models/`, bygg och tagga en ny version
