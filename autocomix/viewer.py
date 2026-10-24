@@ -71,7 +71,7 @@ def rotate_box(p, rot):
 
 def _steps(total, view):
     """Start positions for a window of size view over the length total, with overlap, the last one against the edge."""
-    if view >= total:
+    if view >= total - 0.5:  # tolerance: W / (W / total) can land a hair below total and add an invisible step
         return [(total - view) / 2]
     out, x, step = [], 0.0, view * (1 - SCROLL_OVERLAP)
     while x + view < total:

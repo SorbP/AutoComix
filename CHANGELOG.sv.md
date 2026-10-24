@@ -5,6 +5,11 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.20.1
+- Rättat: med Anpassa till skärm krävde vissa sidor två tryck för att bläddra. Vid vissa fönsterhöjder gjorde ett
+  avrundningsfel den anpassade sidan en bråkdel av en pixel för liten, vilket gav ett osynligt extra rullsteg på
+  samma sida. Märktes mest i mappar med enstaka bilder (utan rutor).
+
 ## 2.20.0
 - Rutdetekteringen körs på grafikkortet i Windows (DirectML: fungerar med NVIDIA-, AMD- och Intel-kort som klarar
   DirectX 12). Uppmätt på 30 sidor med ett RTX 3090: ca 1 s → 0,09 s per sida för hela kedjan (läsa bilden, OpenCV och

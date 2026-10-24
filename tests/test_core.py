@@ -196,3 +196,10 @@ def test_history_keeps_20_newest_with_position(tmp_path, monkeypatch):
     h = st.d["history"]
     assert len(h) == 20 and h[0] == str(tmp_path / "b3.cbz") and h.count(str(tmp_path / "b3.cbz")) == 1
     assert st.comic(tmp_path / "b3.cbz")["pages"] == 30 and st.comic(tmp_path / "b3.cbz")["opened"] > 0
+
+
+def test_fit_screen_rounding_gives_one_step():
+    from autocomix.viewer import _steps
+    for H in (317, 615, 1230, 1287):  # H / (H / 1216) lands a hair below 1216: must not add an invisible second step
+        assert len(_steps(1216, H / (H / 1216))) == 1
+    assert len(_steps(1216, 1000)) == 2

@@ -5,6 +5,11 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.20.1
+- Fixed: with Fit to screen, some pages needed two presses to turn the page. At certain window heights a rounding
+  error made the fitted page a fraction of a pixel too small, which added an invisible second scroll step on the
+  same page. Most noticeable in folders of single images (no panels).
+
 ## 2.20.0
 - Panel detection runs on the graphics card on Windows (DirectML: works with NVIDIA, AMD and Intel cards that support
   DirectX 12). Measured on 30 pages on an RTX 3090: about 1 s → 0.09 s per page for the whole chain (reading the image,
