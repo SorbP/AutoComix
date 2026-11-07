@@ -129,6 +129,7 @@ class Viewer(QWidget):
         ml_onnx.set_device(self.opt("ml_device"))
         self.fit_key = lambda: "fit"  # the second screen switches to the left/right key (second.fit_key)
         self.comic = self.detector = self.cache = None
+        self.noscan = False
         self.sidecar, self.rtl = {}, False
         self.images, self.sizes, self.loading = {}, {}, set()
         self.gen = 0
@@ -253,9 +254,12 @@ class Viewer(QWidget):
         self.detector.pageDone.connect(self._on_detected)
         self.detector.progress.connect(self._on_progress)
         self.detector.set_focus(start)
-        if self._scan_in_batches(comic):
+        scan = self._scan_mode(comic)
+        self.noscan = scan == "none"  # unscanned pages are shown whole (image galleries without panels)
+        if scan == "batch":
             self.detector.set_batch(self.opt("detect_batch"))
-        self.detector.start()
+        if not self.noscan:
+            self.detector.start()
         self._layout()
         self.goto_page(start, forward=True, animate=False)
         self.flash(f"{comic.title}  (" + tr("{n} sidor").format(n=len(comic.pages)) + ")")
@@ -380,6 +384,8 @@ class Viewer(QWidget):
         """(image, page rectangles in display order, pages in display order) or None if not loaded."""
         if s in self.sp_cache:
             return self.sp_cache[s]
+        if not 0 <= s < len(self.spreads):  # painted while the scan question is open, before the layout is built
+            return None
         pages = self.spreads[s]
         if any(p not in self.images for p in pages):
             return None
@@ -402,7 +408,7 @@ class Viewer(QWidget):
         else:
             c = self.cache.get(name)
             if c is None:
-                return [], False
+                return [], self.noscan  # not scanned: wait for the detector, or whole page if scanning is off
             ps = G.finalize(G.merge(c["cv"], c["ml"]), self.rtl, xy)
         rot = self.opt("rotation")
         return [rotate_box(p, rot) for p in ps], True
@@ -1228,31 +1234,55 @@ class Viewer(QWidget):
         self.free, self.custom = False, None
         self._retarget()
 
-    def _scan_in_batches(self, comic):
-        """More unscanned pages than detect_batch: scan all now or one batch at a time (asks if detect_large=ask)."""
+    def _scan_mode(self, comic):
+        """"all", "batch" or "none" (no scanning, whole pages). More unscanned pages than detect_batch:
+        asks if detect_large=ask. "Don't scan now" is remembered for the file (noscan in state)."""
+        if self.state.comic(comic.path).get("noscan"):
+            return "none"
         n = int(self.opt("detect_batch"))
         mode = self.opt("detect_large")
         if n <= 0 or mode == "all":
-            return False
+            return "all"
         left = sum(self.cache.get(p) is None for p in comic.pages)
         if left <= n:
-            return False
-        if mode == "batch":
-            return True
+            return "all"
+        if mode in ("batch", "none"):
+            return mode
         from PySide6.QtWidgets import QCheckBox, QMessageBox
         box = QMessageBox(QMessageBox.Icon.Question, "AutoComix",
                           tr("{title} har {left} sidor som inte är skannade efter rutor.").format(title=comic.title, left=left)
                           + "\n\n" + tr("Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
                                        "av de skannade)?").format(n=n), parent=self.window())
+        box.setInformativeText(tr("Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här "
+                                  "filen (Bild > Skanna rutor nu skannar ändå)."))
         every = box.addButton(tr("Skanna alla nu"), QMessageBox.ButtonRole.AcceptRole)
-        box.addButton(tr("{n} i taget").format(n=n), QMessageBox.ButtonRole.RejectRole)
+        batch = box.addButton(tr("{n} i taget").format(n=n), QMessageBox.ButtonRole.RejectRole)
+        none = box.addButton(tr("Skanna inte nu"), QMessageBox.ButtonRole.DestructiveRole)
+        box.setDefaultButton(every)
         keep = QCheckBox(tr("Kom ihåg valet (ändras under Inställningar)"))
         box.setCheckBox(keep)
         box.exec()
-        batch = box.clickedButton() is not every
+        hit = box.clickedButton()
+        mode = "none" if hit is none else "batch" if hit is batch else "all"
+        if mode == "none":
+            self.state.set_noscan(comic.path, True)
         if keep.isChecked():
-            self.set_opt("detect_large", "batch" if batch else "all")
-        return batch
+            self.set_opt("detect_large", mode)
+        return mode
+
+    def scan_now(self):
+        """Start panel detection for a file opened with "Don't scan now" (and forget that choice)."""
+        if not self.comic or not self.noscan or not self.detector:
+            return
+        self.noscan = False
+        self.state.set_noscan(self.comic.path, False)
+        left = sum(self.cache.get(p) is None for p in self.comic.pages)
+        if self.opt("detect_large") == "batch" and 0 < int(self.opt("detect_batch")) < left:
+            self.detector.set_batch(self.opt("detect_batch"))
+        self.detector.start()
+        self.flash(tr("Rutskanning startad"))
+        self.changed.emit()
+        self.update()
 
     # ---------- slideshow / magnifier ----------
     def toggle_slideshow(self):

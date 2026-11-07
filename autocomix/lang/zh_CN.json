@@ -364,5 +364,10 @@
  "processorn": "处理器",
  "inte startad än": "尚未启动",
  "DirectML finns inte i den här versionen": "此版本不提供 DirectML",
- "Används nu: {now}": "当前使用：{now}"
+ "Används nu: {now}": "当前使用：{now}",
+ "Skanna inte nu": "暂不扫描",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "暂不扫描：页面将像图片库一样完整显示。此选择会保存到该文件（图像 > 立即扫描分格 仍可扫描）。",
+ "Skanna rutor nu": "立即扫描分格",
+ "Skanna inte (visa hela sidor)": "不扫描（显示整页）",
+ "Rutskanning startad": "已开始扫描分格"
 }

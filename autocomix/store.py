@@ -177,6 +177,15 @@ class State:
         self.d["dirs"].setdefault(comic_key(Path(path).parent), {})["rtl"] = rtl
         self.save()
 
+    def set_noscan(self, path, on):
+        """"Don't scan now" for a file (e.g. image galleries without panels): pages are shown whole."""
+        c = self.d["comics"].setdefault(comic_key(path), {})
+        if on:
+            c["noscan"] = True
+        else:
+            c.pop("noscan", None)
+        self.save()
+
     def set_page(self, path, page, panel=None):
         c = self.d["comics"].setdefault(comic_key(path), {})
         c["page"] = page

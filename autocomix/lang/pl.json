@@ -364,5 +364,10 @@
  "processorn": "procesor",
  "inte startad än": "jeszcze nie uruchomione",
  "DirectML finns inte i den här versionen": "DirectML nie jest dostępny w tej wersji",
- "Används nu: {now}": "Używane teraz: {now}"
+ "Används nu: {now}": "Używane teraz: {now}",
+ "Skanna inte nu": "Nie skanuj teraz",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Nie skanuj teraz: strony są wyświetlane w całości, jak w galerii obrazów. Wybór zostaje zapisany dla tego pliku (Obraz > Skanuj kadry teraz i tak skanuje).",
+ "Skanna rutor nu": "Skanuj kadry teraz",
+ "Skanna inte (visa hela sidor)": "Nie skanuj (pokazuj całe strony)",
+ "Rutskanning startad": "Rozpoczęto skanowanie kadrów"
 }

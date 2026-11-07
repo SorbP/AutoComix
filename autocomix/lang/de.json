@@ -364,5 +364,10 @@
  "processorn": "dem Prozessor",
  "inte startad än": "noch nicht gestartet",
  "DirectML finns inte i den här versionen": "DirectML ist in dieser Version nicht verfügbar",
- "Används nu: {now}": "Jetzt verwendet: {now}"
+ "Används nu: {now}": "Jetzt verwendet: {now}",
+ "Skanna inte nu": "Jetzt nicht scannen",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Jetzt nicht scannen: Seiten werden ganz angezeigt, wie in einer Bildergalerie. Die Wahl wird für diese Datei gespeichert (Bild > Panels jetzt scannen scannt trotzdem).",
+ "Skanna rutor nu": "Panels jetzt scannen",
+ "Skanna inte (visa hela sidor)": "Nicht scannen (ganze Seiten zeigen)",
+ "Rutskanning startad": "Panel-Scan gestartet"
 }

@@ -227,6 +227,7 @@ class MainWindow(QMainWindow):
         A("order_auto", tr("Automatisk läsordning igen (uppslaget)"), ["Shift+X"], v.order_auto)
         A("order_xy", tr("Läsordning: kolumn bredvid hög ruta först (4-6-5 i stället för 4-5-6)"), [],
           lambda: self._toggle("order_xy"), check=lambda: v.opt("order_xy"))
+        A("scan_now", tr("Skanna rutor nu"), [], v.scan_now)
         A("bm_add", tr("Lägg till bokmärke…"), ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", tr("Hantera bokmärken…"), ["Ctrl+Shift+B"], self.manage_bookmarks)
         # Settings / help
@@ -304,7 +305,7 @@ class MainWindow(QMainWindow):
         dm.addAction(a["second_fit_cycle"])
         m = self.image_menu = mb.addMenu(tr("&Bild"))
         for k in ("edit", "approve", "edit_del", "edit_clear", "edit_undo", "edit_redo", "edit_reset", None,
-                  "order_pick", "order_auto", "order_xy", None, "auto_color", None, "bg_color", "bg_auto"):
+                  "order_pick", "order_auto", "order_xy", None, "scan_now", None, "auto_color", None, "bg_color", "bg_auto"):
             m.addSeparator() if k is None else m.addAction(a[k])
         self.bm_menu = mb.addMenu(tr("B&okmärken"))
         self.bm_menu.aboutToShow.connect(self._fill_bookmarks)
@@ -1087,7 +1088,8 @@ class OptionsDialog(QDialog):
         f.addRow(chk("slideshow_loop", tr("Bildspelet börjar om från början vid slutet")))
         f.addRow(tr("Sortering"), combo("sort", SORTS))
         f.addRow(tr("Många oskannade sidor"), combo("detect_large", [("ask", tr("Fråga")), ("all", tr("Skanna alla direkt")),
-                                                                ("batch", tr("Skanna en sats i taget"))]))
+                                                                ("batch", tr("Skanna en sats i taget")),
+                                                                ("none", tr("Skanna inte (visa hela sidor)"))]))
         f.addRow(tr("Sidor per sats"), num("detect_batch", 0, 10000, 10, 0, tr(" (0 = alltid alla)")))
         from . import ml_onnx
         f.addRow(tr("Rutdetektering körs på"), combo("ml_device", [("auto", tr("Grafikkortet om det går, annars processorn")),

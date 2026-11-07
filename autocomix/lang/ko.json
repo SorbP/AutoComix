@@ -364,5 +364,10 @@
  "processorn": "프로세서",
  "inte startad än": "아직 시작 안 됨",
  "DirectML finns inte i den här versionen": "이 버전에는 DirectML이 없습니다",
- "Används nu: {now}": "현재 사용 중: {now}"
+ "Används nu: {now}": "현재 사용 중: {now}",
+ "Skanna inte nu": "지금 스캔 안 함",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "지금 스캔 안 함: 페이지가 이미지 갤러리처럼 통째로 표시됩니다. 이 선택은 이 파일에 저장됩니다(이미지 > 지금 컷 스캔으로 언제든 스캔할 수 있습니다).",
+ "Skanna rutor nu": "지금 컷 스캔",
+ "Skanna inte (visa hela sidor)": "스캔 안 함(페이지 전체 표시)",
+ "Rutskanning startad": "컷 스캔을 시작했습니다"
 }

@@ -12,6 +12,8 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
 - More than 100 unscanned pages (adjustable): asks whether to scan all now or 100 at a time; the next 100 are scanned
   when you are 10 pages from the end of the scanned ones (Settings → Many unscanned pages / Pages per batch).
+  *Don't scan now* shows the pages whole without detection (image galleries without panels), is remembered for the
+  file, and *Image → Scan panels now* scans anyway.
 - A `.cbxy` next to the comic (e.g. corrected in `cbxy-editor`) takes precedence over the cache.
 - Reading direction, page and panel are saved continuously per comic. Ctrl+L opens the last comic where you were;
   File → Viewing history (Ctrl+Shift+H) shows the last 20 with position. After a hard crash `crash.log` is written in

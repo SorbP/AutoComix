@@ -5,6 +5,16 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.21.0
+- Nytt val i frågan som kommer när en fil har många oskannade sidor: **Skanna inte nu**. Sidorna visas hela, som i ett
+  bildgalleri, och ingen rutdetektering körs. Tänkt för mappar och arkiv med hela bilder utan serierutor.
+- Valet sparas för filen, så frågan kommer inte igen nästa gång du öppnar den.
+- **Bild > Skanna rutor nu** startar rutdetekteringen ändå för en fil som öppnats med Skanna inte nu (och glömmer
+  valet).
+- Inställningar > "Många oskannade sidor" har ett nytt läge, **Skanna inte (visa hela sidor)**, som också sätts om du
+  kryssar i "Kom ihåg valet" i frågan.
+- Rättat: ett felmeddelande kunde skrivas i bakgrunden när fönstret ritades om medan frågan var öppen.
+
 ## 2.20.1
 - Rättat: med Anpassa till skärm krävde vissa sidor två tryck för att bläddra. Vid vissa fönsterhöjder gjorde ett
   avrundningsfel den anpassade sidan en bråkdel av en pixel för liten, vilket gav ett osynligt extra rullsteg på

@@ -364,5 +364,10 @@
  "processorn": "CPU",
  "inte startad än": "まだ開始していません",
  "DirectML finns inte i den här versionen": "このバージョンではDirectMLを利用できません",
- "Används nu: {now}": "現在の使用: {now}"
+ "Används nu: {now}": "現在の使用: {now}",
+ "Skanna inte nu": "今はスキャンしない",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "今はスキャンしない: ページは画像ギャラリーのように丸ごと表示されます。この選択はこのファイルに保存されます(画像 > 今すぐコマをスキャン でいつでもスキャンできます)。",
+ "Skanna rutor nu": "今すぐコマをスキャン",
+ "Skanna inte (visa hela sidor)": "スキャンしない(ページ全体を表示)",
+ "Rutskanning startad": "コマのスキャンを開始しました"
 }

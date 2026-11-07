@@ -364,5 +364,10 @@
  "processorn": "процессор",
  "inte startad än": "ещё не запущено",
  "DirectML finns inte i den här versionen": "DirectML недоступен в этой версии",
- "Används nu: {now}": "Сейчас используется: {now}"
+ "Används nu: {now}": "Сейчас используется: {now}",
+ "Skanna inte nu": "Не сканировать сейчас",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Не сканировать сейчас: страницы показываются целиком, как в галерее изображений. Выбор сохраняется для этого файла (Изображение > Сканировать панели сейчас всё равно запускает сканирование).",
+ "Skanna rutor nu": "Сканировать панели сейчас",
+ "Skanna inte (visa hela sidor)": "Не сканировать (показывать целые страницы)",
+ "Rutskanning startad": "Сканирование панелей запущено"
 }

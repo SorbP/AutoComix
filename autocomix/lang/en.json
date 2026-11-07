@@ -364,5 +364,10 @@
  "processorn": "the processor",
  "inte startad än": "not started yet",
  "DirectML finns inte i den här versionen": "DirectML is not available in this version",
- "Används nu: {now}": "In use now: {now}"
+ "Används nu: {now}": "In use now: {now}",
+ "Skanna inte nu": "Don't scan now",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Don't scan now: pages are shown whole, like an image gallery. The choice is saved for this file (Image > Scan panels now scans anyway).",
+ "Skanna rutor nu": "Scan panels now",
+ "Skanna inte (visa hela sidor)": "Don't scan (show whole pages)",
+ "Rutskanning startad": "Panel scan started"
 }

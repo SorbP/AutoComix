@@ -364,5 +364,10 @@
  "processorn": "o processador",
  "inte startad än": "ainda não iniciada",
  "DirectML finns inte i den här versionen": "DirectML não está disponível nesta versão",
- "Används nu: {now}": "Em uso agora: {now}"
+ "Används nu: {now}": "Em uso agora: {now}",
+ "Skanna inte nu": "Não analisar agora",
+ "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Não analisar agora: as páginas são mostradas inteiras, como uma galeria de imagens. A escolha é salva para este arquivo (Imagem > Analisar quadros agora analisa mesmo assim).",
+ "Skanna rutor nu": "Analisar quadros agora",
+ "Skanna inte (visa hela sidor)": "Não analisar (mostrar páginas inteiras)",
+ "Rutskanning startad": "Análise de quadros iniciada"
 }

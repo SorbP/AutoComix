@@ -5,6 +5,17 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.21.0
+- New choice in the question that appears when a file has many unscanned pages: **Don't scan now**. The pages are
+  shown whole, like an image gallery, and no panel detection runs. Meant for folders and archives of whole pictures
+  without comic panels.
+- The choice is remembered for that file, so the question does not come back the next time you open it.
+- **Image > Scan panels now** starts the panel detection anyway for a file opened with Don't scan now (and forgets
+  the choice).
+- Settings > "Many unscanned pages" has a new setting, **Don't scan (show whole pages)**, which is also set if you
+  tick "Remember the choice" in the question.
+- Fixed: an error message could be written in the background when the window was redrawn while the question was open.
+
 ## 2.20.1
 - Fixed: with Fit to screen, some pages needed two presses to turn the page. At certain window heights a rounding
   error made the fitted page a fraction of a pixel too small, which added an invisible second scroll step on the
