@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Slideshow, time per step",
  "Bildspel, läge": "Slideshow, mode",
  "Sortering": "Sorting",
- "Många oskannade sidor": "Many unscanned pages",
  "Sidor per sats": "Pages per batch",
  "Esc när helskärm och fönster redan är stängda": "Esc when full screen and windows are already closed",
  "Läsning": "Reading",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Guided mode: zoom panel by panel",
  "Visa hela sidan innan rutorna": "Show the whole page before the panels",
  "Omslaget visas ensamt i dubbelsidesläge": "The cover is shown alone in double page mode",
- "Öppna nästa fil i mappen vid slutet": "Open the next file in the folder at the end",
  "Bildspelet fortsätter med nästa fil i mappen": "The slideshow continues with the next file in the folder",
  "Bildspelet börjar om från början vid slutet": "The slideshow starts over from the beginning at the end",
  " (0 = alltid alla)": " (0 = always all)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Smooth (except during animation)",
  "Bästa (alltid jämn)": "Best (always smooth)",
  "Anpassning, {side} ({mode})": "Fit, {side} ({mode})",
- "Fråga": "Ask",
  "Skanna alla direkt": "Scan all right away",
  "Skanna en sats i taget": "Scan one batch at a time",
  "Avsluta inte (Ctrl+Q avslutar)": "Do not exit (Ctrl+Q exits)",
@@ -296,7 +293,6 @@
  "Rund": "Round",
  "Lins (rund, förvrängd)": "Lens (round, distorted)",
  "Skanna alla nu": "Scan all now",
- "Kom ihåg valet (ändras under Inställningar)": "Remember the choice (can be changed in Settings)",
  "Bildspelet är slut": "The slideshow has ended",
  "Klicka rutorna i läsordning": "Click the panels in reading order",
  "Automatisk läsordning igen": "Automatic reading order again",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Don't scan now: pages are shown whole, like an image gallery. The choice is saved for this file (Image > Scan panels now scans anyway).",
  "Skanna rutor nu": "Scan panels now",
  "Skanna inte (visa hela sidor)": "Don't scan (show whole pages)",
- "Rutskanning startad": "Panel scan started"
+ "Rutskanning startad": "Panel scan started",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Always scan without asking (can be changed in Settings)",
+ "Fråga innan en fil med oskannade sidor skannas": "Ask before scanning a file with unscanned pages",
+ "Utan fråga": "Without asking",
+ "Första sidan – tryck igen för förra filen": "First page – press again for the previous file",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Open the next file at the end, the previous file at the start (press twice)"
 }

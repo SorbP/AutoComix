@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Diashow, Zeit pro Schritt",
  "Bildspel, läge": "Diashow, Modus",
  "Sortering": "Sortierung",
- "Många oskannade sidor": "Viele ungescannte Seiten",
  "Sidor per sats": "Seiten pro Durchgang",
  "Esc när helskärm och fönster redan är stängda": "Esc, wenn Vollbild und Fenster bereits geschlossen sind",
  "Läsning": "Lesen",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Geführter Modus: Panel für Panel zoomen",
  "Visa hela sidan innan rutorna": "Ganze Seite vor den Panels zeigen",
  "Omslaget visas ensamt i dubbelsidesläge": "Das Cover wird im Doppelseitenmodus allein angezeigt",
- "Öppna nästa fil i mappen vid slutet": "Am Ende die nächste Datei im Ordner öffnen",
  "Bildspelet fortsätter med nästa fil i mappen": "Die Diashow fährt mit der nächsten Datei im Ordner fort",
  "Bildspelet börjar om från början vid slutet": "Die Diashow beginnt am Ende wieder von vorne",
  " (0 = alltid alla)": " (0 = immer alle)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Glatt (außer während der Animation)",
  "Bästa (alltid jämn)": "Beste (immer glatt)",
  "Anpassning, {side} ({mode})": "Anpassung, {side} ({mode})",
- "Fråga": "Fragen",
  "Skanna alla direkt": "Alle sofort scannen",
  "Skanna en sats i taget": "Einen Durchgang nach dem anderen scannen",
  "Avsluta inte (Ctrl+Q avslutar)": "Nicht beenden (Strg+Q beendet)",
@@ -296,7 +293,6 @@
  "Rund": "Rund",
  "Lins (rund, förvrängd)": "Linse (rund, verzerrt)",
  "Skanna alla nu": "Alle jetzt scannen",
- "Kom ihåg valet (ändras under Inställningar)": "Auswahl merken (änderbar unter Einstellungen)",
  "Bildspelet är slut": "Die Diashow ist zu Ende",
  "Klicka rutorna i läsordning": "Panels in Lesereihenfolge anklicken",
  "Automatisk läsordning igen": "Wieder automatische Lesereihenfolge",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Jetzt nicht scannen: Seiten werden ganz angezeigt, wie in einer Bildergalerie. Die Wahl wird für diese Datei gespeichert (Bild > Panels jetzt scannen scannt trotzdem).",
  "Skanna rutor nu": "Panels jetzt scannen",
  "Skanna inte (visa hela sidor)": "Nicht scannen (ganze Seiten zeigen)",
- "Rutskanning startad": "Panel-Scan gestartet"
+ "Rutskanning startad": "Panel-Scan gestartet",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Immer ohne Nachfrage scannen (in den Einstellungen änderbar)",
+ "Fråga innan en fil med oskannade sidor skannas": "Vor dem Scannen einer Datei mit ungescannten Seiten fragen",
+ "Utan fråga": "Ohne Nachfrage",
+ "Första sidan – tryck igen för förra filen": "Erste Seite – erneut drücken für die vorherige Datei",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Am Ende die nächste, am Anfang die vorherige Datei öffnen (zweimal drücken)"
 }

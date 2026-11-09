@@ -20,6 +20,7 @@ for f in OUT.glob("*.png"):
     f.unlink()
 app = QApplication([])
 w = MainWindow()
+w.v.set_opt("scan_ask", False)
 w.resize(1600, 900)
 w.show()
 v = w.v

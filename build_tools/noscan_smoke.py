@@ -36,14 +36,15 @@ def until(cond, s=60):
     return cond()
 
 
-def click_later(label):
-    """Clicks the button with the text label in the question box once it is open."""
+def click_later(label, always=False):
+    """Clicks the button with the text label in the question box once it is open (always: tick "Always scan")."""
     def go():
         box = QApplication.activeModalWidget()
         if not isinstance(box, QMessageBox):
             QTimer.singleShot(100, go)
             return
         seen.extend(b.text() for b in box.buttons())
+        box.checkBox().setChecked(always)
         next(b for b in box.buttons() if b.text() == label).click()
     seen = []
     QTimer.singleShot(100, go)
@@ -64,13 +65,13 @@ def main():
     from autocomix.mainwindow import MainWindow
     w = MainWindow()
     v = w.v
-    v.set_opt("detect_large", "ask")
+    res = [check("standard: fråga", v.opt("scan_ask") is True)]
     w.show()
     done = lambda: sum(v.cache.get(p) is not None for p in v.comic.pages)  # noqa: E731
 
     seen = click_later(tr("Skanna inte nu"))
     v.open(str(pages))
-    res = [check("frågan har tre val", len(seen) == 3 and tr("Skanna inte nu") in seen, str(seen)),
+    res += [check("frågan har tre val", len(seen) == 3 and tr("Skanna inte nu") in seen, str(seen)),
            check("ingen skanning startad", v.noscan and not v.detector.isRunning())]
     wait(500)
     res.append(check("inga sidor skannade", done() == 0, f"klara={done()}"))
@@ -79,7 +80,7 @@ def main():
     v.goto_page(5, animate=False)
     res.append(check("bläddring fungerar", v.page == 5, f"sida={v.page}"))
     res.append(check("valet sparat för filen", v.state.comic(pages).get("noscan") is True))
-    res.append(check("globala inställningen orörd", v.opt("detect_large") == "ask"))
+    res.append(check("globala inställningen orörd", v.opt("scan_ask") is True))
 
     v.close_comic()
     v.open(str(pages))  # no question this time: the file remembers "Don't scan now"
@@ -91,20 +92,51 @@ def main():
     res.append(check("sidorna skannas (en sats i taget enligt Fråga -> alla)", until(lambda: done() == 150), f"klara={done()}"))
 
     v.close_comic()
-    v.set_opt("detect_large", "none")
-    other = tmp / "galleri2"
-    other.mkdir()
-    for k in range(120):
-        Image.new("RGB", (400, 600), (200, 200, 200)).save(other / f"{k:03d}.png")
-    v.open(str(other))
-    res.append(check("inställningen Skanna inte: ingen fråga, ingen skanning", v.noscan and not v.detector.isRunning()))
     small = tmp / "liten"
     small.mkdir()
     for k in range(5):
         Image.new("RGB", (400, 600), (220, 220, 220)).save(small / f"{k:03d}.png")
+    seen = click_later(tr("Skanna alla nu"))
+    v.open(str(small))
+    res.append(check("få sidor: frågar också, två val", len(seen) == 2, str(seen)))
+    res.append(check("få sidor skannas efter Skanna alla", not v.noscan and v.detector.isRunning()))
     v.close_comic()
     v.open(str(small))
-    res.append(check("få sidor skannas som vanligt", not v.noscan and v.detector.isRunning()))
+    res.append(check("svaret sparat för filen: ingen ny fråga", v.state.comic(small).get("scan") == "all"))
+
+    v.close_comic()
+    other = tmp / "galleri2"
+    other.mkdir()
+    for k in range(120):
+        Image.new("RGB", (400, 600), (200, 200, 200)).save(other / f"{k:03d}.png")
+    seen = click_later(tr("Skanna alla nu"), always=True)
+    v.open(str(other))
+    res.append(check("Skanna alltid: frågan stängs av", v.opt("scan_ask") is False and v.opt("detect_large") == "all"))
+    v.close_comic()
+    v.set_opt("detect_large", "none")
+    third = tmp / "galleri3"
+    third.mkdir()
+    for k in range(120):
+        Image.new("RGB", (400, 600), (180, 180, 180)).save(third / f"{k:03d}.png")
+    v.open(str(third))
+    res.append(check("utan fråga, Skanna inte: ingen skanning", v.noscan and not v.detector.isRunning()))
+    v.set_opt("detect_large", "ask")  # value from older versions = scan all
+    v.close_comic()
+    fourth = tmp / "galleri4"
+    fourth.mkdir()
+    Image.new("RGB", (400, 600), (160, 160, 160)).save(fourth / "000.png")
+    v.open(str(fourth))
+    res.append(check("gammalt värde ask utan fråga: skannar", not v.noscan and v.detector.isRunning()))
+
+    # left twice on the first page -> previous file, on its last page (galleri3 comes before galleri4)
+    v.set_opt("guided", False)
+    v.goto_page(0, animate=False)
+    v.step(-1)
+    res.append(check("första vänster: stannar kvar", Path(v.comic.path) == fourth and v.at_start))
+    v.step(-1)
+    res.append(check("andra vänster: förra filen, sista sidan",
+                     Path(v.comic.path) == third and v.page == len(v.comic.pages) - 1,
+                     f"{Path(v.comic.path).name} sida {v.page}"))
     w.close()
     print(f"\n{sum(res)}/{len(res)} OK")
     return 0 if all(res) else 1

@@ -1080,14 +1080,15 @@ class OptionsDialog(QDialog):
         f.addRow(chk("double", tr("Dubbelsida")))
         f.addRow(chk("cover_single", tr("Omslaget visas ensamt i dubbelsidesläge")))
         f.addRow(chk("shadow", tr("Skugga i bokryggen")))
-        f.addRow(chk("auto_next_file", tr("Öppna nästa fil i mappen vid slutet")))
+        f.addRow(chk("auto_next_file", tr("Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)")))
         f.addRow(tr("Bildspel, tid per steg"), num("slideshow_ms", 100, 600000, 100, 0, tr(" ms")))
         f.addRow(tr("Bildspel, läge"), combo("slideshow_mode", [("guided", tr("Ruta för ruta (i guidat läge)")),
                                                             ("pages", tr("Sida för sida"))]))
         f.addRow(chk("slideshow_next_file", tr("Bildspelet fortsätter med nästa fil i mappen")))
         f.addRow(chk("slideshow_loop", tr("Bildspelet börjar om från början vid slutet")))
         f.addRow(tr("Sortering"), combo("sort", SORTS))
-        f.addRow(tr("Många oskannade sidor"), combo("detect_large", [("ask", tr("Fråga")), ("all", tr("Skanna alla direkt")),
+        f.addRow(chk("scan_ask", tr("Fråga innan en fil med oskannade sidor skannas")))
+        f.addRow(tr("Utan fråga"), combo("detect_large", [("all", tr("Skanna alla direkt")),
                                                                 ("batch", tr("Skanna en sats i taget")),
                                                                 ("none", tr("Skanna inte (visa hela sidor)"))]))
         f.addRow(tr("Sidor per sats"), num("detect_batch", 0, 10000, 10, 0, tr(" (0 = alltid alla)")))

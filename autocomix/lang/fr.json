@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Diaporama, durée par étape",
  "Bildspel, läge": "Diaporama, mode",
  "Sortering": "Tri",
- "Många oskannade sidor": "Nombreuses pages non analysées",
  "Sidor per sats": "Pages par lot",
  "Esc när helskärm och fönster redan är stängda": "Échap quand le plein écran et les fenêtres sont déjà fermés",
  "Läsning": "Lecture",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Mode guidé : zoomer case par case",
  "Visa hela sidan innan rutorna": "Afficher la page entière avant les cases",
  "Omslaget visas ensamt i dubbelsidesläge": "La couverture est affichée seule en mode double page",
- "Öppna nästa fil i mappen vid slutet": "Ouvrir le fichier suivant du dossier à la fin",
  "Bildspelet fortsätter med nästa fil i mappen": "Le diaporama continue avec le fichier suivant du dossier",
  "Bildspelet börjar om från början vid slutet": "Le diaporama recommence depuis le début à la fin",
  " (0 = alltid alla)": " (0 = toujours toutes)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Lisse (sauf pendant l'animation)",
  "Bästa (alltid jämn)": "Meilleure (toujours lisse)",
  "Anpassning, {side} ({mode})": "Ajustement, {side} ({mode})",
- "Fråga": "Demander",
  "Skanna alla direkt": "Tout analyser immédiatement",
  "Skanna en sats i taget": "Analyser un lot à la fois",
  "Avsluta inte (Ctrl+Q avslutar)": "Ne pas quitter (Ctrl+Q quitte)",
@@ -296,7 +293,6 @@
  "Rund": "Rond",
  "Lins (rund, förvrängd)": "Lentille (ronde, déformée)",
  "Skanna alla nu": "Tout analyser maintenant",
- "Kom ihåg valet (ändras under Inställningar)": "Mémoriser le choix (modifiable dans Paramètres)",
  "Bildspelet är slut": "Le diaporama est terminé",
  "Klicka rutorna i läsordning": "Cliquez sur les cases dans l'ordre de lecture",
  "Automatisk läsordning igen": "Ordre de lecture automatique à nouveau",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Ne pas analyser maintenant : les pages sont affichées entières, comme une galerie d'images. Le choix est enregistré pour ce fichier (Image > Analyser les cases maintenant lance quand même l'analyse).",
  "Skanna rutor nu": "Analyser les cases maintenant",
  "Skanna inte (visa hela sidor)": "Ne pas analyser (pages entières)",
- "Rutskanning startad": "Analyse des cases lancée"
+ "Rutskanning startad": "Analyse des cases lancée",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Toujours analyser sans demander (modifiable dans les Paramètres)",
+ "Fråga innan en fil med oskannade sidor skannas": "Demander avant d'analyser un fichier aux pages non analysées",
+ "Utan fråga": "Sans demander",
+ "Första sidan – tryck igen för förra filen": "Première page – appuyez à nouveau pour le fichier précédent",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Ouvrir le fichier suivant à la fin, le précédent au début (appuyer deux fois)"
 }

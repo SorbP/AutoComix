@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Apresentação, tempo por etapa",
  "Bildspel, läge": "Apresentação, modo",
  "Sortering": "Ordenação",
- "Många oskannade sidor": "Muitas páginas não analisadas",
  "Sidor per sats": "Páginas por lote",
  "Esc när helskärm och fönster redan är stängda": "Esc quando a tela cheia e as janelas já estão fechadas",
  "Läsning": "Leitura",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Modo guiado: zoom quadro a quadro",
  "Visa hela sidan innan rutorna": "Mostrar a página inteira antes dos quadros",
  "Omslaget visas ensamt i dubbelsidesläge": "A capa é mostrada sozinha no modo de página dupla",
- "Öppna nästa fil i mappen vid slutet": "Abrir o próximo arquivo da pasta ao chegar ao fim",
  "Bildspelet fortsätter med nästa fil i mappen": "A apresentação continua com o próximo arquivo da pasta",
  "Bildspelet börjar om från början vid slutet": "A apresentação recomeça do início ao chegar ao fim",
  " (0 = alltid alla)": " (0 = sempre todas)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Suave (exceto durante a animação)",
  "Bästa (alltid jämn)": "Melhor (sempre suave)",
  "Anpassning, {side} ({mode})": "Ajuste, {side} ({mode})",
- "Fråga": "Perguntar",
  "Skanna alla direkt": "Analisar todas imediatamente",
  "Skanna en sats i taget": "Analisar um lote por vez",
  "Avsluta inte (Ctrl+Q avslutar)": "Não sair (Ctrl+Q sai)",
@@ -296,7 +293,6 @@
  "Rund": "Redonda",
  "Lins (rund, förvrängd)": "Lente (redonda, distorcida)",
  "Skanna alla nu": "Analisar todas agora",
- "Kom ihåg valet (ändras under Inställningar)": "Lembrar a escolha (altere em Configurações)",
  "Bildspelet är slut": "A apresentação terminou",
  "Klicka rutorna i läsordning": "Clique nos quadros em ordem de leitura",
  "Automatisk läsordning igen": "Ordem de leitura automática novamente",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Não analisar agora: as páginas são mostradas inteiras, como uma galeria de imagens. A escolha é salva para este arquivo (Imagem > Analisar quadros agora analisa mesmo assim).",
  "Skanna rutor nu": "Analisar quadros agora",
  "Skanna inte (visa hela sidor)": "Não analisar (mostrar páginas inteiras)",
- "Rutskanning startad": "Análise de quadros iniciada"
+ "Rutskanning startad": "Análise de quadros iniciada",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Sempre escanear sem perguntar (pode ser alterado nas Configurações)",
+ "Fråga innan en fil med oskannade sidor skannas": "Perguntar antes de escanear um arquivo com páginas não escaneadas",
+ "Utan fråga": "Sem perguntar",
+ "Första sidan – tryck igen för förra filen": "Primeira página – pressione de novo para o arquivo anterior",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Abrir o próximo arquivo no fim e o anterior no início (pressionar duas vezes)"
 }

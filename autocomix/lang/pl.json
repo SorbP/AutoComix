@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Pokaz slajdów, czas na krok",
  "Bildspel, läge": "Pokaz slajdów, tryb",
  "Sortering": "Sortowanie",
- "Många oskannade sidor": "Wiele nieprzeskanowanych stron",
  "Sidor per sats": "Stron na partię",
  "Esc när helskärm och fönster redan är stängda": "Esc, gdy pełny ekran i okna są już zamknięte",
  "Läsning": "Czytanie",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Tryb prowadzony: powiększaj kadr po kadrze",
  "Visa hela sidan innan rutorna": "Pokaż całą stronę przed kadrami",
  "Omslaget visas ensamt i dubbelsidesläge": "Okładka jest wyświetlana osobno w trybie podwójnej strony",
- "Öppna nästa fil i mappen vid slutet": "Na końcu otwórz następny plik w folderze",
  "Bildspelet fortsätter med nästa fil i mappen": "Pokaz slajdów kontynuuje z następnym plikiem w folderze",
  "Bildspelet börjar om från början vid slutet": "Pokaz slajdów na końcu zaczyna od początku",
  " (0 = alltid alla)": " (0 = zawsze wszystkie)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Gładkie (poza animacją)",
  "Bästa (alltid jämn)": "Najlepsze (zawsze gładkie)",
  "Anpassning, {side} ({mode})": "Dopasowanie, {side} ({mode})",
- "Fråga": "Pytaj",
  "Skanna alla direkt": "Skanuj wszystkie od razu",
  "Skanna en sats i taget": "Skanuj po jednej partii",
  "Avsluta inte (Ctrl+Q avslutar)": "Nie zamykaj (Ctrl+Q zamyka)",
@@ -296,7 +293,6 @@
  "Rund": "Okrągła",
  "Lins (rund, förvrängd)": "Soczewka (okrągła, zniekształcona)",
  "Skanna alla nu": "Skanuj wszystkie teraz",
- "Kom ihåg valet (ändras under Inställningar)": "Zapamiętaj wybór (zmiana w Ustawieniach)",
  "Bildspelet är slut": "Pokaz slajdów zakończony",
  "Klicka rutorna i läsordning": "Klikaj kadry w kolejności czytania",
  "Automatisk läsordning igen": "Ponownie automatyczna kolejność czytania",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Nie skanuj teraz: strony są wyświetlane w całości, jak w galerii obrazów. Wybór zostaje zapisany dla tego pliku (Obraz > Skanuj kadry teraz i tak skanuje).",
  "Skanna rutor nu": "Skanuj kadry teraz",
  "Skanna inte (visa hela sidor)": "Nie skanuj (pokazuj całe strony)",
- "Rutskanning startad": "Rozpoczęto skanowanie kadrów"
+ "Rutskanning startad": "Rozpoczęto skanowanie kadrów",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Zawsze skanuj bez pytania (można zmienić w Ustawieniach)",
+ "Fråga innan en fil med oskannade sidor skannas": "Pytaj przed skanowaniem pliku z nieprzeskanowanymi stronami",
+ "Utan fråga": "Bez pytania",
+ "Första sidan – tryck igen för förra filen": "Pierwsza strona – naciśnij ponownie, aby przejść do poprzedniego pliku",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Otwieraj następny plik na końcu, poprzedni na początku (naciśnij dwa razy)"
 }

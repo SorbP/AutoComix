@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "幻灯片，每步时间",
  "Bildspel, läge": "幻灯片，模式",
  "Sortering": "排序",
- "Många oskannade sidor": "大量未扫描页面",
  "Sidor per sats": "每批页数",
  "Esc när helskärm och fönster redan är stängda": "全屏和窗口均已关闭时按 Esc",
  "Läsning": "阅读",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "引导模式：逐格缩放",
  "Visa hela sidan innan rutorna": "在分格前显示整页",
  "Omslaget visas ensamt i dubbelsidesläge": "双页模式下封面单独显示",
- "Öppna nästa fil i mappen vid slutet": "到末尾时打开文件夹中的下一个文件",
  "Bildspelet fortsätter med nästa fil i mappen": "幻灯片继续播放文件夹中的下一个文件",
  "Bildspelet börjar om från början vid slutet": "幻灯片到末尾时从头开始",
  " (0 = alltid alla)": " （0 = 始终全部）",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "平滑（动画期间除外）",
  "Bästa (alltid jämn)": "最佳（始终平滑）",
  "Anpassning, {side} ({mode})": "适应，{side}（{mode}）",
- "Fråga": "询问",
  "Skanna alla direkt": "立即全部扫描",
  "Skanna en sats i taget": "每次扫描一批",
  "Avsluta inte (Ctrl+Q avslutar)": "不退出（Ctrl+Q 退出）",
@@ -296,7 +293,6 @@
  "Rund": "圆形",
  "Lins (rund, förvrängd)": "透镜（圆形，带畸变）",
  "Skanna alla nu": "立即全部扫描",
- "Kom ihåg valet (ändras under Inställningar)": "记住选择（可在设置中更改）",
  "Bildspelet är slut": "幻灯片已结束",
  "Klicka rutorna i läsordning": "按阅读顺序点击分格",
  "Automatisk läsordning igen": "重新使用自动阅读顺序",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "暂不扫描：页面将像图片库一样完整显示。此选择会保存到该文件（图像 > 立即扫描分格 仍可扫描）。",
  "Skanna rutor nu": "立即扫描分格",
  "Skanna inte (visa hela sidor)": "不扫描（显示整页）",
- "Rutskanning startad": "已开始扫描分格"
+ "Rutskanning startad": "已开始扫描分格",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "始终扫描，不再询问（可在设置中更改）",
+ "Fråga innan en fil med oskannade sidor skannas": "扫描含未扫描页面的文件前询问",
+ "Utan fråga": "不询问时",
+ "Första sidan – tryck igen för förra filen": "第一页 – 再按一次打开上一个文件",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "在结尾打开下一个文件，在开头打开上一个文件（按两次）"
 }

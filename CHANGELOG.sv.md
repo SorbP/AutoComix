@@ -5,6 +5,18 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.22.0
+- När en fil med oskannade sidor öppnas **frågar den nu innan skanning** som standard, oavsett antal sidor: Skanna
+  alla nu, N i taget (bara när det är fler än Sidor per sats) eller Skanna inte nu. Svaret sparas för filen, så du
+  får frågan en gång per fil.
+- Frågan har en kryssruta **Skanna alltid utan att fråga**. Inställningar har **Fråga innan en fil med oskannade sidor
+  skannas** (på som standard) och **Utan fråga** (skanna alla, en sats i taget eller skanna inte), som gäller när
+  frågan är avstängd.
+- **Vänster två gånger på första sidan öppnar förra filen** i mappen, på sista sidan, på samma sätt som höger två
+  gånger på sista sidan öppnar nästa fil (inställning: Öppna nästa fil vid slutet, förra filen vid början).
+- Seriebläddraren (L) kan storleksändras fritt som andra fönster: minimera/maximera-knappar, storlekshandtag, kan göras
+  mycket mindre, och storlek och läge sparas.
+
 ## 2.21.0
 - Nytt val i frågan som kommer när en fil har många oskannade sidor: **Skanna inte nu**. Sidorna visas hela, som i ett
   bildgalleri, och ingen rutdetektering körs. Tänkt för mappar och arkiv med hela bilder utan serierutor.

@@ -10,8 +10,9 @@ The full feature list and how it maps to CDisplayEx is in [FEATURES.md](FEATURES
   The hybrid logic is in
   `autocomix/geometry.py`. The nearest pages are detected first and the result is cached
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
-- More than 100 unscanned pages (adjustable): asks whether to scan all now or 100 at a time; the next 100 are scanned
-  when you are 10 pages from the end of the scanned ones (Settings → Many unscanned pages / Pages per batch).
+- A file with unscanned pages: asks once per file whether to scan all now, 100 at a time (more than 100 pages,
+  adjustable) or not at all; the next 100 are scanned when you are 10 pages from the end of the scanned ones. *Always
+  scan without asking* in the question, or Settings → Ask before scanning / Without asking / Pages per batch.
   *Don't scan now* shows the pages whole without detection (image galleries without panels), is remembered for the
   file, and *Image → Scan panels now* scans anyway.
 - A `.cbxy` next to the comic (e.g. corrected in `cbxy-editor`) takes precedence over the cache.

@@ -47,6 +47,7 @@ def main():
     detector.detect_bytes = lambda data, ml_ok=True: ([], [], ml_ok)  # fast fake detection: the test is about the batches
     from autocomix.mainwindow import MainWindow
     w = MainWindow()
+    w.v.set_opt("scan_ask", False)  # the scan question is tested in noscan_smoke
     v = w.v
     v.set_opt("detect_large", "batch")
     w.show()

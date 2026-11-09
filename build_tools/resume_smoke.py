@@ -56,6 +56,7 @@ BOXES = [{"x": .005, "y": .01, "w": .49, "h": .98}, {"x": .505, "y": .01, "w": .
 
 
 def start(path=None, size=(1280, 800)):
+    store.State().set_setting("scan_ask", False)  # the scan question is tested in noscan_smoke
     w = MainWindow(path)
     w.resize(*size)
     w.show()

@@ -10,8 +10,9 @@ Hela funktionslistan och hur den motsvarar CDisplayEx finns i [FEATURES.sv.md](F
   Hybridlogiken finns i
   `autocomix/geometry.py`. Närmaste sidor detekteras först och resultatet cachas
   (Windows `%LOCALAPPDATA%\AutoComix`, Linux `~/.local/share/AutoComix`).
-- Fler än 100 oskannade sidor (ställbart): frågar om alla ska skannas nu eller 100 i taget; nästa 100 skannas
-  när du är 10 sidor från slutet av de skannade (Inställningar → Många oskannade sidor / Sidor per sats).
+- En fil med oskannade sidor: frågar en gång per fil om alla ska skannas nu, 100 i taget (fler än 100 sidor,
+  ställbart) eller inte alls; nästa 100 skannas när du är 10 sidor från slutet av de skannade. *Skanna alltid utan
+  att fråga* i frågan, eller Inställningar → Fråga innan skanning / Utan fråga / Sidor per sats.
   *Skanna inte nu* visar sidorna hela utan detektering (bildgallerier utan rutor), sparas för filen, och
   *Bild → Skanna rutor nu* skannar ändå.
 - En `.cbxy` bredvid serien (t.ex. rättad i `cbxy-editor`) går före cachen.

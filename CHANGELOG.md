@@ -5,6 +5,18 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.22.0
+- Opening a file with unscanned pages now **asks before scanning** by default, whatever the number of pages:
+  Scan all now, N at a time (only offered when there are more than Pages per batch) or Don't scan now. The answer is
+  remembered for the file, so you are asked once per file.
+- The question has a checkbox **Always scan without asking**. Settings has **Ask before scanning a file with unscanned
+  pages** (on by default) and **Without asking** (scan all, a batch at a time, or don't scan), used when the question
+  is off.
+- **Left twice on the first page opens the previous file** in the folder, on its last page, the same way right twice
+  on the last page opens the next file (setting: Open the next file at the end, the previous file at the start).
+- The comic browser (L) can be resized freely like other windows: minimize/maximize buttons, a size grip, it can be
+  made much smaller, and its size and position are remembered.
+
 ## 2.21.0
 - New choice in the question that appears when a file has many unscanned pages: **Don't scan now**. The pages are
   shown whole, like an image gallery, and no panel detection runs. Meant for folders and archives of whole pictures

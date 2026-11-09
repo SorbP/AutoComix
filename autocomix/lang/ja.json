@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "スライドショー、1 ステップの時間",
  "Bildspel, läge": "スライドショー、モード",
  "Sortering": "並べ替え",
- "Många oskannade sidor": "未スキャンのページが多い場合",
  "Sidor per sats": "1 回にスキャンするページ数",
  "Esc när helskärm och fönster redan är stängda": "全画面とウィンドウがすでに閉じているときの Esc",
  "Läsning": "読書",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "ガイドモード: コマごとにズーム",
  "Visa hela sidan innan rutorna": "コマの前にページ全体を表示",
  "Omslaget visas ensamt i dubbelsidesläge": "見開きモードで表紙を単独で表示",
- "Öppna nästa fil i mappen vid slutet": "最後まで行ったらフォルダー内の次のファイルを開く",
  "Bildspelet fortsätter med nästa fil i mappen": "スライドショーはフォルダー内の次のファイルに進む",
  "Bildspelet börjar om från början vid slutet": "スライドショーは最後まで行ったら最初から再開する",
  " (0 = alltid alla)": " (0 = 常にすべて)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "滑らか (アニメーション中を除く)",
  "Bästa (alltid jämn)": "最高 (常に滑らか)",
  "Anpassning, {side} ({mode})": "表示合わせ、{side} ({mode})",
- "Fråga": "確認する",
  "Skanna alla direkt": "すぐにすべてスキャン",
  "Skanna en sats i taget": "1 回分ずつスキャン",
  "Avsluta inte (Ctrl+Q avslutar)": "終了しない (Ctrl+Q で終了)",
@@ -296,7 +293,6 @@
  "Rund": "円形",
  "Lins (rund, förvrängd)": "レンズ (円形、歪みあり)",
  "Skanna alla nu": "今すぐすべてスキャン",
- "Kom ihåg valet (ändras under Inställningar)": "選択を記憶する (設定で変更可能)",
  "Bildspelet är slut": "スライドショーが終了しました",
  "Klicka rutorna i läsordning": "読む順番にコマをクリックしてください",
  "Automatisk läsordning igen": "読む順番を再び自動に",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "今はスキャンしない: ページは画像ギャラリーのように丸ごと表示されます。この選択はこのファイルに保存されます(画像 > 今すぐコマをスキャン でいつでもスキャンできます)。",
  "Skanna rutor nu": "今すぐコマをスキャン",
  "Skanna inte (visa hela sidor)": "スキャンしない(ページ全体を表示)",
- "Rutskanning startad": "コマのスキャンを開始しました"
+ "Rutskanning startad": "コマのスキャンを開始しました",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "確認せずに常にスキャン（設定で変更可）",
+ "Fråga innan en fil med oskannade sidor skannas": "未スキャンのページがあるファイルをスキャンする前に確認する",
+ "Utan fråga": "確認しない場合",
+ "Första sidan – tryck igen för förra filen": "最初のページ – もう一度押すと前のファイル",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "最後で次のファイル、最初で前のファイルを開く（2回押す）"
 }

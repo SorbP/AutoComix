@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Слайд-шоу, время на шаг",
  "Bildspel, läge": "Слайд-шоу, режим",
  "Sortering": "Сортировка",
- "Många oskannade sidor": "Много непросканированных страниц",
  "Sidor per sats": "Страниц за раз",
  "Esc när helskärm och fönster redan är stängda": "Esc, когда полноэкранный режим и окна уже закрыты",
  "Läsning": "Чтение",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Режим навигации: увеличение кадр за кадром",
  "Visa hela sidan innan rutorna": "Показать всю страницу перед кадрами",
  "Omslaget visas ensamt i dubbelsidesläge": "Обложка показывается отдельно в режиме разворота",
- "Öppna nästa fil i mappen vid slutet": "В конце открывать следующий файл в папке",
  "Bildspelet fortsätter med nästa fil i mappen": "Слайд-шоу продолжается со следующего файла в папке",
  "Bildspelet börjar om från början vid slutet": "Слайд-шоу в конце начинается сначала",
  " (0 = alltid alla)": " (0 = всегда все)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Плавное (кроме времени анимации)",
  "Bästa (alltid jämn)": "Наилучшее (всегда плавное)",
  "Anpassning, {side} ({mode})": "Вписывание, {side} ({mode})",
- "Fråga": "Спрашивать",
  "Skanna alla direkt": "Сканировать все сразу",
  "Skanna en sats i taget": "Сканировать по одной партии",
  "Avsluta inte (Ctrl+Q avslutar)": "Не выходить (Ctrl+Q — выход)",
@@ -296,7 +293,6 @@
  "Rund": "Круглая",
  "Lins (rund, förvrängd)": "Линза (круглая, с искажением)",
  "Skanna alla nu": "Сканировать все сейчас",
- "Kom ihåg valet (ändras under Inställningar)": "Запомнить выбор (меняется в Настройках)",
  "Bildspelet är slut": "Слайд-шоу закончилось",
  "Klicka rutorna i läsordning": "Щёлкайте кадры в порядке чтения",
  "Automatisk läsordning igen": "Снова автоматический порядок чтения",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Не сканировать сейчас: страницы показываются целиком, как в галерее изображений. Выбор сохраняется для этого файла (Изображение > Сканировать панели сейчас всё равно запускает сканирование).",
  "Skanna rutor nu": "Сканировать панели сейчас",
  "Skanna inte (visa hela sidor)": "Не сканировать (показывать целые страницы)",
- "Rutskanning startad": "Сканирование панелей запущено"
+ "Rutskanning startad": "Сканирование панелей запущено",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Всегда сканировать без вопроса (меняется в Настройках)",
+ "Fråga innan en fil med oskannade sidor skannas": "Спрашивать перед сканированием файла с несканированными страницами",
+ "Utan fråga": "Без вопроса",
+ "Första sidan – tryck igen för förra filen": "Первая страница – нажмите ещё раз для предыдущего файла",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Открывать следующий файл в конце, предыдущий в начале (нажать дважды)"
 }

@@ -21,6 +21,7 @@ def one(code):
     i18n.setup(app, code)
     from autocomix.mainwindow import MainWindow, OptionsDialog
     w = MainWindow()
+    w.v.set_opt("scan_ask", False)  # the scan question is tested in noscan_smoke
     w.show()
     menus = [m.title() for m in w.menus]
     OptionsDialog(w).close()

@@ -32,6 +32,7 @@ def main():
     im.save(tmp / "00.png")
     res = []
     w = MainWindow()
+    w.v.set_opt("scan_ask", False)  # the scan question is tested in noscan_smoke
     v = w.v
     w.resize(1200, 700)
     w.show()

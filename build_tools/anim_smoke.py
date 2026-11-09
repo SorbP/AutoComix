@@ -71,6 +71,7 @@ def main():
 
     # 2. visning
     v = Viewer(State())
+    v.state.set_setting("scan_ask", False)
     v.state.set_setting("guided", False)
     v.state.set_setting("anim_play", True)
     v.state.set_setting("anim_speed", 1.0)

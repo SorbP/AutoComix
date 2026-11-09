@@ -33,7 +33,7 @@ DEFAULTS = {
     "double": False, "cover_single": True, "shadow": True,
     "rotation": 0, "auto_color": False, "gamma": 1.0, "vibrance": 0.0,
     "bg": "#0c0c0c", "quality": "smooth", "anim": True, "anim_ms": 320,
-    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "detect_large": "ask", "detect_batch": 100, "language": "auto", "auto_next_file": True, "history": True, "clear_history_on_exit": False,
+    "slideshow_ms": 5000, "slideshow_mode": "guided", "slideshow_next_file": False, "slideshow_loop": False, "scan_ask": True, "detect_large": "all", "detect_batch": 100, "language": "auto", "auto_next_file": True, "history": True, "clear_history_on_exit": False,
     "sort": "natural",
     "esc_quit": "never", "hide_cursor": True,
     "show_pagenum": True, "show_progress": True, "mag_size": 320, "mag_zoom": 2.0,
@@ -155,7 +155,7 @@ class Viewer(QWidget):
         self.msg, self.progress = "", (0, 0)
         self.drag = None
         self.wheel_acc = 0
-        self.at_end = False
+        self.at_end = self.at_start = False
         self.mag_on = self.mag_hold = False
         self.edit, self.edit_drag, self.edit_undo, self.edit_redo = False, None, [], []  # the steps = lists of (page, panels)
         self.edit_grab = None  # (page, index, edges, original panel, start point) during resize/move
@@ -224,7 +224,8 @@ class Viewer(QWidget):
         self.update()
 
     # ---------- serie ----------
-    def open(self, path, password=None):
+    def open(self, path, password=None, at_last=False):
+        """at_last: start on the last page (going back from the first page of the next file)."""
         path = Path(path)
         first = None
         if path.is_file() and path.suffix.lower() in IMAGE_EXT:  # single image: open the folder and start at that image
@@ -248,6 +249,8 @@ class Viewer(QWidget):
         self.resume_panel = saved.get("panel") if not first else None
         if first:
             start = next((i for i, n in enumerate(comic.pages) if Path(n).name == first), start)
+        if at_last:
+            start, self.resume_panel = len(comic.pages) - 1, None
         if self.opt("history"):
             self.state.add_history(path, len(comic.pages))
         self.detector = Detector(comic, self.cache)
@@ -261,7 +264,7 @@ class Viewer(QWidget):
         if not self.noscan:
             self.detector.start()
         self._layout()
-        self.goto_page(start, forward=True, animate=False)
+        self.goto_page(start, forward=not at_last, animate=False)
         self.flash(f"{comic.title}  (" + tr("{n} sidor").format(n=len(comic.pages)) + ")")
         self.changed.emit()
         return True
@@ -322,7 +325,7 @@ class Viewer(QWidget):
         self.changed.emit()
         self.update()
 
-    def sibling(self, step):
+    def sibling(self, step, at_last=False):
         if not self.comic:
             return
         sib = self.comic.siblings()
@@ -331,7 +334,7 @@ class Viewer(QWidget):
         except ValueError:
             return
         if 0 <= i + step < len(sib):
-            self.open(sib[i + step])
+            self.open(sib[i + step], at_last=at_last)
         else:
             self.flash(tr("Ingen fler serie i mappen"))
 
@@ -500,7 +503,7 @@ class Viewer(QWidget):
             return
         self.custom = None
         self.free = False
-        self.at_end = False
+        self.at_end = self.at_start = False
         self.order_pick = None
         self.sp = max(0, min(s, len(self.spreads) - 1))
         self.page = self.spreads[self.sp][0]
@@ -545,6 +548,7 @@ class Viewer(QWidget):
         n = self.pidx + d
         if 0 <= n < len(t):
             self.pidx = n
+            self.at_end = self.at_start = False
             self._retarget()
             self.changed.emit()
         elif 0 <= self.sp + d < len(self.spreads):
@@ -557,6 +561,13 @@ class Viewer(QWidget):
             else:
                 self.at_end = True
                 self.flash(tr("Slut på serien – tryck igen för nästa fil"))
+        elif self.at_start and self.opt("auto_next_file"):
+            self.at_start = False
+            self.slideshow.stop()
+            self.sibling(-1, at_last=True)
+        elif self.opt("auto_next_file"):
+            self.at_start = True
+            self.flash(tr("Första sidan – tryck igen för förra filen"))
         else:
             self.flash(tr("Första sidan"))
 
@@ -1235,39 +1246,49 @@ class Viewer(QWidget):
         self._retarget()
 
     def _scan_mode(self, comic):
-        """"all", "batch" or "none" (no scanning, whole pages). More unscanned pages than detect_batch:
-        asks if detect_large=ask. "Don't scan now" is remembered for the file (noscan in state)."""
-        if self.state.comic(comic.path).get("noscan"):
+        """"all", "batch" or "none" (no scanning, whole pages). By default asks once per file with unscanned pages
+        (scan_ask); the answer is remembered for the file. Without the question detect_large decides."""
+        c = self.state.comic(comic.path)
+        if c.get("noscan"):
             return "none"
         n = int(self.opt("detect_batch"))
-        mode = self.opt("detect_large")
-        if n <= 0 or mode == "all":
-            return "all"
         left = sum(self.cache.get(p) is None for p in comic.pages)
-        if left <= n:
-            return "all"
-        if mode in ("batch", "none"):
-            return mode
+        many = 0 < n < left
+        mode = c.get("scan")
+        if mode not in ("all", "batch"):
+            if left and self.opt("scan_ask"):
+                return self._ask_scan(comic, left, n if many else 0)
+            mode = self.opt("detect_large")
+            mode = mode if mode in ("all", "batch", "none") else "all"  # "ask" from older versions
+        return "all" if mode == "batch" and not many else mode
+
+    def _ask_scan(self, comic, left, n):
+        """The question before scanning. n > 0 offers "n at a time"."""
         from PySide6.QtWidgets import QCheckBox, QMessageBox
-        box = QMessageBox(QMessageBox.Icon.Question, "AutoComix",
-                          tr("{title} har {left} sidor som inte är skannade efter rutor.").format(title=comic.title, left=left)
-                          + "\n\n" + tr("Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
-                                       "av de skannade)?").format(n=n), parent=self.window())
+        text = tr("{title} har {left} sidor som inte är skannade efter rutor.").format(title=comic.title, left=left)
+        if n:
+            text += "\n\n" + tr("Skanna alla nu, eller {n} i taget (nästa {n} skannas när du närmar dig slutet "
+                                 "av de skannade)?").format(n=n)
+        box = QMessageBox(QMessageBox.Icon.Question, "AutoComix", text, parent=self.window())
         box.setInformativeText(tr("Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här "
                                   "filen (Bild > Skanna rutor nu skannar ändå)."))
         every = box.addButton(tr("Skanna alla nu"), QMessageBox.ButtonRole.AcceptRole)
-        batch = box.addButton(tr("{n} i taget").format(n=n), QMessageBox.ButtonRole.RejectRole)
+        batch = box.addButton(tr("{n} i taget").format(n=n), QMessageBox.ButtonRole.RejectRole) if n else None
         none = box.addButton(tr("Skanna inte nu"), QMessageBox.ButtonRole.DestructiveRole)
         box.setDefaultButton(every)
-        keep = QCheckBox(tr("Kom ihåg valet (ändras under Inställningar)"))
-        box.setCheckBox(keep)
+        always = QCheckBox(tr("Skanna alltid utan att fråga (ändras under Inställningar)"))
+        box.setCheckBox(always)
         box.exec()
         hit = box.clickedButton()
-        mode = "none" if hit is none else "batch" if hit is batch else "all"
+        mode = "none" if hit is none else "batch" if batch is not None and hit is batch else "all"
+        if always.isChecked():
+            self.set_opt("scan_ask", False)
+            self.set_opt("detect_large", "batch" if mode == "batch" else "all")
+            mode = "batch" if mode == "batch" else "all"
         if mode == "none":
             self.state.set_noscan(comic.path, True)
-        if keep.isChecked():
-            self.set_opt("detect_large", mode)
+        else:
+            self.state.set_scan(comic.path, mode)
         return mode
 
     def scan_now(self):
@@ -1277,7 +1298,9 @@ class Viewer(QWidget):
         self.noscan = False
         self.state.set_noscan(self.comic.path, False)
         left = sum(self.cache.get(p) is None for p in self.comic.pages)
-        if self.opt("detect_large") == "batch" and 0 < int(self.opt("detect_batch")) < left:
+        batch = self.opt("detect_large") == "batch" and 0 < int(self.opt("detect_batch")) < left
+        self.state.set_scan(self.comic.path, "batch" if batch else "all")
+        if batch:
             self.detector.set_batch(self.opt("detect_batch"))
         self.detector.start()
         self.flash(tr("Rutskanning startad"))

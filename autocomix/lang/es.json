@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Presentación, tiempo por paso",
  "Bildspel, läge": "Presentación, modo",
  "Sortering": "Orden",
- "Många oskannade sidor": "Muchas páginas sin escanear",
  "Sidor per sats": "Páginas por lote",
  "Esc när helskärm och fönster redan är stängda": "Esc cuando la pantalla completa y las ventanas ya están cerradas",
  "Läsning": "Lectura",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Modo guiado: ampliar viñeta a viñeta",
  "Visa hela sidan innan rutorna": "Mostrar la página entera antes de las viñetas",
  "Omslaget visas ensamt i dubbelsidesläge": "La portada se muestra sola en modo de doble página",
- "Öppna nästa fil i mappen vid slutet": "Abrir el siguiente archivo de la carpeta al final",
  "Bildspelet fortsätter med nästa fil i mappen": "La presentación continúa con el siguiente archivo de la carpeta",
  "Bildspelet börjar om från början vid slutet": "La presentación vuelve a empezar desde el principio al final",
  " (0 = alltid alla)": " (0 = siempre todas)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Suave (excepto durante la animación)",
  "Bästa (alltid jämn)": "Mejor (siempre suave)",
  "Anpassning, {side} ({mode})": "Ajuste, {side} ({mode})",
- "Fråga": "Preguntar",
  "Skanna alla direkt": "Escanear todas de inmediato",
  "Skanna en sats i taget": "Escanear un lote cada vez",
  "Avsluta inte (Ctrl+Q avslutar)": "No salir (Ctrl+Q sale)",
@@ -296,7 +293,6 @@
  "Rund": "Redonda",
  "Lins (rund, förvrängd)": "Lente (redonda, distorsionada)",
  "Skanna alla nu": "Escanear todas ahora",
- "Kom ihåg valet (ändras under Inställningar)": "Recordar la elección (se cambia en Ajustes)",
  "Bildspelet är slut": "La presentación ha terminado",
  "Klicka rutorna i läsordning": "Haz clic en las viñetas en orden de lectura",
  "Automatisk läsordning igen": "Orden de lectura automático de nuevo",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "No escanear ahora: las páginas se muestran enteras, como una galería de imágenes. La elección se guarda para este archivo (Imagen > Escanear viñetas ahora escanea igualmente).",
  "Skanna rutor nu": "Escanear viñetas ahora",
  "Skanna inte (visa hela sidor)": "No escanear (mostrar páginas enteras)",
- "Rutskanning startad": "Escaneo de viñetas iniciado"
+ "Rutskanning startad": "Escaneo de viñetas iniciado",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Escanear siempre sin preguntar (se puede cambiar en Ajustes)",
+ "Fråga innan en fil med oskannade sidor skannas": "Preguntar antes de escanear un archivo con páginas sin escanear",
+ "Utan fråga": "Sin preguntar",
+ "Första sidan – tryck igen för förra filen": "Primera página – pulsa de nuevo para el archivo anterior",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Abrir el archivo siguiente al final y el anterior al principio (pulsar dos veces)"
 }

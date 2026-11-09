@@ -153,7 +153,6 @@
  "Bildspel, tid per steg": "Presentazione, tempo per passo",
  "Bildspel, läge": "Presentazione, modalità",
  "Sortering": "Ordinamento",
- "Många oskannade sidor": "Molte pagine non analizzate",
  "Sidor per sats": "Pagine per blocco",
  "Esc när helskärm och fönster redan är stängda": "Esc quando lo schermo intero e le finestre sono già chiusi",
  "Läsning": "Lettura",
@@ -228,7 +227,6 @@
  "Guidat läge: zooma ruta för ruta": "Modalità guidata: zoom vignetta per vignetta",
  "Visa hela sidan innan rutorna": "Mostra la pagina intera prima delle vignette",
  "Omslaget visas ensamt i dubbelsidesläge": "La copertina viene mostrata da sola in modalità doppia pagina",
- "Öppna nästa fil i mappen vid slutet": "Apri il file successivo nella cartella alla fine",
  "Bildspelet fortsätter med nästa fil i mappen": "La presentazione continua con il file successivo nella cartella",
  "Bildspelet börjar om från början vid slutet": "La presentazione ricomincia dall'inizio alla fine",
  " (0 = alltid alla)": " (0 = sempre tutte)",
@@ -263,7 +261,6 @@
  "Jämn (utom under animering)": "Uniforme (tranne durante l'animazione)",
  "Bästa (alltid jämn)": "Migliore (sempre uniforme)",
  "Anpassning, {side} ({mode})": "Adattamento, {side} ({mode})",
- "Fråga": "Chiedi",
  "Skanna alla direkt": "Analizza tutte subito",
  "Skanna en sats i taget": "Analizza un blocco alla volta",
  "Avsluta inte (Ctrl+Q avslutar)": "Non uscire (Ctrl+Q esce)",
@@ -296,7 +293,6 @@
  "Rund": "Rotonda",
  "Lins (rund, förvrängd)": "Lente (rotonda, distorta)",
  "Skanna alla nu": "Analizza tutte ora",
- "Kom ihåg valet (ändras under Inställningar)": "Ricorda la scelta (modificabile in Impostazioni)",
  "Bildspelet är slut": "La presentazione è terminata",
  "Klicka rutorna i läsordning": "Clicca le vignette in ordine di lettura",
  "Automatisk läsordning igen": "Di nuovo ordine di lettura automatico",
@@ -369,5 +365,10 @@
  "Skanna inte nu: sidorna visas hela, som i ett bildgalleri. Valet sparas för den här filen (Bild > Skanna rutor nu skannar ändå).": "Non analizzare ora: le pagine vengono mostrate intere, come una galleria di immagini. La scelta viene salvata per questo file (Immagine > Analizza vignette ora analizza comunque).",
  "Skanna rutor nu": "Analizza vignette ora",
  "Skanna inte (visa hela sidor)": "Non analizzare (mostra pagine intere)",
- "Rutskanning startad": "Analisi delle vignette avviata"
+ "Rutskanning startad": "Analisi delle vignette avviata",
+ "Skanna alltid utan att fråga (ändras under Inställningar)": "Analizza sempre senza chiedere (modificabile nelle Impostazioni)",
+ "Fråga innan en fil med oskannade sidor skannas": "Chiedi prima di analizzare un file con pagine non analizzate",
+ "Utan fråga": "Senza chiedere",
+ "Första sidan – tryck igen för förra filen": "Prima pagina – premi di nuovo per il file precedente",
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Apri il file successivo alla fine, il precedente all'inizio (premi due volte)"
 }

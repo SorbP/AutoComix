@@ -341,7 +341,13 @@ class BrowserDialog(QDialog):
         self.choice = None
         self.setWindowTitle(tr("Öppna serie"))
         self.setAcceptDrops(True)
+        # like an ordinary window: minimize/maximize buttons, a size grip, free resizing; the size is remembered
+        self.setWindowFlags(self.windowFlags() | Qt.WindowType.WindowMinMaxButtonsHint)
+        self.setSizeGripEnabled(True)
         self.resize(1300, 800)
+        g = state.setting("browser_geometry")
+        if g:
+            self.restoreGeometry(QByteArray.fromBase64(g.encode()))
         st = self.style()
 
         self.dirs = QFileSystemModel(self)
@@ -415,8 +421,9 @@ class BrowserDialog(QDialog):
         bb.accepted.connect(lambda: self._activate(self.sel) if self.sel else None)
         bb.rejected.connect(self.reject)
         bottom = QHBoxLayout()
-        bottom.addWidget(QLabel(tr("Dubbelklicka för att öppna, eller dra in filer hit.")))
-        bottom.addStretch()
+        hint = QLabel(tr("Dubbelklicka för att öppna, eller dra in filer hit."), wordWrap=True)
+        hint.setMinimumWidth(40)  # may wrap/shrink so the window can be made small
+        bottom.addWidget(hint, 1)
         bottom.addWidget(self.open_dir)
         bottom.addWidget(bb)
 
@@ -514,6 +521,7 @@ class BrowserDialog(QDialog):
 
     def done(self, r):
         self.state.set_setting("browser_split", self.split.sizes())
+        self.state.set_setting("browser_geometry", bytes(self.saveGeometry().toBase64()).decode())
         self.grid.shutdown()
         self.pool.clear()
         self.pool.waitForDone(3000)
