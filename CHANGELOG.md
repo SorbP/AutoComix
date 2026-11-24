@@ -5,6 +5,16 @@
 Every version has a tag (`vX.Y.Z`) and, from 2.1.0, a release on GitHub with ready-built files.
 The program was called PanelView up to 2.15.0.
 
+## 2.23.0
+- New in the right-click menu (and the File menu): **Image info…** (Ctrl+Shift+I), **Show file in folder**
+  (Ctrl+Shift+L) and **Open in Explorer**.
+- Image info shows the file, page, dimensions, format and file size, and all metadata in the image: Stable Diffusion
+  parameters (A1111/Forge "parameters" in PNG, EXIF UserComment in JPG/WebP), ComfyUI prompt/workflow (as indented
+  JSON) and other EXIF data. **Copy all** copies the text.
+- Show file in folder opens the comic browser (L) in the folder of the file, with the file selected.
+- Right-click in the comic browser's file list: **Open** and **Open in Explorer** (Windows Explorer opens with the file
+  selected).
+
 ## 2.22.0
 - Opening a file with unscanned pages now **asks before scanning** by default, whatever the number of pages:
   Scan all now, N at a time (only offered when there are more than Pages per batch) or Don't scan now. The answer is

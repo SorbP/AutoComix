@@ -370,5 +370,20 @@
  "Fråga innan en fil med oskannade sidor skannas": "未スキャンのページがあるファイルをスキャンする前に確認する",
  "Utan fråga": "確認しない場合",
  "Första sidan – tryck igen för förra filen": "最初のページ – もう一度押すと前のファイル",
- "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "最後で次のファイル、最初で前のファイルを開く（2回押す）"
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "最後で次のファイル、最初で前のファイルを開く（2回押す）",
+ "Öppna i Utforskaren": "エクスプローラーで開く",
+ "Bildinfo": "画像情報",
+ "Kopiera allt": "すべてコピー",
+ "Ingen metadata i bilden.": "画像にメタデータはありません。",
+ "Visa fil i mapp": "フォルダーでファイルを表示",
+ "Namn": "名前",
+ "Fil": "ファイル",
+ "Sida": "ページ",
+ "I": "場所",
+ "Fel": "エラー",
+ "Mått": "寸法",
+ "Format": "形式",
+ "Storlek": "サイズ",
+ "Bildrutor": "フレーム",
+ "Bildinfo…": "画像情報…"
 }

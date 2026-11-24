@@ -860,6 +860,15 @@ class Viewer(QWidget):
             return None, None
         return self.comic.read(self.page), Path(self.comic.pages[self.page]).name
 
+    def current_file(self):
+        """The file on disk for the current page: the image itself in a folder, otherwise the archive/pdf."""
+        if not self.comic:
+            return None
+        root = getattr(self.comic, "root", None)
+        if root is not None and self.comic.path.is_dir():
+            return str(Path(root) / self.comic.pages[self.page])
+        return str(self.comic.path)
+
     # ---------- rendering ----------
     def area_h(self):
         """The height the page is shown in: the thumbnail bar and slider take space at the bottom instead of covering the panel."""

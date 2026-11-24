@@ -370,5 +370,20 @@
  "Fråga innan en fil med oskannade sidor skannas": "扫描含未扫描页面的文件前询问",
  "Utan fråga": "不询问时",
  "Första sidan – tryck igen för förra filen": "第一页 – 再按一次打开上一个文件",
- "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "在结尾打开下一个文件，在开头打开上一个文件（按两次）"
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "在结尾打开下一个文件，在开头打开上一个文件（按两次）",
+ "Öppna i Utforskaren": "在资源管理器中打开",
+ "Bildinfo": "图像信息",
+ "Kopiera allt": "全部复制",
+ "Ingen metadata i bilden.": "图像中没有元数据。",
+ "Visa fil i mapp": "在文件夹中显示文件",
+ "Namn": "名称",
+ "Fil": "文件",
+ "Sida": "页",
+ "I": "位于",
+ "Fel": "错误",
+ "Mått": "尺寸",
+ "Format": "格式",
+ "Storlek": "大小",
+ "Bildrutor": "帧数",
+ "Bildinfo…": "图像信息…"
 }

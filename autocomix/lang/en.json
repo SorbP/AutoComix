@@ -370,5 +370,20 @@
  "Fråga innan en fil med oskannade sidor skannas": "Ask before scanning a file with unscanned pages",
  "Utan fråga": "Without asking",
  "Första sidan – tryck igen för förra filen": "First page – press again for the previous file",
- "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Open the next file at the end, the previous file at the start (press twice)"
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Open the next file at the end, the previous file at the start (press twice)",
+ "Öppna i Utforskaren": "Open in Explorer",
+ "Bildinfo": "Image info",
+ "Kopiera allt": "Copy all",
+ "Ingen metadata i bilden.": "No metadata in the image.",
+ "Visa fil i mapp": "Show file in folder",
+ "Namn": "Name",
+ "Fil": "File",
+ "Sida": "Page",
+ "I": "In",
+ "Fel": "Error",
+ "Mått": "Dimensions",
+ "Format": "Format",
+ "Storlek": "Size",
+ "Bildrutor": "Frames",
+ "Bildinfo…": "Image info…"
 }

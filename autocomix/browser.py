@@ -335,7 +335,7 @@ class _PageGrid(QListWidget):
 class BrowserDialog(QDialog):
     """Pick a comic (folder, archive, pdf or image). The result is in .choice."""
 
-    def __init__(self, parent, state, start_dir):
+    def __init__(self, parent, state, start_dir, select=None):
         super().__init__(parent)
         self.state = state
         self.choice = None
@@ -442,7 +442,35 @@ class BrowserDialog(QDialog):
         self.stack.setCurrentIndex(int(self.pages_btn.isChecked()))
         g = state.setting("browser_split")
         self.split.setSizes(g if g else [260, 600, 440])
+        self.list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.list.customContextMenuRequested.connect(self._list_menu)
         self.go(start_dir)
+        if select:
+            self._want = str(Path(select))  # selected when the folder has been read (QFileSystemModel is async)
+            self.files.directoryLoaded.connect(self._select_wanted)
+            self._select_wanted()
+
+    def _select_wanted(self, *_):
+        ix = self.files.index(getattr(self, "_want", "") or "")
+        if ix.isValid() and ix.parent() == self.list.rootIndex():
+            self._want = None
+            self.list.setCurrentIndex(ix)
+            self.list.scrollTo(ix)
+            self.list.setFocus()
+
+    def _list_menu(self, pos):
+        """Right-click in the file list: open, Open in Explorer."""
+        ix = self.list.indexAt(pos)
+        path = self.files.filePath(ix) if ix.isValid() else self.cur
+        if not path:
+            return
+        from PySide6.QtWidgets import QMenu
+        from .imageinfo import open_in_explorer
+        m = QMenu(self)
+        if ix.isValid():
+            m.addAction(tr("Öppna"), lambda: self._activate(path))
+        m.addAction(tr("Öppna i Utforskaren"), lambda: open_in_explorer(path))
+        m.exec(self.list.viewport().mapToGlobal(pos))
 
     def go(self, d):
         d = Path(d)

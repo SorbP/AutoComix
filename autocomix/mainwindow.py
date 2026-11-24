@@ -228,6 +228,9 @@ class MainWindow(QMainWindow):
         A("order_xy", tr("Läsordning: kolumn bredvid hög ruta först (4-6-5 i stället för 4-5-6)"), [],
           lambda: self._toggle("order_xy"), check=lambda: v.opt("order_xy"))
         A("scan_now", tr("Skanna rutor nu"), [], v.scan_now)
+        A("img_info", tr("Bildinfo…"), ["Ctrl+Shift+I"], self.image_info)
+        A("show_in_folder", tr("Visa fil i mapp"), ["Ctrl+Shift+L"], self.show_in_folder)
+        A("explorer", tr("Öppna i Utforskaren"), [], lambda: self._explorer())
         A("bm_add", tr("Lägg till bokmärke…"), ["Ctrl+B"], self.add_bookmark)
         A("bm_manage", tr("Hantera bokmärken…"), ["Ctrl+Shift+B"], self.manage_bookmarks)
         # Settings / help
@@ -252,6 +255,7 @@ class MainWindow(QMainWindow):
         self.recent_menu = m.addMenu(tr("Öppna senaste"))
         self.recent_menu.aboutToShow.connect(self._fill_recent)
         for k in ("resume", "history", None, "next_file", "prev_file", None, "save_page", "copy_page", "print", None,
+                  "img_info", "show_in_folder", "explorer", None,
                   "close_file", "clear_history", None, "exit"):
             m.addSeparator() if k is None else m.addAction(a[k])
         m = mb.addMenu(tr("&Navigera"))
@@ -351,7 +355,7 @@ class MainWindow(QMainWindow):
                 a.setChecked(bool(c()))
         has = self.v.comic is not None
         for k in ("save_page", "copy_page", "print", "close_file", "next_file", "prev_file", "goto", "thumbs",
-                  "slideshow", "bm_add", "rtl"):
+                  "slideshow", "bm_add", "rtl", "img_info", "show_in_folder", "explorer"):
             self.acts[k].setEnabled(has)
         self.setWindowTitle(f"AutoComix – {self.v.comic.title}" if has else "AutoComix")
         self.v.help_text = self.help_text()
@@ -365,6 +369,9 @@ class MainWindow(QMainWindow):
         self._recent_into(m.addMenu(tr("Öppna senaste")))
         m.addSeparator()
         for k in ("next_file", "prev_file", "goto", "thumbbar", "slider"):
+            m.addAction(a[k])
+        m.addSeparator()
+        for k in ("img_info", "show_in_folder", "explorer"):
             m.addAction(a[k])
         m.addSeparator()
         m.addMenu(self.slideshow_menu())
@@ -450,9 +457,24 @@ class MainWindow(QMainWindow):
         if p:
             self.v.open(p)
 
-    def browse(self):
+    def image_info(self):
+        if self.v.comic:
+            from .imageinfo import ImageInfoDialog
+            ImageInfoDialog(self, self.v, self.show_in_folder).exec()
+
+    def show_in_folder(self):
+        """Opens our comic browser (L) in the folder of the current file, with the file selected."""
+        if self.v.comic:
+            self.browse(select=self.v.current_file())
+
+    def _explorer(self):
+        if self.v.comic:
+            from .imageinfo import open_in_explorer
+            open_in_explorer(self.v.current_file())
+
+    def browse(self, select=None):
         from .browser import BrowserDialog
-        d = BrowserDialog(self, self.state, self._start_dir())
+        d = BrowserDialog(self, self.state, str(Path(select).parent) if select else self._start_dir(), select=select)
         if d.exec() == QDialog.DialogCode.Accepted and d.choice:
             if self.v.open(d.choice) and d.page is not None:
                 self.v.goto_page(d.page, animate=False)  # chosen in the page grid

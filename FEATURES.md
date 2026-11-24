@@ -12,6 +12,7 @@ AutoComix's panel zoom.
 | Open recent, Clear history, history on/off, clear on close | File → Open recent, Settings → History | |
 | Resume last file (at the last page) | Resume last (page + panel), viewing history of 20 | Ctrl+L |
 | Load next/previous file, automatically next file at the end, extra mouse buttons | Next/Previous file, auto-next (press again at the end), auto-previous (press left again on the first page), mouse back/forward buttons | N, B |
+| Image info, show in folder | Image info with dimensions and all metadata (SD/ComfyUI parameters, EXIF), Show file in folder (our browser), Open in Explorer | Ctrl+Shift+I, Ctrl+Shift+L |
 | Next/previous page, first/last page, forward/back two pages | Arrows/space (panel, part or page), PgUp/PgDn (spread), Home/End | |
 | Japanese mode (right→left, whole interface mirrored) | Manga mode: arrows, click zones, spreads, progress bar and thumbnail bar are mirrored; saved per comic | R |
 | Double page, landscape page = spread, cover, shadow, splitting | Double page, landscape pages are shown alone, the cover alone, shadow in the spine | Shift+D |

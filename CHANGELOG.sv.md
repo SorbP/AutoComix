@@ -5,6 +5,15 @@
 Varje version har en tagg (`vX.Y.Z`) och, från 2.1.0, en release på GitHub med färdigbyggda filer.
 Programmet hette PanelView fram till 2.15.0.
 
+## 2.23.0
+- Nytt i högerklicksmenyn (och Arkiv-menyn): **Bildinfo…** (Ctrl+Shift+I), **Visa fil i mapp** (Ctrl+Shift+L) och
+  **Öppna i Utforskaren**.
+- Bildinfo visar fil, sida, mått, format och filstorlek, och all metadata i bilden: Stable Diffusion-parametrar
+  (A1111/Forge "parameters" i PNG, EXIF UserComment i JPG/WebP), ComfyUI prompt/workflow (som indenterad JSON) och
+  annan EXIF-data. **Kopiera allt** kopierar texten.
+- Visa fil i mapp öppnar seriebläddraren (L) i filens mapp, med filen markerad.
+- Högerklick i seriebläddrarens fillista: **Öppna** och **Öppna i Utforskaren** (Utforskaren öppnas med filen markerad).
+
 ## 2.22.0
 - När en fil med oskannade sidor öppnas **frågar den nu innan skanning** som standard, oavsett antal sidor: Skanna
   alla nu, N i taget (bara när det är fler än Sidor per sats) eller Skanna inte nu. Svaret sparas för filen, så du

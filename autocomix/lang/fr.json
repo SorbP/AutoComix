@@ -370,5 +370,20 @@
  "Fråga innan en fil med oskannade sidor skannas": "Demander avant d'analyser un fichier aux pages non analysées",
  "Utan fråga": "Sans demander",
  "Första sidan – tryck igen för förra filen": "Première page – appuyez à nouveau pour le fichier précédent",
- "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Ouvrir le fichier suivant à la fin, le précédent au début (appuyer deux fois)"
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Ouvrir le fichier suivant à la fin, le précédent au début (appuyer deux fois)",
+ "Öppna i Utforskaren": "Ouvrir dans l'Explorateur",
+ "Bildinfo": "Infos sur l'image",
+ "Kopiera allt": "Tout copier",
+ "Ingen metadata i bilden.": "Aucune métadonnée dans l'image.",
+ "Visa fil i mapp": "Afficher le fichier dans le dossier",
+ "Namn": "Nom",
+ "Fil": "Fichier",
+ "Sida": "Page",
+ "I": "Dans",
+ "Fel": "Erreur",
+ "Mått": "Dimensions",
+ "Format": "Format",
+ "Storlek": "Taille",
+ "Bildrutor": "Images",
+ "Bildinfo…": "Infos sur l'image…"
 }

@@ -370,5 +370,20 @@
  "Fråga innan en fil med oskannade sidor skannas": "Спрашивать перед сканированием файла с несканированными страницами",
  "Utan fråga": "Без вопроса",
  "Första sidan – tryck igen för förra filen": "Первая страница – нажмите ещё раз для предыдущего файла",
- "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Открывать следующий файл в конце, предыдущий в начале (нажать дважды)"
+ "Öppna nästa fil vid slutet, förra filen vid början (tryck två gånger)": "Открывать следующий файл в конце, предыдущий в начале (нажать дважды)",
+ "Öppna i Utforskaren": "Открыть в Проводнике",
+ "Bildinfo": "Сведения об изображении",
+ "Kopiera allt": "Копировать всё",
+ "Ingen metadata i bilden.": "В изображении нет метаданных.",
+ "Visa fil i mapp": "Показать файл в папке",
+ "Namn": "Имя",
+ "Fil": "Файл",
+ "Sida": "Страница",
+ "I": "В",
+ "Fel": "Ошибка",
+ "Mått": "Размеры",
+ "Format": "Формат",
+ "Storlek": "Размер",
+ "Bildrutor": "Кадры",
+ "Bildinfo…": "Сведения об изображении…"
 }
